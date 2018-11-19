@@ -9,7 +9,8 @@ class CozmoSoar(object):
 
     A `CozmoSoar` object holds a reference to two critical things: a `cozmo.Robot` instance used
     to talk with the actual Cozmo robot, and a `sml.Agent` instance used to communicate with the
-    Soar kernel.
+    Soar kernel. A `CozmoSoar` instance is then used by the debugger itself to easily get
+    information to and from both the Soar agent and the actual Cozmo robot.
     """
     def __init__(self, robot, agent):
         """
