@@ -51,6 +51,8 @@ class CozmoSoar(object):
                               lambda: self.r.battery_voltage)
         self.in_link.add_attr('carrying_block',
                               lambda: int(self.r.is_carrying_block))
+        self.in_link.add_attr('carrying_object_id',
+                              lambda: self.r.carrying_object_id)
         self.in_link.add_attr('charging',
                               lambda: int(self.r.is_charging))
         self.in_link.add_attr('cliff_detected',
@@ -69,7 +71,16 @@ class CozmoSoar(object):
                               self.r.serial)
 
         # Now we initialize more complex WMEs which need special IdWMEs
-        # TODO: Fill in
+        lift_attr_dict = {'angle': lambda: self.r.lift_angle.radians,
+                          'height': lambda: self.r.lift_height.distance_mm,
+                          'ratio': lambda: self.r.lift_ratio}
+        lift_wme = self.in_link.create_child_wme('lift', lift_attr_dict)
+
+        pose_attr_dict = {'rot': lambda: self.r.pose.rotation.angle_z.radians,
+                          'x': lambda: self.r.pose.position.x,
+                          'y': lambda: self.r.pose.position.y,
+                          'z': lambda: self.r.pose.position.z}
+        pose_wme = self.in_link.create_child_wme('pose', pose_attr_dict)
 
     def update_input(self):
         """
@@ -142,7 +153,7 @@ class WorkingMemoryElement(object):
         self.attr_refs = dict()
         if attr_dict is not None:
             for attr_name in attr_dict:
-                self.add_attr(attr_name, attr_name[attr_name])
+                self.add_attr(attr_name, attr_dict[attr_name])
 
     @property
     def attr_vals(self):
