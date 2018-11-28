@@ -33,8 +33,8 @@ Soar agent to interact with a Cozmo robot.
   * cube_id (int)
   * descriptive_name (str)
   * moving (bool)
-* num_faces_detected (int)
-* num_objects_detected (int)
+* face_count (int)
+* obj_count (int)
 * picked_up (bool)
 * pose 
   * rot (float)
