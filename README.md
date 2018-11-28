@@ -12,10 +12,7 @@ Soar agent to interact with a Cozmo robot.
 ### Input-link
 * battery_voltage (float)
 * carrying_block (bool)
-* carrying_object
-  * descriptive_name (str)
-  * object_id (int)
-  * object_type (str)
+* carrying_object_id (int)
 * charging (bool)
 * cliff_detected (bool)
 * face_detected_n
