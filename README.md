@@ -29,6 +29,7 @@ Soar agent to interact with a Cozmo robot.
   * lift_height (float)
   * lift_ratio (float)
 * light_cube_n
+  * object_id (int)
   * connected (bool)
   * cube_id (int)
   * descriptive_name (str)
