@@ -42,6 +42,7 @@ Soar agent to interact with a Cozmo robot.
   * y (float)
   * z (float)
 * robot_id (int)
+* serial (str)
 
 ### Output-link.action
 * abort-action
@@ -119,4 +120,7 @@ Soar agent to interact with a Cozmo robot.
   * completed (bool)
   * parallel (bool)
   * face_id (int)
+  
+### Notes
+All angles are in radians.
   
