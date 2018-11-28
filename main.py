@@ -5,19 +5,20 @@ import soar.Python_sml_ClientInterface as sml
 import cozmo
 from cozmo.camera import Camera
 from cozmo.util import degrees, distance_mm, speed_mmps
+from cozmo_soar import CozmoSoar
 
 
-def show_camera_img(robot):
-    world = robot.world
-    cam = robot.camera
-    cam.color_image_enabled = True
-    cam.image_stream_enabled = True
-
+def CozmoSoarEngine(robot: cozmo.robot.Robot):
+    kernel = sml.Kernel_CreateKernelInNewThread()
+    robot = CozmoSoar(robot, kernel, "Cozmo1")
     while True:
-        latest_img = world.latest_image
-        if latest_img is None:
-            continue
-        raw_img = latest_img.raw_image
-        raw_img.show()
+        robot.agent.RunSelf(1)
+        print("State:")
+        print(kernel.ExecuteCommandLine("print <s>", robot.name))
+        print("=====\nInput-link:")
+        print(kernel.ExecuteCommandLine("print --depth 2 i2", robot.name))
+        robot.update_input()
+        input()
 
-cozmo.run_program(show_camera_img)
+
+cozmo.run_program(CozmoSoarEngine)
