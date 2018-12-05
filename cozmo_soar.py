@@ -2,7 +2,9 @@ from collections import namedtuple
 
 import soar.Python_sml_ClientInterface as sml
 import cozmo
+from cozmo.faces import EvtFaceAppeared, EvtFaceObserved, EvtFaceIdChanged, EvtFaceDisappeared
 from cozmo.robot import Robot
+from cozmo.objects import LightCube, LightCubeIDs
 from cozmo.camera import Camera
 from cozmo.util import degrees, distance_mm, speed_mmps
 
@@ -29,6 +31,11 @@ class CozmoSoar(object):
 
         self.robot = self.r = robot
         self.world = self.w = self.r.world
+        self.world.add_event_handler(EvtFaceAppeared, self.__handle_face_appear)
+        # self.world.add_event_handler(EvtFaceObserved, self.__handle_face_observed)
+        # self.world.add_event_handler(EvtFaceIdChanged, self.__handle_face_id_change)
+        self.world.add_event_handler(EvtFaceDisappeared, self.__handle_face_disappear)
+        self.light_cubes = [self.w.get_light_cube(i) for i in LightCubeIDs]
 
         self.kernel = self.k = kernel
         self.agent = self.a = self.kernel.CreateAgent(name)
@@ -51,6 +58,8 @@ class CozmoSoar(object):
                               lambda: self.r.battery_voltage)
         self.in_link.add_attr('carrying_block',
                               lambda: int(self.r.is_carrying_block))
+        self.in_link.add_attr('carrying_object_id',
+                              lambda: self.r.carrying_object_id)
         self.in_link.add_attr('charging',
                               lambda: int(self.r.is_charging))
         self.in_link.add_attr('cliff_detected',
@@ -69,7 +78,42 @@ class CozmoSoar(object):
                               self.r.serial)
 
         # Now we initialize more complex WMEs which need special IdWMEs
-        # TODO: Fill in
+        lift_attr_dict = {'angle': lambda: self.r.lift_angle.radians,
+                          'height': lambda: self.r.lift_height.distance_mm,
+                          'ratio': lambda: self.r.lift_ratio}
+        lift_wme = self.in_link.create_child_wme('lift', lift_attr_dict)
+
+        pose_attr_dict = {'rot': lambda: self.r.pose.rotation.angle_z.radians,
+                          'x': lambda: self.r.pose.position.x,
+                          'y': lambda: self.r.pose.position.y,
+                          'z': lambda: self.r.pose.position.z}
+        pose_wme = self.in_link.create_child_wme('pose', pose_attr_dict)
+
+        # Initialize light cube WMEs
+        for l_cube in self.light_cubes:
+            if l_cube is None:
+                continue
+            self.init_light_cube_wme(l_cube)
+
+    def init_light_cube_wme(self, l_cube):
+        l_cube_attr_dict = {'object_id': l_cube.object_id,
+                            'connected': lambda: l_cube.is_connected,
+                            'cube_id': lambda: l_cube.cube_id,
+                            'descriptive_name': lambda: l_cube.descriptive_name,
+                            'moving': lambda: int(l_cube.is_moving),
+                            'liftable': lambda: int(l_cube.pickupable),
+                            'type': "cube",
+                            'visible': lambda: int(l_cube.is_visible)}
+        l_cube_wme = self.in_link.create_child_wme(l_cube.descriptive_name,
+                                                   l_cube_attr_dict,
+                                                   soar_name='object')
+
+        # Add pose WME for cube
+        lc_pose_attr_dict = {'rot': lambda: l_cube.pose.rotation.angle_z.radians,
+                             'x': lambda: l_cube.pose.position.x,
+                             'y': lambda: l_cube.pose.position.y,
+                             'z': lambda: l_cube.pose.position.z}
+        lc_pose_wme = l_cube_wme.create_child_wme('pose', lc_pose_attr_dict)
 
     def update_input(self):
         """
@@ -81,7 +125,55 @@ class CozmoSoar(object):
         self.in_link.update()
 
     def load_productions(self, filename):
+        """
+        Load Soar productions for the Agent to use.
+
+        :param filename: Soar production file to load
+        :return: None
+        """
         self.a.LoadProductions(filename)
+
+    def __handle_face_appear(self, evt, face, image_box, name, pose, updated):
+        """
+        Callback method for when Cozmo sees a new face; adds face to input link.
+
+        Cozmo SDK guarantees that this will be called only the very first time a certain face is
+        seen, unless the face has disappeared in the interim. As such, we know that this will be
+        called only once before ``__handle_face_disappear`` is called, and so making a new WME is
+        fine.
+
+        :param evt: Event object
+        :param face: New ``Cozmo.faces.Face`` object for newly detected face
+        :param image_box: Image box around the face
+        :param name: Name assigned to the face
+        :param pose: Estimated pose of the face (as a Cozmo ``Pose`` object)
+        :param updated: List of attributes updated
+        :return: None
+        """
+        new_face_wme_attr_dict = {
+            'name': lambda: face.name,
+            'face_id': lambda: face.face_id,
+            'expression': lambda: face.expression,
+            'expression_conf': lambda: face.expression_score
+        }
+        self.in_link.create_child_wme("face-{}".format(face.face_id),
+                                      new_face_wme_attr_dict,
+                                      soar_name='face')
+
+    def __handle_face_observed(self, evt, face, image_box, name, pose, updated):
+        self.in_link.attr_vals["face-{}".format(face.face_id)].update()
+
+
+    def __handle_face_disappear(self, evt, face):
+        """
+        Callback for when a face leaves Cozmo's vision; removes face from input link.
+
+        :param evt: Event object
+        :param face: Face object which left view
+        :return: None
+        """
+        if "face-{}".format(face.face_id) in self.in_link.attr_refs.keys():
+            self.in_link.rem_attr("face-{}".format(face.face_id))
 
 
 class WorkingMemoryElement(object):
@@ -142,7 +234,7 @@ class WorkingMemoryElement(object):
         self.attr_refs = dict()
         if attr_dict is not None:
             for attr_name in attr_dict:
-                self.add_attr(attr_name, attr_name[attr_name])
+                self.add_attr(attr_name, attr_dict[attr_name])
 
     @property
     def attr_vals(self):
@@ -201,6 +293,16 @@ class WorkingMemoryElement(object):
         self.__attr_vals[name] = type_check_wrapper(value_or_getter)
         self.attr_refs[name] = self.__create_simple_wme_ref(name, current_value)
 
+    def rem_attr(self, name):
+        """
+        Remove the attribute with the given name from Soar and the WME.
+
+        :param name: Name of attribute to remove
+        """
+        self.agent.DestroyWME(self.attr_refs[name])
+        del self.attr_refs[name]
+        del self.__attr_vals[name]
+
     def __create_simple_wme_ref(self, name, val):
         """
         Given a name and a value, create a type-appropriate WME in Soar and return reference.
@@ -229,7 +331,7 @@ class WorkingMemoryElement(object):
         self.agent.Commit()
         return new_wme
 
-    def create_child_wme(self, name, attr_dict=None):
+    def create_child_wme(self, name, attr_dict=None, soar_name=None):
         """
         Create a new WorkingMemoryElement as a child to this one.
 
@@ -238,9 +340,12 @@ class WorkingMemoryElement(object):
 
         :param name: Name of the new WME. Must be unique within this WME's attributes
         :param attr_dict: A dict of name-value pairs for initial attributes to the WME
+        :param soar_name: Name for attribute connection in Soar, can be a duplicate
         :return: The new python WME object
         """
-        new_soar_wme = self.agent.CreateIdWME(self.wme_ref, name)
+        if soar_name is None:
+            soar_name = name
+        new_soar_wme = self.agent.CreateIdWME(self.wme_ref, soar_name)
         new_py_wme = WorkingMemoryElement(name, new_soar_wme, self.agent, attr_dict)
 
         self.__attr_vals[name] = new_py_wme
@@ -250,6 +355,11 @@ class WorkingMemoryElement(object):
         return new_py_wme
 
     def update(self):
+        """
+        Recursively update the WMEs in Soar based on the attribute values.
+
+        :return: None
+        """
         attr_vals = self.attr_vals  # Should save time due to nature of self.attr_vals
         for name in self.attr_refs:
             if isinstance(attr_vals[name], WorkingMemoryElement):
@@ -257,3 +367,14 @@ class WorkingMemoryElement(object):
             else:
                 self.agent.Update(self.attr_refs[name], attr_vals[name])
         self.agent.Commit()
+
+    def __str__(self):
+        """
+        Print the WME by showing attribute names and values.
+
+        :return: String representation of the WME
+        """
+        ret_str = "<WME>{}:\n".format(self.name)
+        for name in self.attr_refs:
+            ret_str += "|--{}:{}\n".format(name, self.attr_vals[name])
+        return ret_str
