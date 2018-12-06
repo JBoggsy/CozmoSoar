@@ -32,8 +32,6 @@ class CozmoSoar(object):
         self.robot = self.r = robot
         self.world = self.w = self.r.world
         self.world.add_event_handler(EvtFaceAppeared, self.__handle_face_appear)
-        # self.world.add_event_handler(EvtFaceObserved, self.__handle_face_observed)
-        # self.world.add_event_handler(EvtFaceIdChanged, self.__handle_face_id_change)
         self.world.add_event_handler(EvtFaceDisappeared, self.__handle_face_disappear)
         self.light_cubes = [self.w.get_light_cube(i) for i in LightCubeIDs]
 
@@ -95,6 +93,10 @@ class CozmoSoar(object):
                 continue
             self.init_light_cube_wme(l_cube)
 
+        # Initialize face WMEs
+        for f in self.w.visible_faces:
+            self.init_face_wme(f)
+
     def init_light_cube_wme(self, l_cube):
         l_cube_attr_dict = {'object_id': l_cube.object_id,
                             'connected': lambda: l_cube.is_connected,
@@ -115,6 +117,24 @@ class CozmoSoar(object):
                              'z': lambda: l_cube.pose.position.z}
         lc_pose_wme = l_cube_wme.create_child_wme('pose', lc_pose_attr_dict)
 
+    def init_face_wme(self, face):
+        new_face_wme_attr_dict = {
+            'name': lambda: face.name,
+            'face_id': lambda: face.face_id,
+            'expression': lambda: face.expression,
+            'expression_conf': lambda: face.expression_score
+        }
+        face_wme = self.in_link.create_child_wme("face-{}".format(face.face_id),
+                                                new_face_wme_attr_dict,
+                                                soar_name='face')
+
+        # Add pose WME for face
+        face_pose_attr_dict = {'rot': lambda: face.pose.rotation.angle_z.radians,
+                               'x': lambda: face.pose.position.x,
+                               'y': lambda: face.pose.position.y,
+                               'z': lambda: face.pose.position.z}
+        lc_pose_wme = face_wme.create_child_wme('pose', face_pose_attr_dict)
+
     def update_input(self):
         """
         Update the Soar input link WMEs.
@@ -132,6 +152,44 @@ class CozmoSoar(object):
         :return: None
         """
         self.a.LoadProductions(filename)
+
+    def handle_command(self, command: sml.Identifier, agent: sml.Agent):
+        """
+        Handle a command produced by Soar.
+
+        This basically just maps command names to their cozmo methods.
+
+        :param command: A Soar command object
+        :return: True if successful, False otherwise
+        """
+        comm_name = command.GetCommandName()
+
+        if comm_name == "move-lift":
+            return self.__handle_move_lift(command, agent)
+
+        print("Error: Don't know how to handle command {}".format(comm_name))
+        return False
+
+    def __handle_move_lift(self, command, agent):
+        """
+        Handle a Soar move-life action.
+
+        The Soar output should look like:
+        (I3 ^move-lift Vx)
+          (Vx ^height [height])
+        where [hieght] is a real number in the range [0, 1]. This command moves the lift to the
+        the given height, where 0 is the lowest possible position and 1 is the highest.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        height = float(command.GetParameterValue("height"))
+        print("Moving lift {}".format(height))
+        set_lift_height_action = self.robot.set_lift_height(height)
+        set_lift_height_action.wait_for_completed()
+        command.AddStatusComplete()
+        agent.Commit()
 
     def __handle_face_appear(self, evt, face, image_box, name, pose, updated):
         """
@@ -156,13 +214,16 @@ class CozmoSoar(object):
             'expression': lambda: face.expression,
             'expression_conf': lambda: face.expression_score
         }
-        self.in_link.create_child_wme("face-{}".format(face.face_id),
-                                      new_face_wme_attr_dict,
-                                      soar_name='face')
+        face_wme = self.in_link.create_child_wme("face-{}".format(face.face_id),
+                                                new_face_wme_attr_dict,
+                                                soar_name='face')
 
-    def __handle_face_observed(self, evt, face, image_box, name, pose, updated):
-        self.in_link.attr_vals["face-{}".format(face.face_id)].update()
-
+        # Add pose WME for face
+        face_pose_attr_dict = {'rot': lambda: face.pose.rotation.angle_z.radians,
+                               'x': lambda: face.pose.position.x,
+                               'y': lambda: face.pose.position.y,
+                               'z': lambda: face.pose.position.z}
+        lc_pose_wme = face_wme.create_child_wme('pose', face_pose_attr_dict)
 
     def __handle_face_disappear(self, evt, face):
         """
@@ -172,8 +233,7 @@ class CozmoSoar(object):
         :param face: Face object which left view
         :return: None
         """
-        if "face-{}".format(face.face_id) in self.in_link.attr_refs.keys():
-            self.in_link.rem_attr("face-{}".format(face.face_id))
+        self.in_link.rem_attr("face-{}".format(face.face_id))
 
 
 class WorkingMemoryElement(object):
@@ -299,9 +359,15 @@ class WorkingMemoryElement(object):
 
         :param name: Name of attribute to remove
         """
+        if not self.has_attr(name):
+            # TODO Log here
+            raise KeyError("WME {} has no attribute {}".format(self.name, name))
         self.agent.DestroyWME(self.attr_refs[name])
         del self.attr_refs[name]
         del self.__attr_vals[name]
+
+    def has_attr(self, name):
+        return name in self.__attr_vals.keys()
 
     def __create_simple_wme_ref(self, name, val):
         """

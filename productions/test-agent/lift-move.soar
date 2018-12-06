@@ -1,0 +1,29 @@
+sp {test-agent*propose*lift-move-up
+   (state <s> ^name test-agent
+              ^io <io>)
+   (<io>  ^input-link <in>
+          ^output-link <out>)
+   (<in>  ^lift.ratio < 0.95)
+   (<in>  ^face_count > 0)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name lift-move-up
+         ^actions.move-lift <ml>)
+   (<ml> ^height 1.0)
+   (write (crlf) | PROPOSING LIFT MOVE UP | )
+}
+
+sp {test-agent*propose*lift-move-down
+   (state <s> ^name test-agent
+              ^io <io>)
+   (<io>  ^input-link <in>
+          ^output-link <out>)
+   (<in>  ^lift.ratio > 0.05)
+   (<in>  ^face_count 0)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name lift-move-down
+         ^actions.move-lift <ml>)
+   (<ml> ^height 0.00)
+   (write (crlf) | PROPOSING LIFT MOVE DOWN | )
+}
