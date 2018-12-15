@@ -4,10 +4,13 @@ import soar.Python_sml_ClientInterface as sml
 import cozmo
 from cozmo.action import EvtActionCompleted
 from cozmo.faces import EvtFaceAppeared, EvtFaceDisappeared
+from cozmo.lights import Light, Color
 from cozmo.robot import Robot
 from cozmo.objects import LightCube, LightCubeIDs, EvtObjectAppeared, EvtObjectDisappeared
 from cozmo.camera import Camera
 from cozmo.util import degrees, distance_mm, speed_mmps
+
+COLORS = ['red', 'blue', 'green', 'white', 'off']
 
 
 class CozmoSoar(object):
@@ -181,6 +184,8 @@ class CozmoSoar(object):
             success = self.__handle_go_to_object(command, agent)
         elif comm_name == "turn-to-face":
             success = self.__handle_turn_to_face(command, agent)
+        elif comm_name == "set-backpack-lights":
+            success = self.__handle_set_backpack_lights(command, agent)
         else:
             raise NotImplementedError("Error: Don't know how to handle command {}".format(comm_name))
 
@@ -250,10 +255,8 @@ class CozmoSoar(object):
 
         The Sour output should look like:
         (I3 ^go-to-object Vx)
-          (Vx ^target_object_id [id]
-              ^distance [dist])
-        where [id] is the object id of the object to go to and [dist] is how far from the object
-        Cozmo should stop, in mm.
+          (Vx ^target_object_id [id])
+        where [id] is the object id of the object to go to. Cozmo will stop 150mm from the object.
 
         :param command: Soar command object
         :param agent: Soar Agent object
@@ -273,6 +276,40 @@ class CozmoSoar(object):
         callback = self.__handle_action_complete_factory(command)
         go_to_object_action.add_event_handler(EvtActionCompleted, callback)
         return True
+
+    def __handle_set_backpack_lights(self, command, agent):
+        """
+        Handle a Soar set-backpack-lights action.
+
+        The Sour output should look like:
+        (I3 ^set-backpack-lights Vx)
+          (Vx ^color [color])
+        where [color] is a string indicating which color the lights should be set to. The colors
+        are "red", "blue", "green", "white", and "off".
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        color_str = command.GetParameterValue("color")
+        if color_str not in COLORS:
+            print("Invalid backpack lights color {}".format(color_str))
+            return False
+        elif color_str == 'red':
+            light = cozmo.lights.red_light
+        elif color_str == 'green':
+            light = cozmo.lights.green_light
+        elif color_str == 'blue':
+            light = cozmo.lights.blue_light
+        elif color_str == 'white':
+            light = cozmo.lights.white_light
+        else:
+            light = cozmo.lights.off_light
+
+        self.r.set_all_backpack_lights(light=light)
+        command.AddStatusComplete()
+        return True
+
 
     def __handle_action_complete_factory(self, command):
         def __handle_action_complete(evt, action, failure_code, failure_reason, state):

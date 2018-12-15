@@ -103,7 +103,7 @@ Presently this action is blocking, meaning the robot cannot do any other actions
 *parameters:*
 - target-object-id
 
-Instructs Cozmo to move itself to the object with the specified object ID. The object id must be one that Cozmo is currently aware of. 
+Instructs Cozmo to move itself to the object with the specified object ID. The object id must be one that Cozmo is currently aware of. Cozmo will stop once its center is 150mm from the object's.
 
 Presently this action is blocking, meaning the robot cannot do any other actions while this one is happening.
 

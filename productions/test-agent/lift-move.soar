@@ -51,3 +51,25 @@ sp {test-agent*propose*turn-to-face
           ^actions.turn-to-face <a>)
     (<a> ^face-id <id>)
 }
+
+sp {test-agent*propose*set-backpack-lights-green
+    (state <s> ^name test-agent
+               ^io.input-link <in>)
+    (<in>  ^face_count > 0)
+-->
+    (<s> ^operator <op> + =)
+    (<op> ^name set-backpack-lights-green
+          ^actions.set-backpack-lights <a>)
+    (<a> ^color green)
+}
+
+sp {test-agent*propose*set-backpack-lights-red
+    (state <s> ^name test-agent
+               ^io.input-link <in>)
+    (<in>  ^face_count 0)
+-->
+    (<s> ^operator <op> + =)
+    (<op> ^name set-backpack-lights-green
+          ^actions.set-backpack-lights <a>)
+    (<a> ^color red)
+}
