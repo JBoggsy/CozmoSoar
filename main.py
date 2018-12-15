@@ -40,7 +40,7 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
         print("Input link:")
         print(kernel.ExecuteCommandLine("print --depth 3 i2", agent.GetAgentName()))
         print("Output link:")
-        print(kernel.ExecuteCommandLine("print --depth 3 i3", agent.GetAgentName()))
+        print(kernel.ExecuteCommandLine("print --depth 4 i3", agent.GetAgentName()))
 
         if ready_to_continue:
             sleep(0.25)
@@ -68,7 +68,13 @@ def sync_world_factory(r: CozmoSoar, agent: sml.Agent):
         numCommands = agent.GetNumberCommands()
         for i in range(numCommands):
             comm = agent.GetCommand(i)
-            r.handle_command(comm, agent)
+            try:
+                r.handle_command(comm, agent)
+            except Exception as e:
+                print("\u001b[31mError: ", e)
+                print(e.args)
+                print("\u001b[0m")
+                raise e
     return sync_world
 
 
