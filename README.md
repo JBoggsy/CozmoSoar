@@ -10,87 +10,84 @@ We define the Soar-Cozmo interface to have the following input- and output-links
 Soar agent to interact with a Cozmo robot.
 
 ### Input-link
-* battery_voltage (float)
-* carrying_block [0|1]
-* carrying_object_id (int)
+* battery-voltage (float)
+* carrying-block [0|1]
+* carrying-object_id (int)
 * charging [0|1]
-* cliff_detected (bool)
+* cliff-detected (bool)
 * face
   * expression (str)
-  * expression_conf (int)
-  * face_id (int)
+  * expression-conf (int)
+  * face-id (int)
   * name (str)
   * pose 
     * rot (float)
     * x (float)
     * y (float)
     * z (float)
-* head_angle (float)
+* head-angle (float)
 * lift
-  * lift_angle (float)
-  * lift_height (float)
-  * lift_ratio (float)
+  * lift-angle (float)
+  * lift-height (float)
+  * lift-ratio (float)
 * object
-  * object_id (int)
+  * object-id (int)
   * connected [False|True]
-  * cube_id (int)
+  * cube-id (int)
   * descriptive_name (str)
   * moving [0|1]
   * liftable [0|1]
-* face_count (int)
-* obj_count (int)
-* picked_up [0|1]
+* face-count (int)
+* obj-count (int)
+* picked-up [0|1]
 * pose 
   * rot (float)
   * x (float)
   * y (float)
   * z (float)
-* robot_id (int)
+* robot-id (int)
 * serial (str)
 
 ### Actions Overview
-* display_face_image
-  * duration (float)
-  * screen_data (bytes)
-* dock_with_cube
+* dock-with-cube
   * approach_angle (float)
   * target_object (int)
-* drive_forward
+* drive-forward
   * distance (float)
   * speed (float)
-* go_to_object
+* go-to-object
   * target_object_id (int)
   * distance (float)
-* go_to_pose
+* go-to-pose
   * pose
     * rot (float)
     * x (float)
     * y (float)
     * z (float)
   * relative_to_robot (bool)
-* pick_up_object
+* pick-up-object
   * object_id (int)
-* place_object_down
-* say_text
+* place-object-down
+* say-text
   * text (str)
   * duration_scale (float)
   * voice_pitch (float)
-* set_backpack_lights
+* set-backpack-lights
   * color (int)
-* set_head_angle
+* set-head-angle
   * angle (float)
   * accel (float)
   * max_speed (float)
   * duration (float)
-* set_lift_height
+* set-lift-height
   * height (float)
-* stop_all_motors
-* turn_in_place
+* stop-all-motors
+* turn-in-place
   * angle (float)
   * speed (float)
   * accel (float)
   * angle_tolerance (float)
-* turn_towards_face
+* turn-to-face
   * face_id (int)
   
 ### Action Details
@@ -100,13 +97,18 @@ Soar agent to interact with a Cozmo robot.
 
 Moves Cozmo's lift to the specified height. The height is given as a a float in the range [0, 1] that represents the percentage of the maximum height the lift should be moved to. A height value of 0.0 will move the lift all the way down while a value of 1.0 will move it all the way up. A value of 0.5 will move it exactly half-way up.
 
-Presently this action is blocking, meaning the robot cannot do any other actions while this one is happening, and Soar won't continue until the action is compelete.
+Presently this action is blocking, meaning the robot cannot do any other actions while this one is happening.
 
 #### go-to-object
 *parameters:*
-- target_object_id
-- distance
+- target-object-id
 
-Instructs Cozmo to move itself to the object with the specified object ID. The object id must be one that Cozmo is currently aware of. The distance parameter tells Cozmo how close it should get to the object, in millimeters.
+Instructs Cozmo to move itself to the object with the specified object ID. The object id must be one that Cozmo is currently aware of. 
 
-Presently this action is blocking, meaning the robot cannot do any other actions while this one is happening, and Soar won't continue until the action is compelete.
+Presently this action is blocking, meaning the robot cannot do any other actions while this one is happening.
+
+#### turn-to-face
+*parameters:*
+- face-id 
+
+Instructs Cozmo to rotate towards a face it sees. The face id should be one it knows about.

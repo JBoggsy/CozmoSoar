@@ -38,11 +38,13 @@ class CozmoSoar(object):
         self.world.add_event_handler(EvtObjectDisappeared, self.__handle_obj_disappear)
 
         self.objects = {}
+        self.faces = {}
 
         self.kernel = self.k = kernel
         self.agent = self.a = self.kernel.CreateAgent(name)
         self.in_link_ref = self.a.GetInputLink()
         self.in_link = WorkingMemoryElement("input-link", self.in_link_ref, self.agent)
+        self.action_failure = None
 
         self.init_in_link()
 
@@ -100,6 +102,7 @@ class CozmoSoar(object):
         # Initialize face WMEs
         for f in self.w.visible_faces:
             self.init_face_wme(f)
+            self.faces[f.face_id] = f
 
     def init_light_cube_wme(self, l_cube):
         l_cube_attr_dict = {'object_id': l_cube.object_id,
@@ -157,6 +160,10 @@ class CozmoSoar(object):
         """
         self.a.LoadProductions(filename)
 
+    ####################
+    # COMMAND HANDLING #
+    ####################
+
     def handle_command(self, command: sml.Identifier, agent: sml.Agent):
         """
         Handle a command produced by Soar.
@@ -169,12 +176,47 @@ class CozmoSoar(object):
         comm_name = command.GetCommandName()
 
         if comm_name == "move-lift":
-            return self.__handle_move_lift(command, agent)
+            success = self.__handle_move_lift(command, agent)
         elif comm_name == "go-to-object":
-            return self.__handle_go_to_object(command, agent)
+            success = self.__handle_go_to_object(command, agent)
+        elif comm_name == "turn-to-face":
+            success = self.__handle_turn_to_face(command, agent)
+        else:
+            raise NotImplementedError("Error: Don't know how to handle command {}".format(comm_name))
 
-        print("Error: Don't know how to handle command {}".format(comm_name))
-        return False
+        if not success:
+            command.AddStatusComplete()
+
+        return True
+
+    def __handle_turn_to_face(self, command, agent):
+        """
+        Handle a Soar turn-to-face action.
+
+        The Soar output should look like:
+        (I3 ^turn-to-face Vx)
+          (Vx ^face-id [fid])
+        where [fid] is the integer ID associated with the face to turn towards.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            fid = int(command.GetParameterValue("face-id"))
+        except ValueError as e:
+            print("Invalid face id format {}".format(command.GetParameterValue("face-id")))
+            return False
+        if fid not in self.faces.keys():
+            print("Face {} not recognized".format(fid))
+            return False
+
+        print("Turning to face {}".format(fid))
+        target_face = self.faces[fid]
+        turn_towards_face_action = self.r.turn_towards_face(target_face)
+        callback = self.__handle_action_complete_factory(command)
+        turn_towards_face_action.add_event_handler(EvtActionCompleted, callback)
+        return True
 
     def __handle_move_lift(self, command, agent):
         """
@@ -190,12 +232,17 @@ class CozmoSoar(object):
         :param agent: Soar Agent object
         :return: True if successful, False otherwise
         """
-        height = float(command.GetParameterValue("height"))
+        try:
+            height = float(command.GetParameterValue("height"))
+        except ValueError as e:
+            print("Invalid height format {}".format(command.GetParameterValue("height")))
+            return False
+
         print("Moving lift {}".format(height))
         set_lift_height_action = self.robot.set_lift_height(height)
-        set_lift_height_action.wait_for_completed()
-        command.AddStatusComplete()
-        agent.Commit()
+        callback = self.__handle_action_complete_factory(command)
+        set_lift_height_action.add_event_handler(EvtActionCompleted, callback)
+        return True
 
     def __handle_go_to_object(self, command, agent):
         """
@@ -212,16 +259,33 @@ class CozmoSoar(object):
         :param agent: Soar Agent object
         :return: True if successful, False otherwise
         """
-        target_id = int(command.GetParameterValue("target_object_id"))
-        print("Going to object {}".format(target_id))
-
+        try:
+            target_id = int(command.GetParameterValue("target_object_id"))
+        except ValueError as e:
+            print("Invalid target-object-id format {}".format(command.GetParameterValue("target_object_id")))
         if target_id not in self.objects.keys():
             print("Couldn't find target object")
             return False
+
+        print("Going to object {}".format(target_id))
         target_obj = self.objects[target_id]
         go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(150))
         callback = self.__handle_action_complete_factory(command)
         go_to_object_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_action_complete_factory(self, command):
+        def __handle_action_complete(evt, action, failure_code, failure_reason, state):
+            if state == cozmo.action.ACTION_SUCCEEDED:
+                print("Action {} finished successfully".format(action))
+            else:
+                print("Action {} terminated because {}".format(action, failure_reason))
+            command.AddStatusComplete()
+        return __handle_action_complete
+
+    #########################
+    # OBJECT/FACE DETECTION #
+    #########################
 
     def __handle_obj_appear(self, evt, updated, obj, image_box, pose):
         if isinstance(obj, cozmo.objects.LightCube):
@@ -267,6 +331,8 @@ class CozmoSoar(object):
                                'y': lambda: face.pose.position.y,
                                'z': lambda: face.pose.position.z}
         lc_pose_wme = face_wme.create_child_wme('pose', face_pose_attr_dict)
+        self.faces[face.face_id] = face
+        print("Added face {}".format(face.face_id))
 
     def __handle_face_disappear(self, evt, face):
         """
@@ -277,15 +343,8 @@ class CozmoSoar(object):
         :return: None
         """
         self.in_link.rem_attr("face-{}".format(face.face_id))
-
-    def __handle_action_complete_factory(self, command):
-        def __handle_action_complete(evt, action, failure_code, failure_reason, state):
-            if state == cozmo.action.ACTION_SUCCEEDED:
-                print("Action {} finished successfully".format(action))
-            else:
-                print("Action {} terminated because {}".format(action, failure_reason))
-            command.AddStatusComplete()
-        return __handle_action_complete
+        del self.faces[face.face_id]
+        print("Removed face {}".format(face.face_id))
 
 
 class WorkingMemoryElement(object):
@@ -385,7 +444,7 @@ class WorkingMemoryElement(object):
         :param value_or_getter: Value or function which returns a value
         """
         if name in self.__attr_vals.keys():
-            raise KeyError("Cannot have duplicate attribute names")
+            raise KeyError("Cannot have duplicate attribute names: {}".format(name))
         if not callable(value_or_getter):
             self.__attr_vals[name] = value_or_getter
             self.attr_refs[name] = self.__create_simple_wme_ref(name, value_or_getter)
