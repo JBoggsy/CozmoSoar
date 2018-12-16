@@ -1,0 +1,27 @@
+sp {test-agent*propose*turn-in-place
+    (state <s> ^name test-agent-turn-in-place
+               ^io.input-link <in>)
+    (<in> ^object <obj>)
+    (<obj> ^visible 1)
+-->
+    (<s> ^operator <op> + =)
+    (<op> ^name turn-in-place
+          ^actions true
+          ^angle 90
+          ^speed 30)
+}
+
+sp {test-agent*apply*turn-in-place
+    (state <s> ^operator <op>
+              ^io.output-link <out>
+              -^performing-action)
+    (<op> ^name turn-in-place
+          ^actions true
+          ^angle <ang>
+          ^speed <spd>)
+-->
+    (<out> ^turn-in-place <a>)
+    (<a> ^angle <ang>
+         ^speed <spd>)
+    (<s> ^performing-action true)
+}

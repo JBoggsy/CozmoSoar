@@ -5,6 +5,12 @@ popd
 pushd elaborations
 source elaborations_source.soar
 popd
+source dock-with-cube.soar
+source drive-forward.soar
 source general_action_elabs.soar
+source go-to-object.soar
 source initialize-test-agent.soar
 source lift-move.soar
+source set-backpack-lights.soar
+source turn-in-place.soar
+source turn-to-face.soar

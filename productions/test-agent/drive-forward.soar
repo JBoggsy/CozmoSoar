@@ -1,0 +1,27 @@
+sp {test-agent*propose*drive-forward
+    (state <s> ^name test-agent-drive-forward
+               ^io.input-link <in>)
+    (<in> ^object <obj>)
+    (<obj> ^visible 1)
+-->
+    (<s> ^operator <op> + =)
+    (<op> ^name drive-forward
+          ^actions true
+          ^distance 200
+          ^speed 50)
+}
+
+sp {test-agent*apply*drive-forward
+    (state <s> ^operator <op>
+              ^io.output-link <out>
+              -^performing-action)
+    (<op> ^name drive-forward
+          ^actions true
+          ^distance <dist>
+          ^speed <spd>)
+-->
+    (<out> ^drive-forward <a>)
+    (<a> ^distance <dist>
+         ^speed <spd>)
+    (<s> ^performing-action true)
+}

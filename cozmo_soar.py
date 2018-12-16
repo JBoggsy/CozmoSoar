@@ -176,7 +176,7 @@ class CozmoSoar(object):
         :param command: A Soar command object
         :return: True if successful, False otherwise
         """
-        comm_name = command.GetCommandName()
+        comm_name = command.GetCommandName().lower()
 
         if comm_name == "move-lift":
             success = self.__handle_move_lift(command, agent)
@@ -188,6 +188,8 @@ class CozmoSoar(object):
             success = self.__handle_set_backpack_lights(command, agent)
         elif comm_name == "drive-forward":
             success = self.__handle_drive_forward(command, agent)
+        elif comm_name == "turn-in-place":
+            success = self.__handle_turn_in_place(command, agent)
         else:
             raise NotImplementedError("Error: Don't know how to handle command {}".format(comm_name))
 
@@ -342,6 +344,38 @@ class CozmoSoar(object):
         drive_forward_action = self.r.drive_straight(distance, speed)
         callback = self.__handle_action_complete_factory(command)
         drive_forward_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_turn_in_place(self, command, agent):
+        """
+        Handle a Soar turn-in-place action.
+
+        The Sour output should look like:
+        (I3 ^turn-in-place Vx)
+          (Vx ^angle [ang]
+              ^speed [spd])
+        where [ang] is the amount Cozmo should rotate in degrees and speed is the speed at which
+        Cozmo should rotate in deg/s.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            angle = degrees(float(command.GetParameterValue("angle")))
+        except ValueError as e:
+            print("Invalid angle format {}".format(command.GetParameterValue("angle")))
+            return False
+        try:
+            speed = degrees(float(command.GetParameterValue("speed")))
+        except ValueError as e:
+            print("Invalid speed format {}".format(command.GetParameterValue("speed")))
+            return False
+
+        print("Rotating in place {} radians at {}rad/s".format(angle.degrees, speed.degrees))
+        turn_in_place_action = self.r.turn_in_place(angle=angle, speed=speed)
+        callback = self.__handle_action_complete_factory(command)
+        turn_in_place_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_action_complete_factory(self, command):

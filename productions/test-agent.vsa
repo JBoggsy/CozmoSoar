@@ -6,7 +6,13 @@ VERSION 4
 3	0	FOLDER elaborations elaborations 4
 4	3	FOPERATOR _all _all.soar 5
 5	3	FOPERATOR top-state top-state.soar 6
-6	0	OPERATOR general_action_elabs general_action_elabs.soar 9
-7	0	OPERATOR initialize-test-agent initialize-test-agent.soar 7
-8	0	OPERATOR lift-move lift-move.soar 8
+6	0	OPERATOR dock-with-cube dock-with-cube.soar 10
+7	0	OPERATOR drive-forward drive-forward.soar 11
+8	0	OPERATOR general_action_elabs general_action_elabs.soar 7
+9	0	OPERATOR go-to-object go-to-object.soar 12
+10	0	OPERATOR initialize-test-agent initialize-test-agent.soar 8
+11	0	OPERATOR lift-move lift-move.soar 9
+12	0	OPERATOR set-backpack-lights set-backpack-lights.soar 14
+13	0	OPERATOR turn-in-place turn-in-place.soar 15
+14	0	OPERATOR turn-to-face turn-to-face.soar 13
 END

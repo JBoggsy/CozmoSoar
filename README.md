@@ -128,3 +128,10 @@ blue, or white, or be turned off.
 
 Instructs Cozmo to drive forward the given distance at the given speed. The distance is given in 
 mm and the speed in mm/s. 
+
+#### turn-in-place
+*parameters:*
+- angle
+- speed
+
+Instructs Cozmo to rotate in place, turning `angle` degrees at `speed` degrees a second. A postive value for `angle` rotates Cozmo counterclockwise, a negative value rotates clockwise.

@@ -5,7 +5,7 @@ import cozmo
 import cv2
 from tkinter import *
 sys.path.append('/Users/nickmatton/Desktop/Soar/Soar/out/')
-import Python_sml_ClientInterface as sml
+import soar.Python_sml_ClientInterface as sml
 
 class GUI:
     def __init__(self, master, robot: cozmo.robot.Robot, kernel):
@@ -211,4 +211,5 @@ def cozmo_program(robot: cozmo.robot.Robot):
     master.mainloop()
 
 
-cozmo.run_program(cozmo_program)
+if __name__ == '__main__':
+    cozmo.run_program(cozmo_program)
