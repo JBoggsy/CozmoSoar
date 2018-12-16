@@ -1,7 +1,7 @@
 from time import sleep
 from threading import current_thread
 
-import tkinter
+import tkinter as tk
 import cv2
 import PIL
 import soar.Python_sml_ClientInterface as sml
@@ -9,6 +9,7 @@ import cozmo
 from cozmo.camera import Camera
 from cozmo.util import degrees, distance_mm, speed_mmps
 from cozmo_soar import CozmoSoar
+from mainGUI import GUI
 
 
 def CozmoSoarEngine(robot: cozmo.robot.Robot):
@@ -20,27 +21,22 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
     agent.RegisterForRunEvent(sml.smlEVENT_AFTER_OUTPUT_PHASE,
                               callback,
                               None)
-
     agent.RegisterForPrintEvent(sml.smlEVENT_PRINT,
                                 soar_print_callback,
                                 None)
-
     agent.LoadProductions("productions/test-agent.soar")
     if agent.HadError():
         print("Error loading productions: {}".format(agent.GetLastErrorDescription()))
+    agent.RunSelf(1)
 
+    # gui_root = tk.Tk()
+    # gui = GUI(gui_root, robot.r, kernel, agent=agent)
+    # gui_root.mainloop()
     i = 0
     ready_to_continue = False
     while True:
         i += 1
         agent.RunSelf(1)
-        print("\n", i)
-        print("State:")
-        print(kernel.ExecuteCommandLine("print --depth 2 s1", agent.GetAgentName()))
-        print("Input link:")
-        print(kernel.ExecuteCommandLine("print --depth 3 i2", agent.GetAgentName()))
-        print("Output link:")
-        print(kernel.ExecuteCommandLine("print --depth 4 i3", agent.GetAgentName()))
 
         if ready_to_continue:
             sleep(0.25)
@@ -59,11 +55,17 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
 
 def sync_world_factory(r: CozmoSoar, agent: sml.Agent):
     """
-    Create callback function for the given robot.
+    Create Soar cycle callback function for the given robot.
 
     :return: A function to call when Soar leaves the output phase
     """
     def sync_world(*args, **kwargs):
+        print("State:")
+        print(agent.ExecuteCommandLine("print --depth 2 s1"))
+        print("Input link:")
+        print(agent.ExecuteCommandLine("print --depth 3 i2"))
+        print("Output link:")
+        print(agent.ExecuteCommandLine("print --depth 4 i3"))
         r.update_input()
         numCommands = agent.GetNumberCommands()
         for i in range(numCommands):

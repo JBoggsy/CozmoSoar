@@ -8,11 +8,14 @@ sys.path.append('/Users/nickmatton/Desktop/Soar/Soar/out/')
 import soar.Python_sml_ClientInterface as sml
 
 class GUI:
-    def __init__(self, master, robot: cozmo.robot.Robot, kernel):
+    def __init__(self, master, robot: cozmo.robot.Robot, kernel, agent=None):
         self.robot = robot
         self.kernel = kernel
         self.master = master
-        self.agent = self.kernel.CreateAgent("agent")
+        if agent is None:
+            self.agent = self.kernel.CreateAgent("agent")
+        else:
+            self.agent = agent
         if not self.agent:
             print("Error creating agent: " + kernel.GetLastErrorDescription())
             exit(1)
