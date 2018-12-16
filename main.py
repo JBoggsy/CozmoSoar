@@ -9,6 +9,7 @@ import cozmo
 from cozmo.camera import Camera
 from cozmo.util import degrees, distance_mm, speed_mmps
 from cozmo_soar import CozmoSoar
+
 from mainGUI import GUI
 
 

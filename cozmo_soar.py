@@ -10,7 +10,7 @@ from cozmo.objects import LightCube, LightCubeIDs, EvtObjectAppeared, EvtObjectD
 from cozmo.camera import Camera
 from cozmo.util import degrees, distance_mm, speed_mmps
 
-COLORS = ['red', 'blue', 'green', 'white', 'off']
+from c_soar_util import COLORS, obj_heading_factory, obj_distance_factory
 
 
 class CozmoSoar(object):
@@ -112,6 +112,8 @@ class CozmoSoar(object):
                             'connected': lambda: l_cube.is_connected,
                             'cube_id': lambda: l_cube.cube_id,
                             'descriptive_name': lambda: l_cube.descriptive_name,
+                            'distance': obj_distance_factory(self.r, l_cube),
+                            'heading': obj_heading_factory(self.r, l_cube),
                             'moving': lambda: int(l_cube.is_moving),
                             'liftable': lambda: int(l_cube.pickupable),
                             'type': "cube",
@@ -132,7 +134,9 @@ class CozmoSoar(object):
             'name': lambda: face.name,
             'face_id': lambda: face.face_id,
             'expression': lambda: face.expression,
-            'expression_conf': lambda: face.expression_score
+            'expression_conf': lambda: face.expression_score,
+            'distance': obj_distance_factory(self.r, face),
+            'heading': obj_heading_factory(self.r, face)
         }
         face_wme = self.in_link.create_child_wme("face-{}".format(face.face_id),
                                                 new_face_wme_attr_dict,
@@ -372,7 +376,7 @@ class CozmoSoar(object):
             print("Invalid speed format {}".format(command.GetParameterValue("speed")))
             return False
 
-        print("Rotating in place {} radians at {}rad/s".format(angle.degrees, speed.degrees))
+        print("Rotating in place {} degrees at {}deg/s".format(angle.degrees, speed.degrees))
         turn_in_place_action = self.r.turn_in_place(angle=angle, speed=speed)
         callback = self.__handle_action_complete_factory(command)
         turn_in_place_action.add_event_handler(EvtActionCompleted, callback)
