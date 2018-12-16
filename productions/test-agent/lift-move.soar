@@ -1,0 +1,105 @@
+sp {test-agent*propose*lift-move-up
+   (state <s> ^name test-agent
+              ^io <io>)
+   (<io>  ^input-link <in>)
+   (<in>  ^lift.ratio < 0.9)
+   (<in>  ^face_count > 0)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name lift-move-up
+         ^actions.move-lift <ml>)
+   (<ml> ^height 1.0)
+   (write (crlf) | PROPOSING LIFT MOVE UP | )
+}
+
+sp {test-agent*propose*lift-move-down
+   (state <s> ^name test-agent
+              ^io <io>)
+   (<io>  ^input-link <in>)
+   (<in>  ^lift.ratio > 0.1)
+   (<in>  ^face_count 0)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name lift-move-down
+         ^actions.move-lift <ml>)
+   (<ml> ^height 0.00)
+   (write (crlf) | PROPOSING LIFT MOVE DOWN | )
+}
+
+sp {test-agent*propose*go-to-object
+   (state <s> ^name test-agent
+              ^io <io>)
+   (<io> ^input-link <in>)
+   (<in>  ^object <obj>)
+   (<obj> ^visible 1
+          ^object_id <id>
+          ^cube_id 2)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name go-to-object
+         ^actions.go-to-object <a>)
+   (<a> ^target_object_id <id>)
+}
+
+sp {test-agent*propose*turn-to-face
+    (state <s> ^name test-agent
+               ^io.input-link <in>)
+    (<in> ^face <f>)
+    (<f> ^face_id <id>)
+-->
+    (<s> ^operator <op> + =)
+    (<op> ^name turn-to-face
+          ^actions.turn-to-face <a>)
+    (<a> ^face-id <id>)
+}
+
+sp {test-agent*propose*set-backpack-lights-green
+    (state <s> ^name test-agent
+               ^io.input-link <in>)
+    (<in>  ^face_count > 0)
+-->
+    (<s> ^operator <op> + =)
+    (<op> ^name set-backpack-lights-green
+          ^actions.set-backpack-lights <a>)
+    (<a> ^color green)
+}
+
+sp {test-agent*propose*set-backpack-lights-red
+    (state <s> ^name test-agent
+               ^io.input-link <in>)
+    (<in>  ^face_count 0)
+-->
+    (<s> ^operator <op> + =)
+    (<op> ^name set-backpack-lights-green
+          ^actions.set-backpack-lights <a>)
+    (<a> ^color red)
+}
+
+sp {test-agent*propose*drive-forward
+    (state <s> ^name test-agent
+               ^io.input-link <in>)
+    (<in> ^object <obj>)
+    (<obj> ^visible 1
+           ^cube_id 3)
+-->
+    (<s> ^operator <op> + =)
+    (<op> ^name drive-forward
+          ^actions true
+          ^distance 200
+          ^speed 50)
+}
+
+sp {test-agent*apply*drive-forward
+    (state <s> ^operator <op>
+              ^io.output-link <out>
+              -^performing-action)
+    (<op> ^name drive-forward
+          ^actions true
+          ^distance <dist>
+          ^speed <spd>)
+-->
+    (<out> ^drive-forward <a>)
+    (<a> ^distance <dist>
+         ^speed <spd>)
+    (<s> ^performing-action true)
+}

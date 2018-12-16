@@ -2,11 +2,15 @@ from collections import namedtuple
 
 import soar.Python_sml_ClientInterface as sml
 import cozmo
-from cozmo.faces import EvtFaceAppeared, EvtFaceObserved, EvtFaceIdChanged, EvtFaceDisappeared
+from cozmo.action import EvtActionCompleted
+from cozmo.faces import EvtFaceAppeared, EvtFaceDisappeared
+from cozmo.lights import Light, Color
 from cozmo.robot import Robot
-from cozmo.objects import LightCube, LightCubeIDs
+from cozmo.objects import LightCube, LightCubeIDs, EvtObjectAppeared, EvtObjectDisappeared
 from cozmo.camera import Camera
 from cozmo.util import degrees, distance_mm, speed_mmps
+
+COLORS = ['red', 'blue', 'green', 'white', 'off']
 
 
 class CozmoSoar(object):
@@ -32,15 +36,18 @@ class CozmoSoar(object):
         self.robot = self.r = robot
         self.world = self.w = self.r.world
         self.world.add_event_handler(EvtFaceAppeared, self.__handle_face_appear)
-        # self.world.add_event_handler(EvtFaceObserved, self.__handle_face_observed)
-        # self.world.add_event_handler(EvtFaceIdChanged, self.__handle_face_id_change)
         self.world.add_event_handler(EvtFaceDisappeared, self.__handle_face_disappear)
-        self.light_cubes = [self.w.get_light_cube(i) for i in LightCubeIDs]
+        self.world.add_event_handler(EvtObjectAppeared, self.__handle_obj_appear)
+        self.world.add_event_handler(EvtObjectDisappeared, self.__handle_obj_disappear)
+
+        self.objects = {}
+        self.faces = {}
 
         self.kernel = self.k = kernel
         self.agent = self.a = self.kernel.CreateAgent(name)
         self.in_link_ref = self.a.GetInputLink()
         self.in_link = WorkingMemoryElement("input-link", self.in_link_ref, self.agent)
+        self.action_failure = None
 
         self.init_in_link()
 
@@ -67,9 +74,9 @@ class CozmoSoar(object):
         self.in_link.add_attr('head_angle',
                               lambda: self.r.head_angle.radians)
         self.in_link.add_attr('face_count',
-                              lambda: self.w.visible_face_count())
+                              self.w.visible_face_count)
         self.in_link.add_attr('obj_count',
-                              lambda: self.w.visible_object_count())
+                              lambda: len(self.objects))
         self.in_link.add_attr('picked_up',
                               lambda: int(self.r.is_picked_up))
         self.in_link.add_attr('robot_id',
@@ -89,11 +96,16 @@ class CozmoSoar(object):
                           'z': lambda: self.r.pose.position.z}
         pose_wme = self.in_link.create_child_wme('pose', pose_attr_dict)
 
-        # Initialize light cube WMEs
-        for l_cube in self.light_cubes:
-            if l_cube is None:
-                continue
-            self.init_light_cube_wme(l_cube)
+        # Initialize object WMEs (right now only light cubes)
+        for o in self.w.visible_objects:
+            if isinstance(o, cozmo.objects.LightCube):
+                self.init_light_cube_wme(o)
+            self.objects[o.object_id] = o
+
+        # Initialize face WMEs
+        for f in self.w.visible_faces:
+            self.init_face_wme(f)
+            self.faces[f.face_id] = f
 
     def init_light_cube_wme(self, l_cube):
         l_cube_attr_dict = {'object_id': l_cube.object_id,
@@ -115,6 +127,24 @@ class CozmoSoar(object):
                              'z': lambda: l_cube.pose.position.z}
         lc_pose_wme = l_cube_wme.create_child_wme('pose', lc_pose_attr_dict)
 
+    def init_face_wme(self, face):
+        new_face_wme_attr_dict = {
+            'name': lambda: face.name,
+            'face_id': lambda: face.face_id,
+            'expression': lambda: face.expression,
+            'expression_conf': lambda: face.expression_score
+        }
+        face_wme = self.in_link.create_child_wme("face-{}".format(face.face_id),
+                                                new_face_wme_attr_dict,
+                                                soar_name='face')
+
+        # Add pose WME for face
+        face_pose_attr_dict = {'rot': lambda: face.pose.rotation.angle_z.radians,
+                               'x': lambda: face.pose.position.x,
+                               'y': lambda: face.pose.position.y,
+                               'z': lambda: face.pose.position.z}
+        lc_pose_wme = face_wme.create_child_wme('pose', face_pose_attr_dict)
+
     def update_input(self):
         """
         Update the Soar input link WMEs.
@@ -132,6 +162,211 @@ class CozmoSoar(object):
         :return: None
         """
         self.a.LoadProductions(filename)
+
+    ####################
+    # COMMAND HANDLING #
+    ####################
+
+    def handle_command(self, command: sml.Identifier, agent: sml.Agent):
+        """
+        Handle a command produced by Soar.
+
+        This basically just maps command names to their cozmo methods.
+
+        :param command: A Soar command object
+        :return: True if successful, False otherwise
+        """
+        comm_name = command.GetCommandName()
+
+        if comm_name == "move-lift":
+            success = self.__handle_move_lift(command, agent)
+        elif comm_name == "go-to-object":
+            success = self.__handle_go_to_object(command, agent)
+        elif comm_name == "turn-to-face":
+            success = self.__handle_turn_to_face(command, agent)
+        elif comm_name == "set-backpack-lights":
+            success = self.__handle_set_backpack_lights(command, agent)
+        elif comm_name == "drive-forward":
+            success = self.__handle_drive_forward(command, agent)
+        else:
+            raise NotImplementedError("Error: Don't know how to handle command {}".format(comm_name))
+
+        if not success:
+            command.AddStatusComplete()
+
+        return True
+
+    def __handle_turn_to_face(self, command, agent):
+        """
+        Handle a Soar turn-to-face action.
+
+        The Soar output should look like:
+        (I3 ^turn-to-face Vx)
+          (Vx ^face-id [fid])
+        where [fid] is the integer ID associated with the face to turn towards.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            fid = int(command.GetParameterValue("face-id"))
+        except ValueError as e:
+            print("Invalid face id format {}".format(command.GetParameterValue("face-id")))
+            return False
+        if fid not in self.faces.keys():
+            print("Face {} not recognized".format(fid))
+            return False
+
+        print("Turning to face {}".format(fid))
+        target_face = self.faces[fid]
+        turn_towards_face_action = self.r.turn_towards_face(target_face)
+        callback = self.__handle_action_complete_factory(command)
+        turn_towards_face_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_move_lift(self, command, agent):
+        """
+        Handle a Soar move-lift action.
+
+        The Soar output should look like:
+        (I3 ^move-lift Vx)
+          (Vx ^height [hgt])
+        where [hgt] is a real number in the range [0, 1]. This command moves the lift to the
+        the given height, where 0 is the lowest possible position and 1 is the highest.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            height = float(command.GetParameterValue("height"))
+        except ValueError as e:
+            print("Invalid height format {}".format(command.GetParameterValue("height")))
+            return False
+
+        print("Moving lift {}".format(height))
+        set_lift_height_action = self.robot.set_lift_height(height)
+        callback = self.__handle_action_complete_factory(command)
+        set_lift_height_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_go_to_object(self, command, agent):
+        """
+        Handle a Soar go-to-object action.
+
+        The Sour output should look like:
+        (I3 ^go-to-object Vx)
+          (Vx ^target_object_id [id])
+        where [id] is the object id of the object to go to. Cozmo will stop 150mm from the object.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            target_id = int(command.GetParameterValue("target_object_id"))
+        except ValueError as e:
+            print("Invalid target-object-id format {}".format(command.GetParameterValue("target_object_id")))
+        if target_id not in self.objects.keys():
+            print("Couldn't find target object")
+            return False
+
+        print("Going to object {}".format(target_id))
+        target_obj = self.objects[target_id]
+        go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(150))
+        callback = self.__handle_action_complete_factory(command)
+        go_to_object_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_set_backpack_lights(self, command, agent):
+        """
+        Handle a Soar set-backpack-lights action.
+
+        The Sour output should look like:
+        (I3 ^set-backpack-lights Vx)
+          (Vx ^color [color])
+        where [color] is a string indicating which color the lights should be set to. The colors
+        are "red", "blue", "green", "white", and "off".
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        color_str = command.GetParameterValue("color")
+        if color_str not in COLORS:
+            print("Invalid backpack lights color {}".format(color_str))
+            return False
+        elif color_str == 'red':
+            light = cozmo.lights.red_light
+        elif color_str == 'green':
+            light = cozmo.lights.green_light
+        elif color_str == 'blue':
+            light = cozmo.lights.blue_light
+        elif color_str == 'white':
+            light = cozmo.lights.white_light
+        else:
+            light = cozmo.lights.off_light
+
+        self.r.set_all_backpack_lights(light=light)
+        command.AddStatusComplete()
+        return True
+
+    def __handle_drive_forward(self, command, agent):
+        """
+        Handle a Soar drive-forward action.
+
+        The Sour output should look like:
+        (I3 ^drive-forward Vx)
+          (Vx ^distance [dist]
+              ^speed [spd])
+        where [dist] is a real number indicating how far Cozmo should travel (negatives go
+        backwards) and speed is how fast Cozmo should travel. Units are mm and mm/s, respectively.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            distance = distance_mm(float(command.GetParameterValue("distance")))
+        except ValueError as e:
+            print("Invalid distance format {}".format(command.GetParameterValue("distance")))
+            return False
+        try:
+            speed = speed_mmps(float(command.GetParameterValue("speed")))
+        except ValueError as e:
+            print("Invalid speed format {}".format(command.GetParameterValue("speed")))
+            return False
+
+        print("Driving forward {}mm at {}mm/s".format(distance.distance_mm, speed.speed_mmps))
+        drive_forward_action = self.r.drive_straight(distance, speed)
+        callback = self.__handle_action_complete_factory(command)
+        drive_forward_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_action_complete_factory(self, command):
+        def __handle_action_complete(evt, action, failure_code, failure_reason, state):
+            if state == cozmo.action.ACTION_SUCCEEDED:
+                print("Action {} finished successfully".format(action))
+            else:
+                print("Action {} terminated because {}".format(action, failure_reason))
+            command.AddStatusComplete()
+        return __handle_action_complete
+
+    #########################
+    # OBJECT/FACE DETECTION #
+    #########################
+
+    def __handle_obj_appear(self, evt, updated, obj, image_box, pose):
+        if isinstance(obj, cozmo.objects.LightCube):
+            self.init_light_cube_wme(obj)
+        self.objects[obj.object_id] = obj
+        print("Saw new object {}".format(obj.object_id))
+
+    def __handle_obj_disappear(self, evt, obj):
+        self.in_link.rem_attr(obj.descriptive_name)
+        del self.objects[obj.object_id]
+        print("Lost sight of object {}".format(obj.object_id))
 
     def __handle_face_appear(self, evt, face, image_box, name, pose, updated):
         """
@@ -156,13 +391,18 @@ class CozmoSoar(object):
             'expression': lambda: face.expression,
             'expression_conf': lambda: face.expression_score
         }
-        self.in_link.create_child_wme("face-{}".format(face.face_id),
-                                      new_face_wme_attr_dict,
-                                      soar_name='face')
+        face_wme = self.in_link.create_child_wme("face-{}".format(face.face_id),
+                                                new_face_wme_attr_dict,
+                                                soar_name='face')
 
-    def __handle_face_observed(self, evt, face, image_box, name, pose, updated):
-        self.in_link.attr_vals["face-{}".format(face.face_id)].update()
-
+        # Add pose WME for face
+        face_pose_attr_dict = {'rot': lambda: face.pose.rotation.angle_z.radians,
+                               'x': lambda: face.pose.position.x,
+                               'y': lambda: face.pose.position.y,
+                               'z': lambda: face.pose.position.z}
+        lc_pose_wme = face_wme.create_child_wme('pose', face_pose_attr_dict)
+        self.faces[face.face_id] = face
+        print("Added face {}".format(face.face_id))
 
     def __handle_face_disappear(self, evt, face):
         """
@@ -172,8 +412,9 @@ class CozmoSoar(object):
         :param face: Face object which left view
         :return: None
         """
-        if "face-{}".format(face.face_id) in self.in_link.attr_refs.keys():
-            self.in_link.rem_attr("face-{}".format(face.face_id))
+        self.in_link.rem_attr("face-{}".format(face.face_id))
+        del self.faces[face.face_id]
+        print("Removed face {}".format(face.face_id))
 
 
 class WorkingMemoryElement(object):
@@ -273,7 +514,7 @@ class WorkingMemoryElement(object):
         :param value_or_getter: Value or function which returns a value
         """
         if name in self.__attr_vals.keys():
-            raise KeyError("Cannot have duplicate attribute names")
+            raise KeyError("Cannot have duplicate attribute names: {}".format(name))
         if not callable(value_or_getter):
             self.__attr_vals[name] = value_or_getter
             self.attr_refs[name] = self.__create_simple_wme_ref(name, value_or_getter)
@@ -299,9 +540,15 @@ class WorkingMemoryElement(object):
 
         :param name: Name of attribute to remove
         """
+        if not self.has_attr(name):
+            # TODO Log here
+            raise KeyError("WME {} has no attribute {}".format(self.name, name))
         self.agent.DestroyWME(self.attr_refs[name])
         del self.attr_refs[name]
         del self.__attr_vals[name]
+
+    def has_attr(self, name):
+        return name in self.__attr_vals.keys()
 
     def __create_simple_wme_ref(self, name, val):
         """

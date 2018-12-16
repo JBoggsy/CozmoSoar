@@ -1,0 +1,10 @@
+sp {test-agent*propose*lift-move-up
+   (state <s> ^name test-agent
+              ^io.input-link <in>)
+   (<in> ^lift.ratio < 0.95)
+   (<in> ^face_count > 0)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name lift-move-up
+         ^actions.move-lift.up 0.10)
+}

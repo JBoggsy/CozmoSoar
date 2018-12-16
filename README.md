@@ -7,118 +7,124 @@ for the embodied Cozmo robot.
 
 ## Soar-Cozmo Interface
 We define the Soar-Cozmo interface to have the following input- and output-links which allow a 
-Soar agent to interact with a Cozmo robot.
+Soar agent to interact with a Cozmo robot. 
 
 ### Input-link
-* battery_voltage (float)
-* carrying_block (bool)
-* carrying_object_id (int)
-* charging (bool)
-* cliff_detected (bool)
-* face_detected_n
+* battery-voltage (float)
+* carrying-block [0|1]
+* carrying-object_id (int)
+* charging [0|1]
+* cliff-detected (bool)
+* face
   * expression (str)
-  * expression_conf (int)
-  * face_id (int)
+  * expression-conf (int)
+  * face-id (int)
   * name (str)
-* head_angle (float)
+  * pose 
+    * rot (float)
+    * x (float)
+    * y (float)
+    * z (float)
+* head-angle (float)
 * lift
-  * lift_angle (float)
-  * lift_height (float)
-  * lift_ratio (float)
-* light_cube_n
-  * object_id (int)
-  * connected (bool)
-  * cube_id (int)
+  * lift-angle (float)
+  * lift-height (float)
+  * lift-ratio (float)
+* object
+  * object-id (int)
+  * connected [False|True]
+  * cube-id (int)
   * descriptive_name (str)
-  * moving (bool)
-* face_count (int)
-* obj_count (int)
-* picked_up (bool)
+  * moving [0|1]
+  * liftable [0|1]
+* face-count (int)
+* obj-count (int)
+* picked-up [0|1]
 * pose 
   * rot (float)
   * x (float)
   * y (float)
   * z (float)
-* robot_id (int)
+* robot-id (int)
 * serial (str)
 
-### Output-link.action
-* abort-action
-  * completed (bool)
-* display_face_image
-  * completed (bool)
-  * duration (float)
-  * screen_data (bytes)
-  * parallel (bool)
-* dock_with_cube
-  * completed (bool)
+### Actions Overview
+* dock-with-cube
   * approach_angle (float)
-  * parallel (bool)
   * target_object (int)
-* drive_forward
-  * completed (bool)
+* drive-forward
   * distance (float)
   * speed (float)
-  * parallel (bool)
-* go_to_object
-  * completed (bool)
-  * target_object (int)
-  * distance_from_object (float)
-  * parallel (bool)
-* go_to_pose
-  * completed (bool)
+* go-to-object
+  * target_object_id (int)
+  * distance (float)
+* go-to-pose
   * pose
     * rot (float)
     * x (float)
     * y (float)
     * z (float)
   * relative_to_robot (bool)
-  * parallel (bool)
-* pick_up_object
-  * completed (bool)
+* pick-up-object
   * object_id (int)
-  * parallel (bool)
-* place_object_down 
-  * completed (bool)
-  * parallel (bool)
-* say_text
-  * completed (bool)
-  * parallel (bool)
+* place-object-down
+* say-text
   * text (str)
   * duration_scale (float)
   * voice_pitch (float)
-* set_backpack_lights
-  * completed (bool)
-  * parallel (bool)
+* set-backpack-lights
   * color (int)
-* set_head_angle
-  * completed (bool)
-  * parallel (bool)
+* set-head-angle
   * angle (float)
   * accel (float)
   * max_speed (float)
   * duration (float)
-* set_lift_height
-  * completed (bool)
-  * parallel (bool)
+* set-lift-height
   * height (float)
-  * accel (float)
-  * max_speed (float)
-  * duration (float)
-* stop_all_motors
-  * completed (bool)
-* turn_in_place
-  * completed (bool)
-  * parallel (bool)
+* stop-all-motors
+* turn-in-place
   * angle (float)
   * speed (float)
   * accel (float)
   * angle_tolerance (float)
-* turn_towards_face
-  * completed (bool)
-  * parallel (bool)
+* turn-to-face
   * face_id (int)
   
-### Notes
-All angles are in radians.
-  
+### Action Details
+
+#### set-lift-height
+*parameters:*
+- height
+
+Moves Cozmo's lift to the specified height. The height is given as a a float in the range [0, 1] that represents the percentage of the maximum height the lift should be moved to. A height value of 0.0 will move the lift all the way down while a value of 1.0 will move it all the way up. A value of 0.5 will move it exactly half-way up.
+
+Presently this action is blocking, meaning the robot cannot do any other actions while this one is happening.
+
+#### go-to-object
+*parameters:*
+- target-object-id
+
+Instructs Cozmo to move itself to the object with the specified object ID. The object id must be one that Cozmo is currently aware of. Cozmo will stop once its center is 150mm from the object's.
+
+Presently this action is blocking, meaning the robot cannot do any other actions while this one is happening.
+
+#### turn-to-face
+*parameters:*
+- face-id 
+
+Instructs Cozmo to rotate towards a face it sees. The face id should be one it knows about.
+
+#### set-backpack-lights
+*parameters:*
+- color
+
+Changes the color of the lights on Cozmo's back. The lights can be set to either red, green, 
+blue, or white, or be turned off.
+
+#### drive-forward
+*parameters:*
+- distance
+- speed
+
+Instructs Cozmo to drive forward the given distance at the given speed. The distance is given in 
+mm and the speed in mm/s. 
