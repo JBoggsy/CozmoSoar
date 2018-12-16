@@ -7,7 +7,7 @@ for the embodied Cozmo robot.
 
 ## Soar-Cozmo Interface
 We define the Soar-Cozmo interface to have the following input- and output-links which allow a 
-Soar agent to interact with a Cozmo robot.
+Soar agent to interact with a Cozmo robot. 
 
 ### Input-link
 * battery-voltage (float)
@@ -91,6 +91,7 @@ Soar agent to interact with a Cozmo robot.
   * face_id (int)
   
 ### Action Details
+
 #### set-lift-height
 *parameters:*
 - height
@@ -112,3 +113,18 @@ Presently this action is blocking, meaning the robot cannot do any other actions
 - face-id 
 
 Instructs Cozmo to rotate towards a face it sees. The face id should be one it knows about.
+
+#### set-backpack-lights
+*parameters:*
+- color
+
+Changes the color of the lights on Cozmo's back. The lights can be set to either red, green, 
+blue, or white, or be turned off.
+
+#### drive-forward
+*parameters:*
+- distance
+- speed
+
+Instructs Cozmo to drive forward the given distance at the given speed. The distance is given in 
+mm and the speed in mm/s. 

@@ -186,6 +186,8 @@ class CozmoSoar(object):
             success = self.__handle_turn_to_face(command, agent)
         elif comm_name == "set-backpack-lights":
             success = self.__handle_set_backpack_lights(command, agent)
+        elif comm_name == "drive-forward":
+            success = self.__handle_drive_forward(command, agent)
         else:
             raise NotImplementedError("Error: Don't know how to handle command {}".format(comm_name))
 
@@ -310,6 +312,37 @@ class CozmoSoar(object):
         command.AddStatusComplete()
         return True
 
+    def __handle_drive_forward(self, command, agent):
+        """
+        Handle a Soar drive-forward action.
+
+        The Sour output should look like:
+        (I3 ^drive-forward Vx)
+          (Vx ^distance [dist]
+              ^speed [spd])
+        where [dist] is a real number indicating how far Cozmo should travel (negatives go
+        backwards) and speed is how fast Cozmo should travel. Units are mm and mm/s, respectively.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            distance = distance_mm(float(command.GetParameterValue("distance")))
+        except ValueError as e:
+            print("Invalid distance format {}".format(command.GetParameterValue("distance")))
+            return False
+        try:
+            speed = speed_mmps(float(command.GetParameterValue("speed")))
+        except ValueError as e:
+            print("Invalid speed format {}".format(command.GetParameterValue("speed")))
+            return False
+
+        print("Driving forward {}mm at {}mm/s".format(distance.distance_mm, speed.speed_mmps))
+        drive_forward_action = self.r.drive_straight(distance, speed)
+        callback = self.__handle_action_complete_factory(command)
+        drive_forward_action.add_event_handler(EvtActionCompleted, callback)
+        return True
 
     def __handle_action_complete_factory(self, command):
         def __handle_action_complete(evt, action, failure_code, failure_reason, state):
