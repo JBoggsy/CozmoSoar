@@ -1,10 +1,13 @@
 
 import sys
 import cozmo
+from cozmo.world import EvtNewCameraImage
 from cozmo.robot import EvtRobotStateUpdated
 
 import cv2
+from PIL import ImageTk
 from tkinter import *
+
 sys.path.append('/Users/nickmatton/Desktop/Soar/Soar/out/')
 import soar.Python_sml_ClientInterface as sml
 
@@ -13,8 +16,8 @@ class GUI:
         self.robot = robot
         self.kernel = kernel
         self.master = master
+        self.robot.world.add_event_handler(EvtNewCameraImage, self.update_cam_view)
         self.run = False
-        #self.robot.world.add_event_handler(EvtRobotStateUpdated, self.update_environment_inputs)
         if agent is None:
             self.agent = self.kernel.CreateAgent("agent")
         else:
@@ -141,15 +144,12 @@ class GUI:
         self.serial = Label(self.master, text=self.robot.serial)
         self.serial.grid(row=17, column=1)
 
+        self.cam_view_canvas = Canvas(self)
+        self.cam_view_canvas.grid(row=0, column=2, rowspan=17)
+
         #
         # camera display
         #
-        self.panel = Label(self.master)
-        self.panel.grid(row=0, column=10)
-        self.vs = cv2.VideoCapture(0)
-        self.output_path = "./"
-        self.current_image = NONE
-        self.video_loop()
     
     def stop(self):
         #stop
@@ -175,7 +175,7 @@ class GUI:
         cmd = "step"
         for i in range(int(x)):
             print(self.agent.ExecuteCommandLine(cmd).strip())
-    
+            
     def send_command(self):
         # sends commands to soar
         cmd = self.entry1.get()
@@ -236,13 +236,13 @@ class GUI:
         self.master.update()
         print("environment updated")
 
-    def video_loop(self):
-        ok, frame = self.vs.read()
-        if ok:
-            cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-            cv2.imshow('frame', cv2image)
-
-        self.master.after(100, self.video_loop)
+    def update_cam_view(self, evt, image):
+        self.cam_img = ImageTk.PhotoImage(image.annotate_image())
+        if self.cam_img_id is None:
+            self.cam_img_id = self.cam_view_canvas.create_image((160, 120), image=self.cam_img)
+        else:
+            self.cam_view_canvas.itemconfigure(self.cam_img_id, image=self.cam_img)
+        self.cam_view_canvas.update_idletasks()
 
 
 def cozmo_program(robot: cozmo.robot.Robot):
