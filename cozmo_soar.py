@@ -194,12 +194,65 @@ class CozmoSoar(object):
             success = self.__handle_drive_forward(command, agent)
         elif comm_name == "turn-in-place":
             success = self.__handle_turn_in_place(command, agent)
+        elif comm_name == "pick-up-object":
+            success = self.__handle_pick_up_object(command, agent)
+        elif comm_name == "place-object-down":
+            success = self.__handle_place_object_down(command, agent)
         else:
             raise NotImplementedError("Error: Don't know how to handle command {}".format(comm_name))
 
         if not success:
             command.AddStatusComplete()
 
+        return True
+
+    def __handle_place_object_down(self, command, agent):
+        """
+        Handle a Soar place-object-down action.
+
+        The Sour output should look like:
+        (I3 ^place-object-down)
+        Cozmo will lower the lift until the object is placed on the ground, then back up.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        print("Placing object down")
+        place_object_down_action = self.r.place_object_on_ground_here(0)
+        callback = self.__handle_action_complete_factory(command)
+        place_object_down_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_pick_up_object(self, command, agent):
+        """
+        Handle a Soar pick-up-object action.
+
+        The Sour output should look like:
+        (I3 ^pick-up-object Vx)
+          (Vx ^object_id [id])
+        where [id] is the object id of the object to pick up. Cozmo will approach the object
+        autonomously and try to grasp it with its lift, then lift the lift up. This action is
+        partiularly prone to failing.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            target_id = int(command.GetParameterValue("object_id"))
+        except ValueError as e:
+            print("Invalid object-id format {}".format(command.GetParameterValue("object_id")))
+            return False
+        if target_id not in self.objects.keys():
+            print("Couldn't find target object")
+            return False
+
+        print("Picking up object {}".format(target_id))
+        target_obj = self.objects[target_id]
+        pick_up_object_action = self.robot.pickup_object(target_obj)
+        callback = self.__handle_action_complete_factory(command)
+        pick_up_object_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_turn_to_face(self, command, agent):
@@ -274,13 +327,14 @@ class CozmoSoar(object):
             target_id = int(command.GetParameterValue("target_object_id"))
         except ValueError as e:
             print("Invalid target-object-id format {}".format(command.GetParameterValue("target_object_id")))
+            return False
         if target_id not in self.objects.keys():
             print("Couldn't find target object")
             return False
 
         print("Going to object {}".format(target_id))
         target_obj = self.objects[target_id]
-        go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(150))
+        go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(100))
         callback = self.__handle_action_complete_factory(command)
         go_to_object_action.add_event_handler(EvtActionCompleted, callback)
         return True

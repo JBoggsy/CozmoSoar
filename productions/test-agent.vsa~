@@ -12,8 +12,9 @@ VERSION 4
 9	0	OPERATOR go-to-object go-to-object.soar 10
 10	0	OPERATOR initialize-test-agent initialize-test-agent.soar 11
 11	0	OPERATOR lift-move lift-move.soar 12
-12	0	OPERATOR point-nav point-nav.soar 13
-13	0	OPERATOR set-backpack-lights set-backpack-lights.soar 14
-14	0	OPERATOR turn-in-place turn-in-place.soar 15
-15	0	OPERATOR turn-to-face turn-to-face.soar 16
+12	0	OPERATOR pick-up-object pick-up-object.soar 17
+13	0	OPERATOR point-nav point-nav.soar 13
+14	0	OPERATOR set-backpack-lights set-backpack-lights.soar 14
+15	0	OPERATOR turn-in-place turn-in-place.soar 15
+16	0	OPERATOR turn-to-face turn-to-face.soar 16
 END

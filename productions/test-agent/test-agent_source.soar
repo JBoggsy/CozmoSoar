@@ -11,6 +11,7 @@ source general_action_elabs.soar
 source go-to-object.soar
 source initialize-test-agent.soar
 source lift-move.soar
+source pick-up-object.soar
 source point-nav.soar
 source set-backpack-lights.soar
 source turn-in-place.soar
