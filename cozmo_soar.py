@@ -39,6 +39,8 @@ class CozmoSoar(object):
         self.world.add_event_handler(EvtFaceDisappeared, self.__handle_face_disappear)
         self.world.add_event_handler(EvtObjectAppeared, self.__handle_obj_appear)
         self.world.add_event_handler(EvtObjectDisappeared, self.__handle_obj_disappear)
+        self.cam = self.robot.camera
+        self.cam.image_stream_enabled = True
 
         self.objects = {}
         self.faces = {}

@@ -33,25 +33,24 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
     gui_root = tk.Tk()
     gui = GUI(gui_root, robot.r, kernel, agent=agent)
     gui_root.mainloop()
-    i = 0
-    ready_to_continue = False
-    while True:
-        i += 1
-        agent.RunSelf(1)
-        # gui_root.update()
-        if ready_to_continue:
-            sleep(0.25)
-        else:
-            ready_to_step = False
-            while not ready_to_step:
-                command = input('>> ')
-                if command.lower() in ['n', "next"]:
-                    ready_to_step = True
-                elif command.lower() in ['c', "continue"]:
-                    ready_to_continue = True
-                    ready_to_step = True
-                else:
-                    print(handle_soar_command(kernel, agent, command.strip()))
+    # i = 0
+    # ready_to_continue = False
+    # while True:
+    #     i += 1
+    #     agent.RunSelf(1)
+    #     if ready_to_continue:
+    #         sleep(0.25)
+    #     else:
+    #         ready_to_step = False
+    #         while not ready_to_step:
+    #             command = input('>> ')
+    #             if command.lower() in ['n', "next"]:
+    #                 ready_to_step = True
+    #             elif command.lower() in ['c', "continue"]:
+    #                 ready_to_continue = True
+    #                 ready_to_step = True
+    #             else:
+    #                 print(handle_soar_command(kernel, agent, command.strip()))
 
 
 def sync_world_factory(r: CozmoSoar, agent: sml.Agent):
