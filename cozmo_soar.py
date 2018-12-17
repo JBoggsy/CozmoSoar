@@ -10,7 +10,7 @@ from cozmo.objects import LightCube, LightCubeIDs, EvtObjectAppeared, EvtObjectD
 from cozmo.camera import Camera
 from cozmo.util import degrees, distance_mm, speed_mmps
 
-COLORS = ['red', 'blue', 'green', 'white', 'off']
+from c_soar_util import COLORS, obj_heading_factory, obj_distance_factory
 
 
 class CozmoSoar(object):
@@ -112,6 +112,8 @@ class CozmoSoar(object):
                             'connected': lambda: l_cube.is_connected,
                             'cube_id': lambda: l_cube.cube_id,
                             'descriptive_name': lambda: l_cube.descriptive_name,
+                            'distance': obj_distance_factory(self.r, l_cube),
+                            'heading': obj_heading_factory(self.r, l_cube),
                             'moving': lambda: int(l_cube.is_moving),
                             'liftable': lambda: int(l_cube.pickupable),
                             'type': "cube",
@@ -132,7 +134,9 @@ class CozmoSoar(object):
             'name': lambda: face.name,
             'face_id': lambda: face.face_id,
             'expression': lambda: face.expression,
-            'expression_conf': lambda: face.expression_score
+            'expression_conf': lambda: face.expression_score,
+            'distance': obj_distance_factory(self.r, face),
+            'heading': obj_heading_factory(self.r, face)
         }
         face_wme = self.in_link.create_child_wme("face-{}".format(face.face_id),
                                                 new_face_wme_attr_dict,
@@ -190,12 +194,131 @@ class CozmoSoar(object):
             success = self.__handle_drive_forward(command, agent)
         elif comm_name == "turn-in-place":
             success = self.__handle_turn_in_place(command, agent)
+        elif comm_name == "pick-up-object":
+            success = self.__handle_pick_up_object(command, agent)
+        elif comm_name == "place-object-down":
+            success = self.__handle_place_object_down(command, agent)
+        elif comm_name == "place-on-object":
+            success = self.__handle_place_on_object(command, agent)
+        elif comm_name == "dock-with-cube":
+            success = self.__handle_dock_with_cube(command, agent)
         else:
             raise NotImplementedError("Error: Don't know how to handle command {}".format(comm_name))
 
         if not success:
             command.AddStatusComplete()
 
+        return True
+
+    def __handle_place_object_down(self, command, agent):
+        """
+        Handle a Soar place-object-down action.
+
+        The Sour output should look like:
+        (I3 ^place-object-down)
+        Cozmo will lower the lift until the object is placed on the ground, then back up.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        print("Placing object down")
+        place_object_down_action = self.r.place_object_on_ground_here(0)
+        callback = self.__handle_action_complete_factory(command)
+        place_object_down_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_place_on_object(self, command, agent):
+        """
+        Handle a Soar place-on-object action.
+
+        The Sour output should look like:
+        (I3 ^place-on-object Vx)
+          (Vx ^target_object_id [id])
+        where [id] is the object id of the object that Cozmo should place to object its holding
+        on top of.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            target_id = int(command.GetParameterValue("target_object_id"))
+        except ValueError as e:
+            print("Invalid target-object-id format {}".format(
+                command.GetParameterValue("target_object_id")))
+            return False
+        if target_id not in self.objects.keys():
+            print("Couldn't find target object")
+            return False
+
+        print("Placing held object on top of {}".format(target_id))
+        target_obj = self.objects[target_id]
+        place_on_object_action = self.robot.place_on_object(target_obj)
+        callback = self.__handle_action_complete_factory(command)
+        place_on_object_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_dock_with_cube(self, command, agent):
+        """
+        Handle a Soar dock-with-cube action.
+
+        The Sour output should look like:
+        (I3 ^dock-with-cube Vx)
+          (Vx ^object_id [id])
+        where [id] is the object id of the cube to dock with. Cozmo will approach the cube until
+        its lift hooks are under the grip holes.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            target_id = int(command.GetParameterValue("object_id"))
+        except ValueError as e:
+            print("Invalid target-object-id format {}".format(
+                command.GetParameterValue("object_id")))
+            return False
+        if target_id not in self.objects.keys():
+            print("Couldn't find target object")
+            return False
+
+        print("Docking with cube with object id {}".format(target_id))
+        target_obj = self.objects[target_id]
+        dock_with_cube_action = self.robot.dock_with_cube(target_obj)
+        callback = self.__handle_action_complete_factory(command)
+        dock_with_cube_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_pick_up_object(self, command, agent):
+        """
+        Handle a Soar pick-up-object action.
+
+        The Sour output should look like:
+        (I3 ^pick-up-object Vx)
+          (Vx ^object_id [id])
+        where [id] is the object id of the object to pick up. Cozmo will approach the object
+        autonomously and try to grasp it with its lift, then lift the lift up. This action is
+        partiularly prone to failing.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            target_id = int(command.GetParameterValue("object_id"))
+        except ValueError as e:
+            print("Invalid object-id format {}".format(command.GetParameterValue("object_id")))
+            return False
+        if target_id not in self.objects.keys():
+            print("Couldn't find target object")
+            return False
+
+        print("Picking up object {}".format(target_id))
+        target_obj = self.objects[target_id]
+        pick_up_object_action = self.robot.pickup_object(target_obj)
+        callback = self.__handle_action_complete_factory(command)
+        pick_up_object_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_turn_to_face(self, command, agent):
@@ -270,13 +393,14 @@ class CozmoSoar(object):
             target_id = int(command.GetParameterValue("target_object_id"))
         except ValueError as e:
             print("Invalid target-object-id format {}".format(command.GetParameterValue("target_object_id")))
+            return False
         if target_id not in self.objects.keys():
             print("Couldn't find target object")
             return False
 
         print("Going to object {}".format(target_id))
         target_obj = self.objects[target_id]
-        go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(150))
+        go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(100))
         callback = self.__handle_action_complete_factory(command)
         go_to_object_action.add_event_handler(EvtActionCompleted, callback)
         return True
@@ -372,7 +496,7 @@ class CozmoSoar(object):
             print("Invalid speed format {}".format(command.GetParameterValue("speed")))
             return False
 
-        print("Rotating in place {} radians at {}rad/s".format(angle.degrees, speed.degrees))
+        print("Rotating in place {} degrees at {}deg/s".format(angle.degrees, speed.degrees))
         turn_in_place_action = self.r.turn_in_place(angle=angle, speed=speed)
         callback = self.__handle_action_complete_factory(command)
         turn_in_place_action.add_event_handler(EvtActionCompleted, callback)
