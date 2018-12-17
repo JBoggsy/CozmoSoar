@@ -2,6 +2,7 @@
 import sys
 import cozmo
 from cozmo.world import EvtNewCameraImage
+from cozmo.robot import EvtRobotStateUpdated
 
 import cv2
 from PIL import ImageTk
@@ -15,8 +16,8 @@ class GUI:
         self.robot = robot
         self.kernel = kernel
         self.master = master
-
         self.robot.world.add_event_handler(EvtNewCameraImage, self.update_cam_view)
+        self.run = False
         if agent is None:
             self.agent = self.kernel.CreateAgent("agent")
         else:
@@ -37,9 +38,23 @@ class GUI:
 
         self.send_command_button = Button(self.master, text="Send Command", command=self.send_command)
         self.send_command_button.grid(row=1)
+        
+        self.step_button = Button(self.master, text="Step", command=self.step)
+        self.step_button.grid(row=1, column=1)
+        
+        self.run_button = Button(self.master, text="Run", command=self.run)
+        self.run_button.grid(row=1, column=2)
+        
+        self.stop_button = Button(self.master, text="Stop", command=self.stop)
+        self.stop_button.grid(row=1, column=3)
+        
+        self.label2 = Label(master, text="Num steps to run:")
+        self.label2.grid(row=2)
+        
+        self.entry2 = Entry(master)
+        self.entry2.grid(row=2, column=1)
 
-        self.update_environment_inputs_button = Button(self.master, text="Update env inputs",
-                                                       command=self.update_environment_inputs)
+        self.update_environment_inputs_button = Button(self.master, text="Update env inputs", command=self.update_environment_inputs)
         self.update_environment_inputs_button.grid(row=2)
 
         self.close_button = Button(self.master, text="Close", command=self.master.quit)
@@ -135,15 +150,32 @@ class GUI:
         #
         # camera display
         #
-        # self.panel = Label(self.master)
-        # self.panel.grid(row=0, column=10)
-        # self.vs = cv2.VideoCapture(0)
-        # self.output_path = "./"
-        # self.current_image = NONE
-        # self.video_loop()
-
-
-
+    
+    def stop(self):
+        #stop
+        self.run = False
+            #cmd = "stop"
+            #print(self.agent.ExecuteCommandLine(cmd).strip())
+        
+    def run(self):
+        # run
+        cmd = "step"
+        self.run = True
+        while(self.run):
+            print(self.agent.ExecuteCommandLine(cmd).strip())
+    
+    def step(self):
+        # step and update
+        cmd = "step"
+        print(self.agent.ExecuteCommandLine(cmd).strip())
+        self.update_environment_inputs()
+    
+    def run_x_steps(self):
+        x = self.entry2.get()
+        cmd = "step"
+        for i in range(int(x)):
+            print(self.agent.ExecuteCommandLine(cmd).strip())
+            
     def send_command(self):
         # sends commands to soar
         cmd = self.entry1.get()
@@ -203,14 +235,6 @@ class GUI:
 
         self.master.update()
         print("environment updated")
-
-    # def video_loop(self):
-    #     ok, frame = self.vs.read()
-    #     if ok:
-    #         cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-    #         cv2.imshow('frame', cv2image)
-    #
-    #     self.master.after(100, self.video_loop)
 
     def update_cam_view(self, evt, image):
         self.cam_img = ImageTk.PhotoImage(image.annotate_image())
