@@ -10,6 +10,6 @@ sp {apply*initialize-test-agent
    (state <s> ^operator <op>)
    (<op> ^name initialize-test-agent)
 -->
-   (<s> ^name test-agent-pick-up-object)
+   (<s> ^name test-agent-dock-with-cube)
 }
 

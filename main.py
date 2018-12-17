@@ -30,15 +30,15 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
         print("Error loading productions: {}".format(agent.GetLastErrorDescription()))
     agent.RunSelf(1)
 
-    # gui_root = tk.Tk()
-    # gui = GUI(gui_root, robot.r, kernel, agent=agent)
-    # gui_root.mainloop()
+    gui_root = tk.Tk()
+    gui = GUI(gui_root, robot.r, kernel, agent=agent)
+    gui_root.mainloop()
     i = 0
     ready_to_continue = False
     while True:
         i += 1
         agent.RunSelf(1)
-
+        # gui_root.update()
         if ready_to_continue:
             sleep(0.25)
         else:

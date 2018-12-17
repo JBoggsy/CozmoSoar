@@ -50,7 +50,6 @@ Soar agent to interact with a Cozmo robot.
 
 ### Actions Overview
 * dock-with-cube
-  * approach_angle (float)
   * target_object (int)
 * drive-forward
   * distance (float)
@@ -134,4 +133,27 @@ mm and the speed in mm/s.
 - angle
 - speed
 
-Instructs Cozmo to rotate in place, turning `angle` degrees at `speed` degrees a second. A postive value for `angle` rotates Cozmo counterclockwise, a negative value rotates clockwise.
+Instructs Cozmo to rotate in place, turning `angle` degrees at `speed` degrees a second. A positive value for `angle` rotates Cozmo counterclockwise, a negative value rotates clockwise.
+
+#### pick-up-object
+*parameters:*
+- object_id
+
+Instructs Cozmo to attempt to lift the specified object. The object must be known beforehand, and must be liftable. Cozmo will do its best to autonomously approach the object, get its lift hooks under the right spot, and the raise the lift. This is not super reliable, however, and is prone to failing a few times before Cozmo gets it right.
+
+#### place-object-down
+*parameters:*
+
+Instructs Cozmo to lower whatever object it is carrying to the ground, then back up. No object id is required, since this action is really equivalent to instructing Cozmo to fully lower its lift and then back up a tad.
+
+#### place-object-on
+*parameters:*
+- target_object_id
+
+Instructs Cozmo to place the block its currently carrying on top of the specified object.
+   
+#### dock-with-cube
+*parameters:*
+- object_id
+
+Instructs Cozmo to approach a cube and dock with it, so that the lift hooks are under the grip holes and if the lift were to move up, the cube would be lifted. The specified object must be liftable, and preferably a light cube.

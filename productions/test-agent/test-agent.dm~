@@ -1,4 +1,4 @@
-29
+31
 SOAR_ID 0
 SOAR_ID 1
 SOAR_ID 2
@@ -28,7 +28,9 @@ SOAR_ID 25
 ENUMERATION 26 1 point-nav
 SOAR_ID 27
 ENUMERATION 28 1 pick-up-object
-29
+SOAR_ID 29
+ENUMERATION 30 1 dock-with-cube
+31
 0 io 1
 0 name 7
 0 operator 4
@@ -42,6 +44,7 @@ ENUMERATION 28 1 pick-up-object
 0 operator 23
 0 operator 25
 0 operator 27
+0 operator 29
 0 superstate 6
 0 top-state 0
 0 type 5
@@ -58,3 +61,4 @@ ENUMERATION 28 1 pick-up-object
 23 name 24
 25 name 26
 27 name 28
+29 name 30

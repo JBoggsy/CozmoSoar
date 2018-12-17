@@ -198,6 +198,10 @@ class CozmoSoar(object):
             success = self.__handle_pick_up_object(command, agent)
         elif comm_name == "place-object-down":
             success = self.__handle_place_object_down(command, agent)
+        elif comm_name == "place-on-object":
+            success = self.__handle_place_on_object(command, agent)
+        elif comm_name == "dock-with-cube":
+            success = self.__handle_dock_with_cube(command, agent)
         else:
             raise NotImplementedError("Error: Don't know how to handle command {}".format(comm_name))
 
@@ -222,6 +226,68 @@ class CozmoSoar(object):
         place_object_down_action = self.r.place_object_on_ground_here(0)
         callback = self.__handle_action_complete_factory(command)
         place_object_down_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_place_on_object(self, command, agent):
+        """
+        Handle a Soar place-on-object action.
+
+        The Sour output should look like:
+        (I3 ^place-on-object Vx)
+          (Vx ^target_object_id [id])
+        where [id] is the object id of the object that Cozmo should place to object its holding
+        on top of.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            target_id = int(command.GetParameterValue("target_object_id"))
+        except ValueError as e:
+            print("Invalid target-object-id format {}".format(
+                command.GetParameterValue("target_object_id")))
+            return False
+        if target_id not in self.objects.keys():
+            print("Couldn't find target object")
+            return False
+
+        print("Placing held object on top of {}".format(target_id))
+        target_obj = self.objects[target_id]
+        place_on_object_action = self.robot.place_on_object(target_obj)
+        callback = self.__handle_action_complete_factory(command)
+        place_on_object_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_dock_with_cube(self, command, agent):
+        """
+        Handle a Soar dock-with-cube action.
+
+        The Sour output should look like:
+        (I3 ^dock-with-cube Vx)
+          (Vx ^object_id [id])
+        where [id] is the object id of the cube to dock with. Cozmo will approach the cube until
+        its lift hooks are under the grip holes.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            target_id = int(command.GetParameterValue("object_id"))
+        except ValueError as e:
+            print("Invalid target-object-id format {}".format(
+                command.GetParameterValue("object_id")))
+            return False
+        if target_id not in self.objects.keys():
+            print("Couldn't find target object")
+            return False
+
+        print("Docking with cube with object id {}".format(target_id))
+        target_obj = self.objects[target_id]
+        dock_with_cube_action = self.robot.dock_with_cube(target_obj)
+        callback = self.__handle_action_complete_factory(command)
+        dock_with_cube_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_pick_up_object(self, command, agent):
