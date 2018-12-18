@@ -17,6 +17,9 @@ class GUI:
         self.kernel = kernel
         self.master = master
         self.robot.world.add_event_handler(EvtNewCameraImage, self.update_cam_view)
+        # self.robot.world.add_event_handler(EvtRobotStateUpdated, self.robo_status_update)
+        self.cam_img = None
+        self.cam_img_id = None
         self.run = False
         if agent is None:
             self.agent = self.kernel.CreateAgent("agent")
@@ -144,7 +147,7 @@ class GUI:
         self.serial = Label(self.master, text=self.robot.serial)
         self.serial.grid(row=17, column=1)
 
-        self.cam_view_canvas = Canvas(self)
+        self.cam_view_canvas = Canvas(self.master)
         self.cam_view_canvas.grid(row=0, column=2, rowspan=17)
 
         #
@@ -154,15 +157,11 @@ class GUI:
     def stop(self):
         #stop
         self.run = False
-            #cmd = "stop"
-            #print(self.agent.ExecuteCommandLine(cmd).strip())
         
     def run(self):
         # run
         cmd = "step"
         self.run = True
-        while(self.run):
-            print(self.agent.ExecuteCommandLine(cmd).strip())
     
     def step(self):
         # step and update
@@ -181,6 +180,18 @@ class GUI:
         cmd = self.entry1.get()
         print(self.agent.ExecuteCommandLine(cmd).strip())
 
+    def robo_status_update(self, evt, robot):
+        """
+        Run this whenever the robot has a status update. Just updates Soar and the GUI, then runs a
+        step of Soar if so specified.
+
+        :param evt:
+        :param robot:
+        :return:
+        """
+        if self.run:
+            cmd = "step"
+            print(self.agent.ExecuteCommandLine(cmd).strip())
 
     def update_environment_inputs(self):
         #
