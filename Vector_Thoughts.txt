@@ -1,0 +1,6 @@
+Installation process:
+- Installing the SDK is laid out pretty well in the docs, but I ran into a problem with a required library: aiogrpc version 1.4 or greater. The solution was just to upgrade my Python version to be Python 3.6 or above.
+
+It does look like vector works without the phone attached, which is very nice. The problem is that it seems like it works over the network the computer is on. I don't have a vector to test this, but I worry that this may not work on the MWireless network because of its size, and because Vector may struggle to even connect to MWireless due to the logon issues.
+
+Just looking at the API, there does look to be some fairly siginificant differences. Again, I don't have Vector to test stuff on, but I'd bet that Cozmo code would need a decent amount of modification to work with Vector. The biggest differences I've noticed (so far) are the way you create a Robot object, which is the primary interface to the Cozmo/Vector, and the way you issue commands to the Vector. These are pretty integral components, and the fact they they differ in a meaningful way makes me suspect that there will be many other, smaller differences as well. 

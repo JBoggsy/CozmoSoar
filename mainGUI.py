@@ -16,7 +16,7 @@ class GUI:
         self.robot = robot
         self.kernel = kernel
         self.master = master
-        self.robot.world.add_event_handler(EvtNewCameraImage, self.update_cam_view)
+        # self.robot.world.add_event_handler(EvtNewCameraImage, self.update_cam_view)
         # self.robot.world.add_event_handler(EvtRobotStateUpdated, self.robo_status_update)
         self.cam_img = None
         self.cam_img_id = None
@@ -249,11 +249,11 @@ class GUI:
 
     def update_cam_view(self, evt, image):
         self.cam_img = ImageTk.PhotoImage(image.annotate_image())
-        if self.cam_img_id is None:
-            self.cam_img_id = self.cam_view_canvas.create_image((160, 120), image=self.cam_img)
-        else:
-            self.cam_view_canvas.itemconfigure(self.cam_img_id, image=self.cam_img)
-        self.cam_view_canvas.update_idletasks()
+        # if self.cam_img_id is None:
+        #     self.cam_img_id = self.cam_view_canvas.create_image((160, 120), image=self.cam_img)
+        # else:
+        #     self.cam_view_canvas.itemconfigure(self.cam_img_id, image=self.cam_img)
+        # self.cam_view_canvas.update_idletasks()
 
 
 def cozmo_program(robot: cozmo.robot.Robot):
