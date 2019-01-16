@@ -17,10 +17,11 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
     kernel = sml.Kernel_CreateKernelInNewThread()
     robot = CozmoSoar(robot, kernel, "Cozmo1")
     agent = robot.agent
-    gui_root = tk.Tk()
-    gui = GUI(gui_root, robot.r, kernel, agent=agent)
+    # gui_root = tk.Tk()
+    # gui = GUI(gui_root, robot.r, kernel, agent=agent)
+    gui = None
 
-    callback = sync_world_factory(robot, agent, gui)
+    callback = sync_world_factory(robot, agent, gui=gui)
     agent.RegisterForRunEvent(sml.smlEVENT_AFTER_OUTPUT_PHASE,
                               callback,
                               None)
@@ -32,28 +33,28 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
         print("Error loading productions: {}".format(agent.GetLastErrorDescription()))
     agent.RunSelf(1)
 
-    gui_root.mainloop()
-    # i = 0
-    # ready_to_continue = False
-    # while True:
-    #     i += 1
-    #     agent.RunSelf(1)
-    #     if ready_to_continue:
-    #         sleep(0.25)
-    #     else:
-    #         ready_to_step = False
-    #         while not ready_to_step:
-    #             command = input('>> ')
-    #             if command.lower() in ['n', "next"]:
-    #                 ready_to_step = True
-    #             elif command.lower() in ['c', "continue"]:
-    #                 ready_to_continue = True
-    #                 ready_to_step = True
-    #             else:
-    #                 print(handle_soar_command(kernel, agent, command.strip()))
+    # gui_root.mainloop()
+    i = 0
+    ready_to_continue = False
+    while True:
+        i += 1
+        agent.RunSelf(1)
+        if ready_to_continue:
+            sleep(0.25)
+        else:
+            ready_to_step = False
+            while not ready_to_step:
+                command = input('>> ')
+                if command.lower() in ['n', "next"]:
+                    ready_to_step = True
+                elif command.lower() in ['c', "continue"]:
+                    ready_to_continue = True
+                    ready_to_step = True
+                else:
+                    print(handle_soar_command(kernel, agent, command.strip()))
 
 
-def sync_world_factory(r: CozmoSoar, agent: sml.Agent, gui: GUI):
+def sync_world_factory(r: CozmoSoar, agent: sml.Agent, gui):
     """
     Create Soar cycle callback function for the given robot.
 
@@ -73,8 +74,9 @@ def sync_world_factory(r: CozmoSoar, agent: sml.Agent, gui: GUI):
         print(agent.ExecuteCommandLine("print --depth 4 i3"))
 
         # Update GUI environment values
-        print("Updating GUI")
-        gui.update_environment_inputs()
+        if gui is not None:
+            print("Updating GUI")
+            gui.update_environment_inputs()
 
         # Handle Soar output
         print("Handling Soar Output")

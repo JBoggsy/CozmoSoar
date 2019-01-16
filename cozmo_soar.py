@@ -161,9 +161,14 @@ class CozmoSoar(object):
         recursively here by just calling the ``update`` method of the input-link WME.
         """
         self.in_link.update()
-        for comm, act in self.running_actions:
+        i = 0
+        while i < len(self.running_actions):
+            comm, act = self.running_actions[i]
             if act.is_completed:
                 comm.AddStatusComplete()
+                self.running_actions.pop(i)
+            else:
+                i += 1
 
     def load_productions(self, filename):
         """
