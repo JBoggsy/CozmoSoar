@@ -1,5 +1,7 @@
 
 import sys
+from time import sleep
+
 import cozmo
 from cozmo.world import EvtNewCameraImage
 from cozmo.robot import EvtRobotStateUpdated
@@ -41,16 +43,22 @@ class GUI:
         self.entry1.grid(row=0, column=1)
 
         self.send_command_button = Button(self.master, text="Send Command", command=self.send_command)
-        self.send_command_button.grid(row=1)
+        self.send_command_button.grid(row=1, sticky=W+E+N+S)
         
         self.step_button = Button(self.master, text="Step", command=self.step)
-        self.step_button.grid(row=1, column=1)
+        self.step_button.grid(row=1, column=1, sticky=W+E+N+S)
+
+        self.step_x_button = Button(self.master, text="Step x Times", command=self.step_x)
+        self.step_x_button.grid(row=1, column=2, sticky=W+E+N+S)
+
+        self.step_x_entry = Entry(self.master)
+        self.step_x_entry.grid(row=1, column=3, sticky=W+E+N+S)
         
         self.run_button = Button(self.master, text="Run", command=self.run)
-        self.run_button.grid(row=1, column=2)
+        self.run_button.grid(row=1, column=4, sticky=W+E+N+S)
         
         self.stop_button = Button(self.master, text="Stop", command=self.stop)
-        self.stop_button.grid(row=1, column=3)
+        self.stop_button.grid(row=1, column=5, sticky=W+E+N+S)
         
         self.label2 = Label(master, text="Num steps to run:")
         self.label2.grid(row=2)
@@ -149,12 +157,10 @@ class GUI:
         self.serial.grid(row=17, column=1)
 
         self.cam_view_canvas = Canvas(self.master)
-        self.cam_view_canvas.grid(row=0, column=2, rowspan=17)
+        self.cam_view_canvas.grid(row=0, column=2, rowspan=17, columnspan=4)
 
-        #
-        # camera display
-        #
-    
+        self.update_cam_view()
+
     def stop(self):
         #stop
         self.run = False
@@ -170,11 +176,12 @@ class GUI:
         print(self.agent.ExecuteCommandLine(cmd).strip())
         self.update_environment_inputs()
     
-    def run_x_steps(self):
-        x = self.entry2.get()
+    def step_x(self):
+        x = int(self.step_x_entry.get())
         cmd = "step"
-        for i in range(int(x)):
+        for i in range(x):
             print(self.agent.ExecuteCommandLine(cmd).strip())
+            sleep(0.10)
             
     def send_command(self):
         # sends commands to soar
@@ -245,13 +252,13 @@ class GUI:
         self.panel = Label(self.master)
         self.panel.grid(row=0, column=5)
 
-        new_image_evt = self.robot.camera.wait_for(EvtNewRawCameraImage)
-        self.update_cam_view(new_image_evt, new_image_evt.image)
+        self.update_cam_view()
         self.master.update()
         print("environment updated")
 
-    def update_cam_view(self, evt, image):
-        self.cam_img = ImageTk.PhotoImage(image)
+    def update_cam_view(self):
+        new_image_evt = self.robot.camera.wait_for(EvtNewRawCameraImage)
+        self.cam_img = ImageTk.PhotoImage(new_image_evt.image)
         if self.cam_img_id is None:
             self.cam_img_id = self.cam_view_canvas.create_image((160, 120), image=self.cam_img)
         else:
