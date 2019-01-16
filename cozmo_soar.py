@@ -1,4 +1,5 @@
 from collections import namedtuple
+from time import sleep
 
 import soar.Python_sml_ClientInterface as sml
 import cozmo
@@ -44,6 +45,7 @@ class CozmoSoar(object):
 
         self.objects = {}
         self.faces = {}
+        self.running_actions = []
 
         self.kernel = self.k = kernel
         self.agent = self.a = self.kernel.CreateAgent(name)
@@ -159,6 +161,9 @@ class CozmoSoar(object):
         recursively here by just calling the ``update`` method of the input-link WME.
         """
         self.in_link.update()
+        for comm, act in self.running_actions:
+            if act.is_completed:
+                comm.AddStatusComplete()
 
     def load_productions(self, filename):
         """
@@ -288,8 +293,10 @@ class CozmoSoar(object):
         print("Docking with cube with object id {}".format(target_id))
         target_obj = self.objects[target_id]
         dock_with_cube_action = self.robot.dock_with_cube(target_obj)
-        callback = self.__handle_action_complete_factory(command)
-        dock_with_cube_action.add_event_handler(EvtActionCompleted, callback)
+        self.running_actions.append((command, dock_with_cube_action))
+        # callback = self.__handle_action_complete_factory(command)
+        # dock_with_cube_action.wait_for_completed(timeout=10)
+        # command.AddStatusComplete()
         return True
 
     def __handle_pick_up_object(self, command, agent):

@@ -2,6 +2,7 @@
 import sys
 from time import sleep
 
+import asyncio
 import cozmo
 from cozmo.world import EvtNewCameraImage
 from cozmo.robot import EvtRobotStateUpdated
@@ -174,14 +175,12 @@ class GUI:
         # step and update
         cmd = "step"
         print(self.agent.ExecuteCommandLine(cmd).strip())
-        self.update_environment_inputs()
     
     def step_x(self):
         x = int(self.step_x_entry.get())
         cmd = "step"
         for i in range(x):
             print(self.agent.ExecuteCommandLine(cmd).strip())
-            sleep(0.10)
             
     def send_command(self):
         # sends commands to soar
@@ -257,8 +256,15 @@ class GUI:
         print("environment updated")
 
     def update_cam_view(self):
-        new_image_evt = self.robot.camera.wait_for(EvtNewRawCameraImage)
-        self.cam_img = ImageTk.PhotoImage(new_image_evt.image)
+        try:
+            print("Attemtping to get new image")
+            new_image_evt = self.robot.world.latest_image
+        except asyncio.TimeoutError as e:
+            print("Failed to get new image")
+            return
+        print("Converting new image")
+        self.cam_img = ImageTk.PhotoImage(new_image_evt.raw_image)
+        print("New image converted")
         if self.cam_img_id is None:
             self.cam_img_id = self.cam_view_canvas.create_image((160, 120), image=self.cam_img)
         else:

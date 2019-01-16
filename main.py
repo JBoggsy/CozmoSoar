@@ -17,8 +17,10 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
     kernel = sml.Kernel_CreateKernelInNewThread()
     robot = CozmoSoar(robot, kernel, "Cozmo1")
     agent = robot.agent
+    gui_root = tk.Tk()
+    gui = GUI(gui_root, robot.r, kernel, agent=agent)
 
-    callback = sync_world_factory(robot, agent)
+    callback = sync_world_factory(robot, agent, gui)
     agent.RegisterForRunEvent(sml.smlEVENT_AFTER_OUTPUT_PHASE,
                               callback,
                               None)
@@ -30,8 +32,6 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
         print("Error loading productions: {}".format(agent.GetLastErrorDescription()))
     agent.RunSelf(1)
 
-    gui_root = tk.Tk()
-    gui = GUI(gui_root, robot.r, kernel, agent=agent)
     gui_root.mainloop()
     # i = 0
     # ready_to_continue = False
@@ -53,24 +53,36 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
     #                 print(handle_soar_command(kernel, agent, command.strip()))
 
 
-def sync_world_factory(r: CozmoSoar, agent: sml.Agent):
+def sync_world_factory(r: CozmoSoar, agent: sml.Agent, gui: GUI):
     """
     Create Soar cycle callback function for the given robot.
 
     :return: A function to call when Soar leaves the output phase
     """
     def sync_world(*args, **kwargs):
+        # Update Soar via CozmoRobot object
+        print("Updating Soar")
+        r.update_input()
+
+        # Print Soar working memory to command line
         print("State:")
         print(agent.ExecuteCommandLine("print --depth 2 s1"))
         print("Input link:")
         print(agent.ExecuteCommandLine("print --depth 3 i2"))
         print("Output link:")
         print(agent.ExecuteCommandLine("print --depth 4 i3"))
-        r.update_input()
+
+        # Update GUI environment values
+        print("Updating GUI")
+        gui.update_environment_inputs()
+
+        # Handle Soar output
+        print("Handling Soar Output")
         numCommands = agent.GetNumberCommands()
         for i in range(numCommands):
             comm = agent.GetCommand(i)
             try:
+                print("Handling command {}".format(comm))
                 r.handle_command(comm, agent)
             except Exception as e:
                 print("\u001b[31mError: ", e)
