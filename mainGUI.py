@@ -3,6 +3,7 @@ import sys
 import cozmo
 from cozmo.world import EvtNewCameraImage
 from cozmo.robot import EvtRobotStateUpdated
+from cozmo.camera import EvtNewRawCameraImage
 
 import cv2
 from PIL import ImageTk
@@ -244,16 +245,18 @@ class GUI:
         self.panel = Label(self.master)
         self.panel.grid(row=0, column=5)
 
+        new_image_evt = self.robot.camera.wait_for(EvtNewRawCameraImage)
+        self.update_cam_view(new_image_evt, new_image_evt.image)
         self.master.update()
         print("environment updated")
 
     def update_cam_view(self, evt, image):
-        self.cam_img = ImageTk.PhotoImage(image.annotate_image())
-        # if self.cam_img_id is None:
-        #     self.cam_img_id = self.cam_view_canvas.create_image((160, 120), image=self.cam_img)
-        # else:
-        #     self.cam_view_canvas.itemconfigure(self.cam_img_id, image=self.cam_img)
-        # self.cam_view_canvas.update_idletasks()
+        self.cam_img = ImageTk.PhotoImage(image)
+        if self.cam_img_id is None:
+            self.cam_img_id = self.cam_view_canvas.create_image((160, 120), image=self.cam_img)
+        else:
+            self.cam_view_canvas.itemconfigure(self.cam_img_id, image=self.cam_img)
+        self.cam_view_canvas.update_idletasks()
 
 
 def cozmo_program(robot: cozmo.robot.Robot):
@@ -261,7 +264,7 @@ def cozmo_program(robot: cozmo.robot.Robot):
     kernel = sml.Kernel.CreateKernelInNewThread()
     if not kernel or kernel.HadError():
         print("Error creating kernal: " + kernel.GetLastErrorDescription())
-        exit(1);
+        exit(1)
 
     my_gui = GUI(master, robot, kernel)
     master.mainloop()
