@@ -1,5 +1,5 @@
 sp {test-agent*propose*turn-to-face
-    (state <s> ^name test-agent-turn-to-face
+    (state <s> ^name test-agent-face-recog
                ^io.input-link <in>)
     (<in> ^face <f>)
     (<f> ^face_id <id>)

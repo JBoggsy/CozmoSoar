@@ -17,17 +17,17 @@ def CozmoSoarEngine(robot: cozmo.robot.Robot):
     kernel = sml.Kernel_CreateKernelInNewThread()
     robot = CozmoSoar(robot, kernel, "Cozmo1")
     agent = robot.agent
-    # gui_root = tk.Tk()
-    # gui = GUI(gui_root, robot.r, kernel, agent=agent)
-    gui = None
+    gui_root = tk.Tk()
+    gui = GUI(gui_root, robot.r, kernel, agent=agent)
+    # gui = None
 
     callback = sync_world_factory(robot, agent, gui=gui)
     agent.RegisterForRunEvent(sml.smlEVENT_AFTER_OUTPUT_PHASE,
                               callback,
                               None)
-    agent.RegisterForPrintEvent(sml.smlEVENT_PRINT,
-                                soar_print_callback,
-                                None)
+    # agent.RegisterForPrintEvent(sml.smlEVENT_PRINT,
+    #                             soar_print_callback,
+    #                             None)
     agent.LoadProductions("productions/test-agent.soar")
     if agent.HadError():
         print("Error loading productions: {}".format(agent.GetLastErrorDescription()))

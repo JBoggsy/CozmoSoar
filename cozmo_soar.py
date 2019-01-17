@@ -9,7 +9,7 @@ from cozmo.lights import Light, Color
 from cozmo.robot import Robot
 from cozmo.objects import LightCube, LightCubeIDs, EvtObjectAppeared, EvtObjectDisappeared
 from cozmo.camera import Camera
-from cozmo.util import degrees, distance_mm, speed_mmps
+from cozmo.util import degrees, distance_mm, speed_mmps, radians
 
 from c_soar_util import COLORS, obj_heading_factory, obj_distance_factory
 
@@ -153,6 +153,30 @@ class CozmoSoar(object):
                                'z': lambda: face.pose.position.z}
         lc_pose_wme = face_wme.create_child_wme('pose', face_pose_attr_dict)
 
+    def init_object_wme(self, obj):
+        """
+        Initialize a working memory element for a new object.
+
+        :param obj:
+        :return:
+        """
+        obj_attr_dict = {'object_id': obj.object_id,
+                         'descriptive_name': lambda: obj.descriptive_name,
+                         'distance': obj_distance_factory(self.r, obj),
+                         'heading': obj_heading_factory(self.r, obj),
+                         'liftable': lambda: int(obj.pickupable),
+                         'type': "object"}
+        obj_wme = self.in_link.create_child_wme(obj.descriptive_name,
+                                                obj_attr_dict,
+                                                soar_name='object')
+
+        # Add pose WME for obj
+        obj_pose_attr_dict = {'rot': lambda: obj.pose.rotation.angle_z.radians,
+                              'x': lambda: obj.pose.position.x,
+                              'y': lambda: obj.pose.position.y,
+                              'z': lambda: obj.pose.position.z}
+        obj_pose_wme = obj_wme.create_child_wme('pose', obj_pose_attr_dict)
+
     def update_input(self):
         """
         Update the Soar input link WMEs.
@@ -160,13 +184,19 @@ class CozmoSoar(object):
         We take advantage of the fact that WorkingMemoryElement objects can update Soar
         recursively here by just calling the ``update`` method of the input-link WME.
         """
+        print("Updating input link")
         self.in_link.update()
         i = 0
+        print("Checking running actions")
         while i < len(self.running_actions):
+            print("Checking action {}".format(i))
             comm, act = self.running_actions[i]
             if act.is_completed:
+                print("Action {} is complete".format(act))
                 comm.AddStatusComplete()
+                print("Added status complete")
                 self.running_actions.pop(i)
+                print("Popped action")
             else:
                 i += 1
 
@@ -198,6 +228,8 @@ class CozmoSoar(object):
             success = self.__handle_move_lift(command, agent)
         elif comm_name == "go-to-object":
             success = self.__handle_go_to_object(command, agent)
+        elif comm_name == "move-head":
+            success = self.__handle_move_head(command, agent)
         elif comm_name == "turn-to-face":
             success = self.__handle_turn_to_face(command, agent)
         elif comm_name == "set-backpack-lights":
@@ -236,8 +268,9 @@ class CozmoSoar(object):
         """
         print("Placing object down")
         place_object_down_action = self.r.place_object_on_ground_here(0)
-        callback = self.__handle_action_complete_factory(command)
-        place_object_down_action.add_event_handler(EvtActionCompleted, callback)
+        self.running_actions.append((command, place_object_down_action))
+        # callback = self.__handle_action_complete_factory(command)
+        # place_object_down_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_place_on_object(self, command, agent):
@@ -267,8 +300,9 @@ class CozmoSoar(object):
         print("Placing held object on top of {}".format(target_id))
         target_obj = self.objects[target_id]
         place_on_object_action = self.robot.place_on_object(target_obj)
-        callback = self.__handle_action_complete_factory(command)
-        place_on_object_action.add_event_handler(EvtActionCompleted, callback)
+        self.running_actions.append((command, place_on_object_action))
+        # callback = self.__handle_action_complete_factory(command)
+        # place_on_object_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_dock_with_cube(self, command, agent):
@@ -331,8 +365,9 @@ class CozmoSoar(object):
         print("Picking up object {}".format(target_id))
         target_obj = self.objects[target_id]
         pick_up_object_action = self.robot.pickup_object(target_obj)
-        callback = self.__handle_action_complete_factory(command)
-        pick_up_object_action.add_event_handler(EvtActionCompleted, callback)
+        self.running_actions.append((command, pick_up_object_action))
+        # callback = self.__handle_action_complete_factory(command)
+        # pick_up_object_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_turn_to_face(self, command, agent):
@@ -360,8 +395,9 @@ class CozmoSoar(object):
         print("Turning to face {}".format(fid))
         target_face = self.faces[fid]
         turn_towards_face_action = self.r.turn_towards_face(target_face)
-        callback = self.__handle_action_complete_factory(command)
-        turn_towards_face_action.add_event_handler(EvtActionCompleted, callback)
+        self.running_actions.append((command, turn_towards_face_action))
+        # callback = self.__handle_action_complete_factory(command)
+        # turn_towards_face_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_move_lift(self, command, agent):
@@ -385,9 +421,38 @@ class CozmoSoar(object):
             return False
 
         print("Moving lift {}".format(height))
-        set_lift_height_action = self.robot.set_lift_height(height)
-        callback = self.__handle_action_complete_factory(command)
-        set_lift_height_action.add_event_handler(EvtActionCompleted, callback)
+        set_lift_height_action = self.robot.set_lift_height(height, in_parallel=True)
+        self.running_actions.append((command, set_lift_height_action))
+        # callback = self.__handle_action_complete_factory(command)
+        # set_lift_height_action.add_event_handler(EvtActionCompleted, callback)
+        return True
+
+    def __handle_move_head(self, command, agent):
+        """
+        Handle a Soar move-head action.
+
+        The Soar output should look like:
+        (I3 ^move-head Vx)
+          (Vx ^angle [ang])
+        where [ang] is a real number in the range [-0.44, 0.78]. This command moves the head to the
+        the given angle, where 0 is looking straight ahead and the angle is radians from that
+        position.
+
+        :param command: Soar command object
+        :param agent: Soar Agent object
+        :return: True if successful, False otherwise
+        """
+        try:
+            angle = float(command.GetParameterValue("angle"))
+        except ValueError as e:
+            print("Invalid angle format {}".format(command.GetParameterValue("angle")))
+            return False
+
+        print("Moving lift {}".format(angle))
+        set_head_angle_action = self.robot.set_head_angle(radians(angle), in_parallel=True)
+        self.running_actions.append((command, set_head_angle_action))
+        # callback = self.__handle_action_complete_factory(command)
+        # set_head_angle_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_go_to_object(self, command, agent):
@@ -415,8 +480,9 @@ class CozmoSoar(object):
         print("Going to object {}".format(target_id))
         target_obj = self.objects[target_id]
         go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(100))
-        callback = self.__handle_action_complete_factory(command)
-        go_to_object_action.add_event_handler(EvtActionCompleted, callback)
+        self.running_actions.append((command, go_to_object_action))
+        # callback = self.__handle_action_complete_factory(command)
+        # go_to_object_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_set_backpack_lights(self, command, agent):
@@ -480,8 +546,9 @@ class CozmoSoar(object):
 
         print("Driving forward {}mm at {}mm/s".format(distance.distance_mm, speed.speed_mmps))
         drive_forward_action = self.r.drive_straight(distance, speed)
-        callback = self.__handle_action_complete_factory(command)
-        drive_forward_action.add_event_handler(EvtActionCompleted, callback)
+        self.running_actions.append((command, drive_forward_action))
+        # callback = self.__handle_action_complete_factory(command)
+        # drive_forward_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_turn_in_place(self, command, agent):
@@ -512,8 +579,9 @@ class CozmoSoar(object):
 
         print("Rotating in place {} degrees at {}deg/s".format(angle.degrees, speed.degrees))
         turn_in_place_action = self.r.turn_in_place(angle=angle, speed=speed)
-        callback = self.__handle_action_complete_factory(command)
-        turn_in_place_action.add_event_handler(EvtActionCompleted, callback)
+        self.running_actions.append((command, turn_in_place_action))
+        # callback = self.__handle_action_complete_factory(command)
+        # turn_in_place_action.add_event_handler(EvtActionCompleted, callback)
         return True
 
     def __handle_action_complete_factory(self, command):
@@ -532,6 +600,8 @@ class CozmoSoar(object):
     def __handle_obj_appear(self, evt, updated, obj, image_box, pose):
         if isinstance(obj, cozmo.objects.LightCube):
             self.init_light_cube_wme(obj)
+        else:
+            self.init_object_wme(obj)
         self.objects[obj.object_id] = obj
         print("Saw new object {}".format(obj.object_id))
 

@@ -1,5 +1,5 @@
 sp {test-agent*propose*lift-move-up
-   (state <s> ^name test-agent-lift-move
+   (state <s> ^name test-agent-face-recog
               ^io <io>)
    (<io>  ^input-link <in>)
    (<in>  ^lift.ratio < 0.9)
@@ -13,7 +13,7 @@ sp {test-agent*propose*lift-move-up
 }
 
 sp {test-agent*propose*lift-move-down
-   (state <s> ^name test-agent-lift-move
+   (state <s> ^name test-agent-face-recog
               ^io <io>)
    (<io>  ^input-link <in>)
    (<in>  ^lift.ratio > 0.1)
