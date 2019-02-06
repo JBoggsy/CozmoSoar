@@ -15,13 +15,20 @@ def cozmo_soar_engine(robot: cozmo.robot):
                           watch_level=1,
                           write_to_stdout=True,
                           print_handler=lambda s: print(GREEN_STR+s+RESET_STR))
+
     cozmo_robot = CozmoSoar(agent, robot)
+    for command in COZMO_COMMANDS:
+        cozmo_robot.add_output_command(command)
+
     soar_observer = SoarObserver(agent)
 
     agent.add_connector("cozmo", cozmo_robot)
     agent.add_connector("observer", soar_observer)
     agent.connect()
-    agent.start()
+    # agent.start()
+    for i in range(25):
+        agent.execute_command('step')
+        sleep(1)
     sleep(5)
     agent.stop()
 
