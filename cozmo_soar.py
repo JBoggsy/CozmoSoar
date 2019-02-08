@@ -460,7 +460,7 @@ class CozmoSoar(psl.AgentConnector):
         turn_in_place_action.wait_for_completed()
         status_wme.set_value("complete")
         status_wme.update_wm()
-        
+
         return turn_in_place_action.failure_reason
 
     def on_input_phase(self, input_link: sml.Identifier):

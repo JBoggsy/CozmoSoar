@@ -1,9 +1,26 @@
-# Cozmo Soar Proof-of-Concept
+# Cozmo-Soar Interface
 
-A proof-of-concept Doar debugger and interface for the Cozmo robot using the [Soar Markup
-Language](https://soar.eecs.umich.edu/articles/articles/soar-markup-language-sml/78-sml-quick-start-guide) and the [Cozmo SDK](http://cozmosdk.anki.com/docs/index.html). The ultimate goal is
-to have a mostly-functioning interactive Soar debugger which allows us to test writing Soar code 
-for the embodied Cozmo robot.
+A python-based interface between the [Soar Cognitive Architecture](https://soar.eecs.umich.edu/) and the [Cozmo](https://www.anki.com/en-us/cozmo) robot by Anki. The [Soar Markup
+Language](https://soar.eecs.umich.edu/articles/articles/soar-markup-language-sml/78-sml-quick-start-guide), Aaron Mininger's [PySoarLib](https://github.com/amininger/pysoarlib) and the [Cozmo SDK](http://cozmosdk.anki.com/docs/index.html) are used to build this interface. The purpose of the interface is to allow a Soar agent to control a fully-embodied Cozmo robot, thereby embodying the Soar agent in the real world and enabling cognitive experiments to be run on a small, flexible, and robust platform.
+
+## Installation
+Several libraries and tools are needed prior to installing the Cozmo-Soar interface itself.
+
+1. Install both [Python 2.7.11](https://www.python.org/downloads/release/python-2713/) or above, and [Python 3.6](https://www.python.org/downloads/) or above. 
+    1. I also recommend creating and using a Python3.6+ virtual environment with the [virtualenv](https://virtualenv.pypa.io/en/latest/) tool. If you do this, use the python interpreter in this virtual environment for every python call except where specifically noted.
+    2. Make a note of the path to the Python 3 installation. You will need to use the path to the Python 3 binary later.
+2. Download and build the Soar Cognitive Architecture.
+    1. Download the source code from GitHub [here](https://github.com/SoarGroup/Soar).
+    2. Install the necessary prerequisites to Soar. The prerequrisites for each OS are listed in different pages [here](https://soar.eecs.umich.edu/articles/articles/building-soar).
+    3. In Windows, open the Visual Studio Command Prompt; in Liinux or Mac, open the terminal. Then, cd into the root directory of the Soar source code.
+    4. In Windows, run the command `build all --python=[Python3 path]`, while in Linux or Mac, run `python scons/scons.py all --python=[Python3 path]`, filling in the path to your Python 3 executable from step 1. *The python executable used to run this command in Linux or Mac must be Python 2.7.11+, NOT Python 3*. 
+    5. Add the `out/` directory generated to your system's `PYTHONPATH` environmental variable.
+3. Use pip to install the following python libraries to your Python 3.6 installation:
+    1. `pillow`
+    2. `cozmo`
+    3. `opencv-python`
+4. Download Aaron Mininger's PySoarLib (linked above) from GitHub, and add the root directory to your `PYTHONPATH`.
+5. Finally, download the Cozmo-Soar Interface code from GitHub, and add its root directory to your `PYTHONPATH`.
 
 ## Soar-Cozmo Interface
 We define the Soar-Cozmo interface to have the following input- and output-links which allow a 
