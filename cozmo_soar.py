@@ -1,5 +1,8 @@
+from time import sleep
+
 import PySoarLib as psl
-import soar.Python_sml_ClientInterface as sml
+import Python_sml_ClientInterface as sml
+import soar.out.Python_sml_ClientInterface as sml
 
 import cozmo
 from cozmo.util import radians, degrees, distance_mm, speed_mmps
@@ -37,7 +40,6 @@ class CozmoSoar(psl.AgentConnector):
 
         self.objects = {}
         self.faces = {}
-        self.running_actions = []
 
         #######################
         # Working Memory data #
@@ -97,10 +99,11 @@ class CozmoSoar(psl.AgentConnector):
         :param root_id: sml Identifier object containing the command
         :return: None
         """
+        print("!!! A: ", command_name, [root_id.GetChild(c) for c in
+                                        range(root_id.GetNumberChildren())])
         self.command_map[command_name](root_id)
-        root_id.AddStatusComplete()
 
-    def __handle_place_object_down(self, command):
+    def __handle_place_object_down(self, command: sml.Identifier):
         """
         Handle a Soar place-object-down action.
 
@@ -113,12 +116,16 @@ class CozmoSoar(psl.AgentConnector):
         """
         print("Placing object down")
         place_object_down_action = self.r.place_object_on_ground_here(0)
-        self.running_actions.append((command, place_object_down_action))
-        # callback = self.__handle_action_complete_factory(command)
-        # place_object_down_action.add_event_handler(EvtActionCompleted, callback)
-        return True
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+        place_object_down_action.wait_for_completed()
+        status_wme.set_value("complete")
+        status_wme.update_wm()
 
-    def __handle_place_on_object(self, command):
+        return place_object_down_action.failure_reason
+
+    def __handle_place_on_object(self, command: sml.Identifier):
         """
         Handle a Soar place-on-object action.
 
@@ -144,12 +151,16 @@ class CozmoSoar(psl.AgentConnector):
         print("Placing held object on top of {}".format(target_id))
         target_obj = self.objects[target_id]
         place_on_object_action = self.robot.place_on_object(target_obj)
-        self.running_actions.append((command, place_on_object_action))
-        # callback = self.__handle_action_complete_factory(command)
-        # place_on_object_action.add_event_handler(EvtActionCompleted, callback)
-        return True
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+        place_on_object_action.wait_for_completed()
+        status_wme.set_value("complete")
+        status_wme.update_wm()
 
-    def __handle_dock_with_cube(self, command):
+        return place_on_object_action.failure_reason
+
+    def __handle_dock_with_cube(self, command: sml.Identifier):
         """
         Handle a Soar dock-with-cube action.
 
@@ -175,13 +186,16 @@ class CozmoSoar(psl.AgentConnector):
         print("Docking with cube with object id {}".format(target_id))
         target_obj = self.objects[target_id]
         dock_with_cube_action = self.robot.dock_with_cube(target_obj)
-        self.running_actions.append((command, dock_with_cube_action))
-        # callback = self.__handle_action_complete_factory(command)
-        # dock_with_cube_action.wait_for_completed(timeout=10)
-        # command.AddStatusComplete()
-        return True
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+        dock_with_cube_action.wait_for_completed()
+        status_wme.set_value("complete")
+        status_wme.update_wm()
 
-    def __handle_pick_up_object(self, command):
+        return dock_with_cube_action.failure_reason
+
+    def __handle_pick_up_object(self, command: sml.Identifier):
         """
         Handle a Soar pick-up-object action.
 
@@ -209,13 +223,16 @@ class CozmoSoar(psl.AgentConnector):
         print("Picking up object {}".format(obj_designation))
         target_obj = self.objects[obj_designation]
         pick_up_object_action = self.robot.pickup_object(target_obj)
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
         pick_up_object_action.wait_for_completed()
-        # self.running_actions.append((command, pick_up_object_action))
-        # callback = self.__handle_action_complete_factory(command)
-        # pick_up_object_action.add_event_handler(EvtActionCompleted, callback)
-        return True
+        status_wme.set_value("complete")
+        status_wme.update_wm()
 
-    def __handle_turn_to_face(self, command):
+        return pick_up_object_action.failure_reason
+
+    def __handle_turn_to_face(self, command: sml.Identifier):
         """
         Handle a Soar turn-to-face action.
 
@@ -239,12 +256,16 @@ class CozmoSoar(psl.AgentConnector):
         print("Turning to face {}".format(fid))
         target_face = self.faces[fid]
         turn_towards_face_action = self.r.turn_towards_face(target_face)
-        self.running_actions.append((command, turn_towards_face_action))
-        # callback = self.__handle_action_complete_factory(command)
-        # turn_towards_face_action.add_event_handler(EvtActionCompleted, callback)
-        return True
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+        turn_towards_face_action.wait_for_completed()
+        status_wme.set_value("complete")
+        status_wme.update_wm()
 
-    def __handle_move_lift(self, command):
+        return turn_towards_face_action.failure_reason
+
+    def __handle_move_lift(self, command: sml.Identifier):
         """
         Handle a Soar move-lift action.
 
@@ -265,12 +286,16 @@ class CozmoSoar(psl.AgentConnector):
 
         print("Moving lift {}".format(height))
         set_lift_height_action = self.robot.set_lift_height(height)
-        self.running_actions.append((command, set_lift_height_action))
-        # callback = self.__handle_action_complete_factory(command)
-        # set_lift_height_action.add_event_handler(EvtActionCompleted, callback)
-        return True
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+        set_lift_height_action.wait_for_completed()
+        status_wme.set_value("complete")
+        status_wme.update_wm()
 
-    def __handle_move_head(self, command):
+        return set_lift_height_action.failure_reason
+
+    def __handle_move_head(self, command: sml.Identifier):
         """
         Handle a Soar move-head action.
 
@@ -292,14 +317,16 @@ class CozmoSoar(psl.AgentConnector):
 
         print("Moving head {}".format(angle))
         set_head_angle_action = self.robot.set_head_angle(radians(angle))
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
         set_head_angle_action.wait_for_completed()
-        print("Done moving head")
-        # self.running_actions.append((command, set_head_angle_action))
-        # callback = self.__handle_action_complete_factory(command)
-        # set_head_angle_action.add_event_handler(EvtActionCompleted, callback)
-        return True
+        status_wme.set_value("complete")
+        status_wme.update_wm()
 
-    def __handle_go_to_object(self, command):
+        return set_head_angle_action.failure_reason
+
+    def __handle_go_to_object(self, command: sml.Identifier):
         """
         Handle a Soar go-to-object action.
 
@@ -323,12 +350,16 @@ class CozmoSoar(psl.AgentConnector):
         print("Going to object {}".format(target_id))
         target_obj = self.objects[target_id]
         go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(100))
-        self.running_actions.append((command, go_to_object_action))
-        # callback = self.__handle_action_complete_factory(command)
-        # go_to_object_action.add_event_handler(EvtActionCompleted, callback)
-        return True
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+        go_to_object_action.wait_for_completed()
+        status_wme.set_value("complete")
+        status_wme.update_wm()
 
-    def __handle_set_backpack_lights(self, command):
+        return go_to_object_action.failure_reason
+
+    def __handle_set_backpack_lights(self, command: sml.Identifier):
         """
         Handle a Soar set-backpack-lights action.
 
@@ -358,9 +389,9 @@ class CozmoSoar(psl.AgentConnector):
 
         self.r.set_all_backpack_lights(light=light)
         command.AddStatusComplete()
-        return True
+        return (None, None)
 
-    def __handle_drive_forward(self, command):
+    def __handle_drive_forward(self, command: sml.Identifier):
         """
         Handle a Soar drive-forward action.
 
@@ -387,12 +418,16 @@ class CozmoSoar(psl.AgentConnector):
 
         print("Driving forward {}mm at {}mm/s".format(distance.distance_mm, speed.speed_mmps))
         drive_forward_action = self.r.drive_straight(distance, speed)
-        self.running_actions.append((command, drive_forward_action))
-        # callback = self.__handle_action_complete_factory(command)
-        # drive_forward_action.add_event_handler(EvtActionCompleted, callback)
-        return True
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+        drive_forward_action.wait_for_completed()
+        status_wme.set_value("complete")
+        status_wme.update_wm()
 
-    def __handle_turn_in_place(self, command):
+        return drive_forward_action.failure_reason
+
+    def __handle_turn_in_place(self, command: sml.Identifier):
         """
         Handle a Soar turn-in-place action.
 
@@ -419,10 +454,14 @@ class CozmoSoar(psl.AgentConnector):
 
         print("Rotating in place {} degrees at {}deg/s".format(angle.degrees, speed.degrees))
         turn_in_place_action = self.r.turn_in_place(angle=angle, speed=speed)
-        self.running_actions.append((command, turn_in_place_action))
-        # callback = self.__handle_action_complete_factory(command)
-        # turn_in_place_action.add_event_handler(EvtActionCompleted, callback)
-        return True
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+        turn_in_place_action.wait_for_completed()
+        status_wme.set_value("complete")
+        status_wme.update_wm()
+        
+        return turn_in_place_action.failure_reason
 
     def on_input_phase(self, input_link: sml.Identifier):
         """
@@ -466,6 +505,9 @@ class CozmoSoar(psl.AgentConnector):
 
         # Then, check through the visible faces and objects to see if they need to be added,
         # updated, or removed
+        #######################
+        # FACE INPUT HANDLING #
+        #######################
         vis_faces = set(list(self.w.visible_faces))
         for face in vis_faces:
             face_designation = "face{}".format(face.face_id)
@@ -483,20 +525,28 @@ class CozmoSoar(psl.AgentConnector):
                 faces_missing.add(face_dsg)
         for face_dsg in faces_missing:
             del self.faces[face_dsg]
-            self.WMEs[face_dsg].DestroyWME()
-            del self.WMEs[face_dsg]
+            remove_list = self.__destroy_wme_subtree(face_dsg)
+            for wme_name, wme in remove_list:
+                del self.WMEs[wme_name]
+                if isinstance(wme, psl.SoarWME):
+                    wme.remove_from_wm()
+                elif isinstance(wme, sml.Identifier):
+                    wme.DestroyWME()
+                else:
+                    raise Exception("WME wasn't of proper type")
 
+        #########################
+        # OBJECT INPUT HANDLING #
+        #########################
         vis_objs = set(list(self.w.visible_objects))
         for obj in vis_objs:
             obj_designation = "obj{}".format(obj.object_id)
             if obj_designation in self.objects:
                 obj_wme = self.WMEs[obj_designation]
             else:
-                print("!!!B")
                 self.objects[obj_designation] = obj
                 obj_wme = input_link.CreateIdWME("object")
                 self.WMEs[obj_designation] = obj_wme
-            print("!!!C")
             self.__build_obj_wme_subtree(obj, obj_designation, obj_wme)
 
         objs_missing = set()
@@ -505,26 +555,30 @@ class CozmoSoar(psl.AgentConnector):
                 objs_missing.add(obj_dsg)
         for obj_dsg in objs_missing:
             del self.objects[obj_dsg]
-            self.__destroy_obj_wme_subtree(obj_dsg)
+            remove_list = self.__destroy_wme_subtree(obj_dsg)
+            for wme_name, wme in remove_list:
+                del self.WMEs[wme_name]
+                if isinstance(wme, psl.SoarWME):
+                    wme.remove_from_wm()
+                elif isinstance(wme, sml.Identifier):
+                    wme.DestroyWME()
+                else:
+                    raise Exception("WME wasn't of proper type")
 
-    def __destroy_obj_wme_subtree(self, wme_name):
+    def __destroy_wme_subtree(self, wme_name):
         """
         Recursively destroy all WMEs rooted at the object with the given wme_name.
 
         :param obj_dsg:
         :return: None
         """
+        remove_list = []
         for sub_tree_root_name in self.WMEs.keys():
             if sub_tree_root_name.startswith(wme_name) and sub_tree_root_name != wme_name:
-                self.__destroy_obj_wme_subtree(sub_tree_root_name)
+                remove_list += self.__destroy_wme_subtree(sub_tree_root_name)
         wme = self.WMEs[wme_name]
-        if isinstance(wme, psl.SoarWME):
-            wme.remove_from_wm()
-        elif isinstance(wme, sml.Identifier):
-            wme.DestroyWME()
-        else:
-            raise Exception("WME was not one of the two correct types")
-        del self.WMEs[wme_name]
+        remove_list.append((wme_name, wme))
+        return remove_list
 
     def __build_obj_wme_subtree(self, obj, obj_designation, obj_wme):
         """
@@ -546,11 +600,8 @@ class CozmoSoar(psl.AgentConnector):
             obj_input_dict['connected'] = obj.is_connected
             obj_input_dict['cube_id'] = obj.cube_id
             obj_input_dict['moving'] = obj.is_moving
-
-        print(obj_input_dict)
         for input_name in obj_input_dict.keys():
             wme = self.WMEs.get(obj_designation + '.' + input_name)
-            print(obj_designation + '.' + input_name)
             if wme is None:
                 wme = psl.SoarWME(input_name, obj_input_dict[input_name])
                 wme.add_to_wm(obj_wme)
@@ -569,7 +620,7 @@ class CozmoSoar(psl.AgentConnector):
         :return: None
         """
         face_input_dict = {'expression': face.expression,
-                           'expression_score': face.expression_score,
+                           'exp_score': face.expression_score,
                            'face_id': face.face_id,
                            'name': face.name if face.name != '' else 'unknown',
                            'distance': obj_distance_factory(self.r, face)(),

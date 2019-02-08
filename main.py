@@ -1,4 +1,8 @@
 from time import sleep
+import sys
+import os
+from os import path
+sys.path.append(path.join(os.getcwd(), "soar/out/"))
 
 import cozmo
 from cozmo_soar import CozmoSoar, SoarObserver
@@ -25,12 +29,13 @@ def cozmo_soar_engine(robot: cozmo.robot):
     agent.add_connector("cozmo", cozmo_robot)
     agent.add_connector("observer", soar_observer)
     agent.connect()
-    # agent.start()
-    for i in range(25):
-        agent.execute_command('step')
-        sleep(1)
-    sleep(5)
-    agent.stop()
+    agent.start()
+    # for i in range(25):
+    #     agent.execute_command('step')
+    #     sleep(1)
+    while True:
+        sleep(60)
+    # agent.stop()
 
 # def CozmoSoarEngine(robot: cozmo.robot.Robot):
 #     kernel = sml.Kernel_CreateKernelInNewThread()

@@ -14,6 +14,6 @@ sp {apply*initialize-test-agent
    (state <s> ^operator <op>)
    (<op> ^name initialize-test-agent)
 -->
-   (<s> ^name test-agent-null)
+   (<s> ^name test-agent-track-object)
 }
 

@@ -13,7 +13,7 @@ from PIL import ImageTk
 from tkinter import *
 
 sys.path.append('/Users/nickmatton/Desktop/Soar/Soar/out/')
-import soar.Python_sml_ClientInterface as sml
+import Python_sml_ClientInterface as sml
 
 class GUI:
     def __init__(self, master, robot: cozmo.robot.Robot, kernel, agent=None):
