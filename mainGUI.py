@@ -13,7 +13,7 @@ from PIL import ImageTk
 from tkinter import *
 
 sys.path.append('/Users/nickmatton/Desktop/Soar/Soar/out/')
-import soar.Python_sml_ClientInterface as sml
+import Python_sml_ClientInterface as sml
 
 class GUI:
     def __init__(self, master, robot: cozmo.robot.Robot, kernel, agent=None):
@@ -266,9 +266,12 @@ class GUI:
         self.cam_img = ImageTk.PhotoImage(new_image_evt.raw_image)
         print("New image converted")
         if self.cam_img_id is None:
+            print("Setting cam_img_id")
             self.cam_img_id = self.cam_view_canvas.create_image((160, 120), image=self.cam_img)
         else:
+            print("itemconfiguring cam view canvas")
             self.cam_view_canvas.itemconfigure(self.cam_img_id, image=self.cam_img)
+        print("Updating GUI idletasks")
         self.cam_view_canvas.update_idletasks()
 
 
@@ -276,7 +279,7 @@ def cozmo_program(robot: cozmo.robot.Robot):
     master = Tk()
     kernel = sml.Kernel.CreateKernelInNewThread()
     if not kernel or kernel.HadError():
-        print("Error creating kernal: " + kernel.GetLastErrorDescription())
+        print("Error creating kernel: " + kernel.GetLastErrorDescription())
         exit(1)
 
     my_gui = GUI(master, robot, kernel)

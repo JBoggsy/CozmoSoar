@@ -1,5 +1,5 @@
 sp {test-agent*propose*set-backpack-lights-green
-    (state <s> ^name test-agent-set-backpack-lights
+    (state <s> ^name test-agent-face-recog
                ^io.input-link <in>)
     (<in>  ^face_count > 0)
 -->
@@ -10,7 +10,7 @@ sp {test-agent*propose*set-backpack-lights-green
 }
 
 sp {test-agent*propose*set-backpack-lights-red
-    (state <s> ^name test-agent
+    (state <s> ^name test-agent-face-recog
                ^io.input-link <in>)
     (<in>  ^face_count 0)
 -->

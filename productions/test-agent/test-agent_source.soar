@@ -14,5 +14,7 @@ source lift-move.soar
 source pick-up-object.soar
 source point-nav.soar
 source set-backpack-lights.soar
+source track-object.soar
 source turn-in-place.soar
 source turn-to-face.soar
+source wait.soar

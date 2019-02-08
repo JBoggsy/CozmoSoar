@@ -67,8 +67,8 @@ sp {test-agent*propose*go-to-slicer
 -->
    (<s> ^operator <op> + =)
    (<op> ^name go-to-object
-         ^actions.go-to-object <a>)
-   (<a> ^target_object_id <id>)
+         ^actions.dock-with-cube <a>)
+   (<a> ^object_id <id>)
 }
 
 sp {test-agent*propose*indicate-success
