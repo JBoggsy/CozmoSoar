@@ -2,7 +2,6 @@ from time import sleep
 
 import PySoarLib as psl
 import Python_sml_ClientInterface as sml
-import soar.out.Python_sml_ClientInterface as sml
 
 import cozmo
 from cozmo.util import radians, degrees, distance_mm, speed_mmps
