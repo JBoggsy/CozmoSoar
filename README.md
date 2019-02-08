@@ -19,7 +19,7 @@ Several libraries and tools are needed prior to installing the Cozmo-Soar interf
     1. `pillow`
     2. `cozmo`
     3. `opencv-python`
-4. Download Aaron Mininger's PySoarLib (linked above) from GitHub, and add the root directory to your `PYTHONPATH`.
+4. Create a new directory, and download Aaron Mininger's `PySoarLib` (linked above) from GitHub to that folder, and add the new directory, which should contain the root directory of `PySoarLib`, to your `PYTHONPATH`.
 5. Finally, download the Cozmo-Soar Interface code from GitHub, and add its root directory to your `PYTHONPATH`.
 
 ## Soar-Cozmo Interface

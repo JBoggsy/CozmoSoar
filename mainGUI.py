@@ -12,7 +12,6 @@ import cv2
 from PIL import ImageTk
 from tkinter import *
 
-sys.path.append('/Users/nickmatton/Desktop/Soar/Soar/out/')
 import Python_sml_ClientInterface as sml
 
 class GUI:

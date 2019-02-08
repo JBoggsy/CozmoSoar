@@ -2,7 +2,7 @@ from time import sleep
 import sys
 import os
 from os import path
-sys.path.append(path.join(os.getcwd(), "soar/out/"))
+
 
 import cozmo
 from cozmo_soar import CozmoSoar, SoarObserver
