@@ -22,9 +22,8 @@ Several libraries and tools are needed prior to installing the Cozmo-Soar interf
 4. Create a new directory, and download Aaron Mininger's `PySoarLib` (linked above) from GitHub to that folder, and add the new directory, which should contain the root directory of `PySoarLib`, to your `PYTHONPATH`.
 5. Finally, download the Cozmo-Soar Interface code from GitHub, and add its root directory to your `PYTHONPATH`.
 
-## Soar-Cozmo Interface
-We define the Soar-Cozmo interface to have the following input- and output-links which allow a 
-Soar agent to interact with a Cozmo robot. 
+## Cozmo-Soar Interface
+The Cozmo-Soar interface provides certain input-link attributes and values to a Soar agent, and listens for certain output-link attributes and their values to allow the agent to control the Cozmo. The nature of these are described below: 
 
 ### Input-link
 * battery-voltage (float)
@@ -174,3 +173,7 @@ Instructs Cozmo to place the block its currently carrying on top of the specifie
 - object_id
 
 Instructs Cozmo to approach a cube and dock with it, so that the lift hooks are under the grip holes and if the lift were to move up, the cube would be lifted. The specified object must be liftable, and preferably a light cube.
+
+## Future Work
+* Currently, if the agent sends a command to the Cozmo, the Soar cycle pauses until the Cozmo is completely done with the action. It'd be nice if Soar could continue to run while Cozmo is executing an action.
+*  Create a GUI which display Soar state information (e.g., state, input-link, output-link), Cozmo information (including the camera view), and the ability to give Soar new commands.
