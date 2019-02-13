@@ -47,25 +47,30 @@ class CozmoSoar(psl.AgentConnector):
         # self.static_inputs maps each static input to a function to retrieve its latest value from
         #   Soar. A static input is one that won't ever disappear, in contrast to temporary inputs
         #   like faces or objects
-        self.static_inputs = {'battery_voltage': lambda: self.r.battery_voltage,
-                              'carrying_block': lambda: int(self.r.is_carrying_block),
-                              'carrying_object_id': lambda: self.r.carrying_object_id,
-                              'charging': lambda: int(self.r.is_charging),
-                              'cliff_detected': lambda: int(self.r.is_cliff_detected),
-                              'head_angle': lambda: self.r.head_angle.radians,
-                              'face_count': self.w.visible_face_count,
-                              'object_count': lambda : len(self.objects),
-                              'picked_up': lambda: int(self.r.is_picked_up),
-                              'robot_id': lambda: self.r.robot_id,
-                              'serial': lambda: self.r.serial,
-                              'pose': {'rot': lambda: self.r.pose.rotation.angle_z.radians,
-                                       'x': lambda: self.r.pose.position.x,
-                                       'y': lambda: self.r.pose.position.y,
-                                       'z': lambda: self.r.pose.position.z},
-                              'lift': {'angle': lambda: self.r.lift_angle.radians,
-                                       'height': lambda: self.r.lift_height.distance_mm,
-                                       'ratio': lambda: self.r.lift_ratio}
-                              }
+        self.static_inputs = {
+            "battery_voltage": lambda: self.r.battery_voltage,
+            "carrying_block": lambda: int(self.r.is_carrying_block),
+            "carrying_object_id": lambda: self.r.carrying_object_id,
+            "charging": lambda: int(self.r.is_charging),
+            "cliff_detected": lambda: int(self.r.is_cliff_detected),
+            "head_angle": lambda: self.r.head_angle.radians,
+            "face_count": self.w.visible_face_count,
+            "object_count": lambda: len(self.objects),
+            "picked_up": lambda: int(self.r.is_picked_up),
+            "robot_id": lambda: self.r.robot_id,
+            "serial": lambda: self.r.serial,
+            "pose": {
+                "rot": lambda: self.r.pose.rotation.angle_z.radians,
+                "x": lambda: self.r.pose.position.x,
+                "y": lambda: self.r.pose.position.y,
+                "z": lambda: self.r.pose.position.z,
+            },
+            "lift": {
+                "angle": lambda: self.r.lift_angle.radians,
+                "height": lambda: self.r.lift_height.distance_mm,
+                "ratio": lambda: self.r.lift_ratio,
+            },
+        }
 
         # self.WMEs maps SoarWME objects to their attribute names for easier retrieval. Since Cozmo
         #   inputs will always be one-to-one with their values (i.e., there won't be multiple values
@@ -75,17 +80,19 @@ class CozmoSoar(psl.AgentConnector):
         ###############################
         # Command Handling dictionary #
         ###############################
-        self.command_map = {"move-lift": self.__handle_move_lift,
-                            "go-to-object": self.__handle_go_to_object,
-                            "move-head": self.__handle_move_head,
-                            "turn-to-face": self.__handle_turn_to_face,
-                            "set-backpack-lights": self.__handle_set_backpack_lights,
-                            "drive-forward": self.__handle_drive_forward,
-                            "turn-in-place": self.__handle_turn_in_place,
-                            "pick-up-object": self.__handle_pick_up_object,
-                            "place-object-down": self.__handle_place_object_down,
-                            "place-on-object": self.__handle_place_on_object,
-                            "dock-with-cube": self.__handle_dock_with_cube}
+        self.command_map = {
+            "move-lift": self.__handle_move_lift,
+            "go-to-object": self.__handle_go_to_object,
+            "move-head": self.__handle_move_head,
+            "turn-to-face": self.__handle_turn_to_face,
+            "set-backpack-lights": self.__handle_set_backpack_lights,
+            "drive-forward": self.__handle_drive_forward,
+            "turn-in-place": self.__handle_turn_in_place,
+            "pick-up-object": self.__handle_pick_up_object,
+            "place-object-down": self.__handle_place_object_down,
+            "place-on-object": self.__handle_place_on_object,
+            "dock-with-cube": self.__handle_dock_with_cube,
+        }
 
     def on_output_event(self, command_name: str, root_id: sml.Identifier):
         """
@@ -98,8 +105,11 @@ class CozmoSoar(psl.AgentConnector):
         :param root_id: sml Identifier object containing the command
         :return: None
         """
-        print("!!! A: ", command_name, [root_id.GetChild(c) for c in
-                                        range(root_id.GetNumberChildren())])
+        print(
+            "!!! A: ",
+            command_name,
+            [root_id.GetChild(c) for c in range(root_id.GetNumberChildren())],
+        )
         self.command_map[command_name](root_id)
 
     def __handle_place_object_down(self, command: sml.Identifier):
@@ -140,8 +150,11 @@ class CozmoSoar(psl.AgentConnector):
         try:
             target_id = int(command.GetParameterValue("target_object_id"))
         except ValueError as e:
-            print("Invalid target-object-id format {}".format(
-                command.GetParameterValue("target_object_id")))
+            print(
+                "Invalid target-object-id format {}".format(
+                    command.GetParameterValue("target_object_id")
+                )
+            )
             return False
         if target_id not in self.objects.keys():
             print("Couldn't find target object")
@@ -175,8 +188,9 @@ class CozmoSoar(psl.AgentConnector):
         try:
             target_id = int(command.GetParameterValue("object_id"))
         except ValueError as e:
-            print("Invalid target-object-id format {}".format(
-                command.GetParameterValue("object_id")))
+            print(
+                "Invalid target-object-id format {}".format(command.GetParameterValue("object_id"))
+            )
             return False
         if target_id not in self.objects.keys():
             print("Couldn't find target object")
@@ -340,7 +354,11 @@ class CozmoSoar(psl.AgentConnector):
         try:
             target_id = int(command.GetParameterValue("target_object_id"))
         except ValueError as e:
-            print("Invalid target-object-id format {}".format(command.GetParameterValue("target_object_id")))
+            print(
+                "Invalid target-object-id format {}".format(
+                    command.GetParameterValue("target_object_id")
+                )
+            )
             return False
         if target_id not in self.objects.keys():
             print("Couldn't find target object")
@@ -375,13 +393,13 @@ class CozmoSoar(psl.AgentConnector):
         if color_str not in COLORS:
             print("Invalid backpack lights color {}".format(color_str))
             return False
-        elif color_str == 'red':
+        elif color_str == "red":
             light = cozmo.lights.red_light
-        elif color_str == 'green':
+        elif color_str == "green":
             light = cozmo.lights.green_light
-        elif color_str == 'blue':
+        elif color_str == "blue":
             light = cozmo.lights.blue_light
-        elif color_str == 'white':
+        elif color_str == "white":
             light = cozmo.lights.white_light
         else:
             light = cozmo.lights.off_light
@@ -494,8 +512,7 @@ class CozmoSoar(psl.AgentConnector):
 
             new_val = new_val()
             if wme is None:
-                new_wme = psl.SoarWME(att=input_name,
-                                      val=new_val)
+                new_wme = psl.SoarWME(att=input_name, val=new_val)
                 self.WMEs[input_name] = new_wme
                 new_wme.add_to_wm(input_link)
             else:
@@ -588,23 +605,25 @@ class CozmoSoar(psl.AgentConnector):
         :param obj_wme: sml identifier at the root of the object sub-tree
         :return: None
         """
-        obj_input_dict = {'object_id': obj.object_id,
-                         'descriptive_name': obj.descriptive_name,
-                         'distance': obj_distance_factory(self.r, obj)(),
-                         'heading': obj_heading_factory(self.r, obj)(),
-                         'liftable': int(obj.pickupable),
-                         'type': "object"}
+        obj_input_dict = {
+            "object_id": obj.object_id,
+            "descriptive_name": obj.descriptive_name,
+            "distance": obj_distance_factory(self.r, obj)(),
+            "heading": obj_heading_factory(self.r, obj)(),
+            "liftable": int(obj.pickupable),
+            "type": "object",
+        }
         if isinstance(obj, cozmo.objects.LightCube):
-            obj_input_dict['type'] = "cube"
-            obj_input_dict['connected'] = obj.is_connected
-            obj_input_dict['cube_id'] = obj.cube_id
-            obj_input_dict['moving'] = obj.is_moving
+            obj_input_dict["type"] = "cube"
+            obj_input_dict["connected"] = obj.is_connected
+            obj_input_dict["cube_id"] = obj.cube_id
+            obj_input_dict["moving"] = obj.is_moving
         for input_name in obj_input_dict.keys():
-            wme = self.WMEs.get(obj_designation + '.' + input_name)
+            wme = self.WMEs.get(obj_designation + "." + input_name)
             if wme is None:
                 wme = psl.SoarWME(input_name, obj_input_dict[input_name])
                 wme.add_to_wm(obj_wme)
-                self.WMEs[obj_designation + '.' + input_name] = wme
+                self.WMEs[obj_designation + "." + input_name] = wme
             else:
                 wme.set_value(obj_input_dict[input_name])
                 wme.update_wm()
@@ -618,19 +637,20 @@ class CozmoSoar(psl.AgentConnector):
         :param face_wme: sml identifier at the root of the face sub-tree
         :return: None
         """
-        face_input_dict = {'expression': face.expression,
-                           'exp_score': face.expression_score,
-                           'face_id': face.face_id,
-                           'name': face.name if face.name != '' else 'unknown',
-                           'distance': obj_distance_factory(self.r, face)(),
-                           'heading': obj_heading_factory(self.r, face)()
-                           }
+        face_input_dict = {
+            "expression": face.expression,
+            "exp_score": face.expression_score,
+            "face_id": face.face_id,
+            "name": face.name if face.name != "" else "unknown",
+            "distance": obj_distance_factory(self.r, face)(),
+            "heading": obj_heading_factory(self.r, face)(),
+        }
         for input_name in face_input_dict.keys():
-            wme = self.WMEs.get(face_designation+'.'+input_name)
+            wme = self.WMEs.get(face_designation + "." + input_name)
             if wme is None:
                 wme = psl.SoarWME(input_name, face_input_dict[input_name])
                 wme.add_to_wm(face_wme)
-                self.WMEs[face_designation+'.'+input_name] = wme
+                self.WMEs[face_designation + "." + input_name] = wme
             else:
                 wme.set_value(face_input_dict[input_name])
                 wme.update_wm()
@@ -651,20 +671,19 @@ class CozmoSoar(psl.AgentConnector):
 
         for input_name in input_dict.keys():
             new_val = input_dict[input_name]
-            wme = self.WMEs.get(root_name+'.'+input_name)
+            wme = self.WMEs.get(root_name + "." + input_name)
 
             if not callable(new_val):
                 if wme is None:
                     wme = root_id.CreateIdWME(input_name)
-                    self.WMEs[root_name+'.'+input_name] = wme
-                self.__input_recurse(new_val, root_name+'.'+input_name, wme)
+                    self.WMEs[root_name + "." + input_name] = wme
+                self.__input_recurse(new_val, root_name + "." + input_name, wme)
                 continue
 
             new_val = new_val()
             if wme is None:
-                new_wme = psl.SoarWME(att=input_name,
-                                      val=new_val)
-                self.WMEs[root_name+'.'+input_name] = new_wme
+                new_wme = psl.SoarWME(att=input_name, val=new_val)
+                self.WMEs[root_name + "." + input_name] = new_wme
                 new_wme.add_to_wm(root_id)
             else:
                 wme.set_value(new_val)
@@ -677,6 +696,7 @@ class SoarObserver(psl.AgentConnector):
 
     This class just exists to handle getting information out of Soar and into a useful format.
     """
+
     def __init__(self, agent: psl.SoarAgent, print_handler=None):
         super(SoarObserver, self).__init__(agent, print_handler)
 

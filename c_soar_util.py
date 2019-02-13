@@ -1,24 +1,26 @@
 from math import sqrt, atan2, pi
 
-COLORS = ['red', 'blue', 'green', 'white', 'off']
+COLORS = ["red", "blue", "green", "white", "off"]
 
 RED_STR = "\u001b[31m"
 GREEN_STR = "\u001b[32m"
 BLUE_STR = "\u001b[34m"
 RESET_STR = "\u001b[0m"
 
-COZMO_COMMANDS = ["move-lift",
-                  "go-to-object",
-                  "move-head",
-                  "turn-to-face",
-                  "turn-to-object",
-                  "set-backpack-lights",
-                  "drive-forward",
-                  "turn-in-place",
-                  "pick-up-object",
-                  "place-object-down",
-                  "place-on-object",
-                  "dock-with-cube"]
+COZMO_COMMANDS = [
+    "move-lift",
+    "go-to-object",
+    "move-head",
+    "turn-to-face",
+    "turn-to-object",
+    "set-backpack-lights",
+    "drive-forward",
+    "turn-in-place",
+    "pick-up-object",
+    "place-object-down",
+    "place-on-object",
+    "dock-with-cube",
+]
 
 
 def obj_distance_factory(obj1, obj2):
@@ -35,8 +37,8 @@ def obj_distance_factory(obj1, obj2):
     :param obj2: An object that has a .pose attribute
     :return: Float, distance in mm between obj1 and obj2 according to their poses
     """
-    assert hasattr(obj1, 'pose'), "Object 1 distance comparison requires .pose attribute"
-    assert hasattr(obj2, 'pose'), "Object 2 distance comparison requires .pose attribute"
+    assert hasattr(obj1, "pose"), "Object 1 distance comparison requires .pose attribute"
+    assert hasattr(obj2, "pose"), "Object 2 distance comparison requires .pose attribute"
 
     def obj_distance_calc():
         pose_1 = obj1.pose
@@ -53,7 +55,7 @@ def obj_distance_factory(obj1, obj2):
         x2 = pose_2.position.x
         y2 = pose_2.position.y
 
-        dist = sqrt((x2-x1)**2 + (y2-y1)**2)
+        dist = sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
         return dist
 
     return obj_distance_calc
@@ -73,8 +75,8 @@ def obj_heading_factory(obj1, obj2):
     :param obj2: An object that has a .pose attribute
     :return: Float, heading from obj1 to obj2 according to their poses
     """
-    assert hasattr(obj1, 'pose'), "Object 1 distance comparison requires .pose attribute"
-    assert hasattr(obj2, 'pose'), "Object 2 distance comparison requires .pose attribute"
+    assert hasattr(obj1, "pose"), "Object 1 distance comparison requires .pose attribute"
+    assert hasattr(obj2, "pose"), "Object 2 distance comparison requires .pose attribute"
 
     def obj_heading_calc():
         pose_1 = obj1.pose
