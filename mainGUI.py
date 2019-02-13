@@ -1,4 +1,3 @@
-
 import sys
 from time import sleep
 
@@ -13,6 +12,7 @@ from PIL import ImageTk
 from tkinter import *
 
 import Python_sml_ClientInterface as sml
+
 
 class GUI:
     def __init__(self, master, robot: cozmo.robot.Robot, kernel, agent=None):
@@ -32,7 +32,7 @@ class GUI:
             print("Error creating agent: " + kernel.GetLastErrorDescription())
             exit(1)
         #
-        #This part pretty much just creates labels to output all the values needed
+        # This part pretty much just creates labels to output all the values needed
         #
         self.master.title("CozmoSoar")
 
@@ -42,31 +42,35 @@ class GUI:
         self.entry1 = Entry(master)
         self.entry1.grid(row=0, column=1)
 
-        self.send_command_button = Button(self.master, text="Send Command", command=self.send_command)
-        self.send_command_button.grid(row=1, sticky=W+E+N+S)
-        
+        self.send_command_button = Button(
+            self.master, text="Send Command", command=self.send_command
+        )
+        self.send_command_button.grid(row=1, sticky=W + E + N + S)
+
         self.step_button = Button(self.master, text="Step", command=self.step)
-        self.step_button.grid(row=1, column=1, sticky=W+E+N+S)
+        self.step_button.grid(row=1, column=1, sticky=W + E + N + S)
 
         self.step_x_button = Button(self.master, text="Step x Times", command=self.step_x)
-        self.step_x_button.grid(row=1, column=2, sticky=W+E+N+S)
+        self.step_x_button.grid(row=1, column=2, sticky=W + E + N + S)
 
         self.step_x_entry = Entry(self.master)
-        self.step_x_entry.grid(row=1, column=3, sticky=W+E+N+S)
-        
+        self.step_x_entry.grid(row=1, column=3, sticky=W + E + N + S)
+
         self.run_button = Button(self.master, text="Run", command=self.run)
-        self.run_button.grid(row=1, column=4, sticky=W+E+N+S)
-        
+        self.run_button.grid(row=1, column=4, sticky=W + E + N + S)
+
         self.stop_button = Button(self.master, text="Stop", command=self.stop)
-        self.stop_button.grid(row=1, column=5, sticky=W+E+N+S)
-        
+        self.stop_button.grid(row=1, column=5, sticky=W + E + N + S)
+
         self.label2 = Label(master, text="Num steps to run:")
         self.label2.grid(row=2)
-        
+
         self.entry2 = Entry(master)
         self.entry2.grid(row=2, column=1)
 
-        self.update_environment_inputs_button = Button(self.master, text="Update env inputs", command=self.update_environment_inputs)
+        self.update_environment_inputs_button = Button(
+            self.master, text="Update env inputs", command=self.update_environment_inputs
+        )
         self.update_environment_inputs_button.grid(row=2)
 
         self.close_button = Button(self.master, text="Close", command=self.master.quit)
@@ -162,25 +166,25 @@ class GUI:
         self.update_cam_view()
 
     def stop(self):
-        #stop
+        # stop
         self.run = False
-        
+
     def run(self):
         # run
         cmd = "step"
         self.run = True
-    
+
     def step(self):
         # step and update
         cmd = "step"
         print(self.agent.ExecuteCommandLine(cmd).strip())
-    
+
     def step_x(self):
         x = int(self.step_x_entry.get())
         cmd = "step"
         for i in range(x):
             print(self.agent.ExecuteCommandLine(cmd).strip())
-            
+
     def send_command(self):
         # sends commands to soar
         cmd = self.entry1.get()
@@ -285,5 +289,5 @@ def cozmo_program(robot: cozmo.robot.Robot):
     master.mainloop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cozmo.run_program(cozmo_program)

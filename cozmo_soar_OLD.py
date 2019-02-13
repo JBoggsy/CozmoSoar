@@ -24,7 +24,6 @@ class CozmoSoar(object):
     information to and from both the Soar agent and the actual Cozmo robot.
     """
 
-
     def __init__(self, robot: Robot, kernel: sml.Kernel, name: str):
         """
         Create a new `CozmoState` instance with the given robot and agent.
@@ -65,40 +64,33 @@ class CozmoSoar(object):
         :return: None
         """
         # First, we'll initialize simple WMEs which don't need an IdWME
-        self.in_link.add_attr('battery_voltage',
-                              lambda: self.r.battery_voltage)
-        self.in_link.add_attr('carrying_block',
-                              lambda: int(self.r.is_carrying_block))
-        self.in_link.add_attr('carrying_object_id',
-                              lambda: self.r.carrying_object_id)
-        self.in_link.add_attr('charging',
-                              lambda: int(self.r.is_charging))
-        self.in_link.add_attr('cliff_detected',
-                              lambda: int(self.r.is_cliff_detected))
-        self.in_link.add_attr('head_angle',
-                              lambda: self.r.head_angle.radians)
-        self.in_link.add_attr('face_count',
-                              self.w.visible_face_count)
-        self.in_link.add_attr('obj_count',
-                              lambda: len(self.objects))
-        self.in_link.add_attr('picked_up',
-                              lambda: int(self.r.is_picked_up))
-        self.in_link.add_attr('robot_id',
-                              lambda: self.r.robot_id)
-        self.in_link.add_attr('serial',
-                              self.r.serial)
+        self.in_link.add_attr("battery_voltage", lambda: self.r.battery_voltage)
+        self.in_link.add_attr("carrying_block", lambda: int(self.r.is_carrying_block))
+        self.in_link.add_attr("carrying_object_id", lambda: self.r.carrying_object_id)
+        self.in_link.add_attr("charging", lambda: int(self.r.is_charging))
+        self.in_link.add_attr("cliff_detected", lambda: int(self.r.is_cliff_detected))
+        self.in_link.add_attr("head_angle", lambda: self.r.head_angle.radians)
+        self.in_link.add_attr("face_count", self.w.visible_face_count)
+        self.in_link.add_attr("obj_count", lambda: len(self.objects))
+        self.in_link.add_attr("picked_up", lambda: int(self.r.is_picked_up))
+        self.in_link.add_attr("robot_id", lambda: self.r.robot_id)
+        self.in_link.add_attr("serial", self.r.serial)
 
         # Now we initialize more complex WMEs which need special IdWMEs
-        lift_attr_dict = {'angle': lambda: self.r.lift_angle.radians,
-                          'height': lambda: self.r.lift_height.distance_mm,
-                          'ratio': lambda: self.r.lift_ratio}
-        lift_wme = self.in_link.create_child_wme('lift', lift_attr_dict)
+        lift_attr_dict = {
+            "angle": lambda: self.r.lift_angle.radians,
+            "height": lambda: self.r.lift_height.distance_mm,
+            "ratio": lambda: self.r.lift_ratio,
+        }
+        lift_wme = self.in_link.create_child_wme("lift", lift_attr_dict)
 
-        pose_attr_dict = {'rot': lambda: self.r.pose.rotation.angle_z.radians,
-                          'x': lambda: self.r.pose.position.x,
-                          'y': lambda: self.r.pose.position.y,
-                          'z': lambda: self.r.pose.position.z}
-        pose_wme = self.in_link.create_child_wme('pose', pose_attr_dict)
+        pose_attr_dict = {
+            "rot": lambda: self.r.pose.rotation.angle_z.radians,
+            "x": lambda: self.r.pose.position.x,
+            "y": lambda: self.r.pose.position.y,
+            "z": lambda: self.r.pose.position.z,
+        }
+        pose_wme = self.in_link.create_child_wme("pose", pose_attr_dict)
 
         # Initialize object WMEs (right now only light cubes)
         for o in self.w.visible_objects:
@@ -112,46 +104,52 @@ class CozmoSoar(object):
             self.faces[f.face_id] = f
 
     def init_light_cube_wme(self, l_cube):
-        l_cube_attr_dict = {'object_id': l_cube.object_id,
-                            'connected': lambda: l_cube.is_connected,
-                            'cube_id': lambda: l_cube.cube_id,
-                            'descriptive_name': lambda: l_cube.descriptive_name,
-                            'distance': obj_distance_factory(self.r, l_cube),
-                            'heading': obj_heading_factory(self.r, l_cube),
-                            'moving': lambda: int(l_cube.is_moving),
-                            'liftable': lambda: int(l_cube.pickupable),
-                            'type': "cube",
-                            'visible': lambda: int(l_cube.is_visible)}
-        l_cube_wme = self.in_link.create_child_wme(l_cube.descriptive_name,
-                                                   l_cube_attr_dict,
-                                                   soar_name='object')
+        l_cube_attr_dict = {
+            "object_id": l_cube.object_id,
+            "connected": lambda: l_cube.is_connected,
+            "cube_id": lambda: l_cube.cube_id,
+            "descriptive_name": lambda: l_cube.descriptive_name,
+            "distance": obj_distance_factory(self.r, l_cube),
+            "heading": obj_heading_factory(self.r, l_cube),
+            "moving": lambda: int(l_cube.is_moving),
+            "liftable": lambda: int(l_cube.pickupable),
+            "type": "cube",
+            "visible": lambda: int(l_cube.is_visible),
+        }
+        l_cube_wme = self.in_link.create_child_wme(
+            l_cube.descriptive_name, l_cube_attr_dict, soar_name="object"
+        )
 
         # Add pose WME for cube
-        lc_pose_attr_dict = {'rot': lambda: l_cube.pose.rotation.angle_z.radians,
-                             'x': lambda: l_cube.pose.position.x,
-                             'y': lambda: l_cube.pose.position.y,
-                             'z': lambda: l_cube.pose.position.z}
-        lc_pose_wme = l_cube_wme.create_child_wme('pose', lc_pose_attr_dict)
+        lc_pose_attr_dict = {
+            "rot": lambda: l_cube.pose.rotation.angle_z.radians,
+            "x": lambda: l_cube.pose.position.x,
+            "y": lambda: l_cube.pose.position.y,
+            "z": lambda: l_cube.pose.position.z,
+        }
+        lc_pose_wme = l_cube_wme.create_child_wme("pose", lc_pose_attr_dict)
 
     def init_face_wme(self, face):
         new_face_wme_attr_dict = {
-            'name': lambda: face.name,
-            'face_id': lambda: face.face_id,
-            'expression': lambda: face.expression,
-            'expression_conf': lambda: face.expression_score,
-            'distance': obj_distance_factory(self.r, face),
-            'heading': obj_heading_factory(self.r, face)
+            "name": lambda: face.name,
+            "face_id": lambda: face.face_id,
+            "expression": lambda: face.expression,
+            "expression_conf": lambda: face.expression_score,
+            "distance": obj_distance_factory(self.r, face),
+            "heading": obj_heading_factory(self.r, face),
         }
-        face_wme = self.in_link.create_child_wme("face-{}".format(face.face_id),
-                                                new_face_wme_attr_dict,
-                                                soar_name='face')
+        face_wme = self.in_link.create_child_wme(
+            "face-{}".format(face.face_id), new_face_wme_attr_dict, soar_name="face"
+        )
 
         # Add pose WME for face
-        face_pose_attr_dict = {'rot': lambda: face.pose.rotation.angle_z.radians,
-                               'x': lambda: face.pose.position.x,
-                               'y': lambda: face.pose.position.y,
-                               'z': lambda: face.pose.position.z}
-        lc_pose_wme = face_wme.create_child_wme('pose', face_pose_attr_dict)
+        face_pose_attr_dict = {
+            "rot": lambda: face.pose.rotation.angle_z.radians,
+            "x": lambda: face.pose.position.x,
+            "y": lambda: face.pose.position.y,
+            "z": lambda: face.pose.position.z,
+        }
+        lc_pose_wme = face_wme.create_child_wme("pose", face_pose_attr_dict)
 
     def init_object_wme(self, obj):
         """
@@ -160,22 +158,26 @@ class CozmoSoar(object):
         :param obj:
         :return:
         """
-        obj_attr_dict = {'object_id': obj.object_id,
-                         'descriptive_name': lambda: obj.descriptive_name,
-                         'distance': obj_distance_factory(self.r, obj),
-                         'heading': obj_heading_factory(self.r, obj),
-                         'liftable': lambda: int(obj.pickupable),
-                         'type': "object"}
-        obj_wme = self.in_link.create_child_wme(obj.descriptive_name,
-                                                obj_attr_dict,
-                                                soar_name='object')
+        obj_attr_dict = {
+            "object_id": obj.object_id,
+            "descriptive_name": lambda: obj.descriptive_name,
+            "distance": obj_distance_factory(self.r, obj),
+            "heading": obj_heading_factory(self.r, obj),
+            "liftable": lambda: int(obj.pickupable),
+            "type": "object",
+        }
+        obj_wme = self.in_link.create_child_wme(
+            obj.descriptive_name, obj_attr_dict, soar_name="object"
+        )
 
         # Add pose WME for obj
-        obj_pose_attr_dict = {'rot': lambda: obj.pose.rotation.angle_z.radians,
-                              'x': lambda: obj.pose.position.x,
-                              'y': lambda: obj.pose.position.y,
-                              'z': lambda: obj.pose.position.z}
-        obj_pose_wme = obj_wme.create_child_wme('pose', obj_pose_attr_dict)
+        obj_pose_attr_dict = {
+            "rot": lambda: obj.pose.rotation.angle_z.radians,
+            "x": lambda: obj.pose.position.x,
+            "y": lambda: obj.pose.position.y,
+            "z": lambda: obj.pose.position.z,
+        }
+        obj_pose_wme = obj_wme.create_child_wme("pose", obj_pose_attr_dict)
 
     def update_input(self):
         """
@@ -247,7 +249,9 @@ class CozmoSoar(object):
         elif comm_name == "dock-with-cube":
             success = self.__handle_dock_with_cube(command, agent)
         else:
-            raise NotImplementedError("Error: Don't know how to handle command {}".format(comm_name))
+            raise NotImplementedError(
+                "Error: Don't know how to handle command {}".format(comm_name)
+            )
 
         if not success:
             command.AddStatusComplete()
@@ -290,8 +294,11 @@ class CozmoSoar(object):
         try:
             target_id = int(command.GetParameterValue("target_object_id"))
         except ValueError as e:
-            print("Invalid target-object-id format {}".format(
-                command.GetParameterValue("target_object_id")))
+            print(
+                "Invalid target-object-id format {}".format(
+                    command.GetParameterValue("target_object_id")
+                )
+            )
             return False
         if target_id not in self.objects.keys():
             print("Couldn't find target object")
@@ -322,8 +329,9 @@ class CozmoSoar(object):
         try:
             target_id = int(command.GetParameterValue("object_id"))
         except ValueError as e:
-            print("Invalid target-object-id format {}".format(
-                command.GetParameterValue("object_id")))
+            print(
+                "Invalid target-object-id format {}".format(command.GetParameterValue("object_id"))
+            )
             return False
         if target_id not in self.objects.keys():
             print("Couldn't find target object")
@@ -471,7 +479,11 @@ class CozmoSoar(object):
         try:
             target_id = int(command.GetParameterValue("target_object_id"))
         except ValueError as e:
-            print("Invalid target-object-id format {}".format(command.GetParameterValue("target_object_id")))
+            print(
+                "Invalid target-object-id format {}".format(
+                    command.GetParameterValue("target_object_id")
+                )
+            )
             return False
         if target_id not in self.objects.keys():
             print("Couldn't find target object")
@@ -503,13 +515,13 @@ class CozmoSoar(object):
         if color_str not in COLORS:
             print("Invalid backpack lights color {}".format(color_str))
             return False
-        elif color_str == 'red':
+        elif color_str == "red":
             light = cozmo.lights.red_light
-        elif color_str == 'green':
+        elif color_str == "green":
             light = cozmo.lights.green_light
-        elif color_str == 'blue':
+        elif color_str == "blue":
             light = cozmo.lights.blue_light
-        elif color_str == 'white':
+        elif color_str == "white":
             light = cozmo.lights.white_light
         else:
             light = cozmo.lights.off_light
@@ -591,6 +603,7 @@ class CozmoSoar(object):
             else:
                 print("Action {} terminated because {}".format(action, failure_reason))
             command.AddStatusComplete()
+
         return __handle_action_complete
 
     #########################
@@ -628,21 +641,23 @@ class CozmoSoar(object):
         :return: None
         """
         new_face_wme_attr_dict = {
-            'name': lambda: face.name,
-            'face_id': lambda: face.face_id,
-            'expression': lambda: face.expression,
-            'expression_conf': lambda: face.expression_score
+            "name": lambda: face.name,
+            "face_id": lambda: face.face_id,
+            "expression": lambda: face.expression,
+            "expression_conf": lambda: face.expression_score,
         }
-        face_wme = self.in_link.create_child_wme("face-{}".format(face.face_id),
-                                                new_face_wme_attr_dict,
-                                                soar_name='face')
+        face_wme = self.in_link.create_child_wme(
+            "face-{}".format(face.face_id), new_face_wme_attr_dict, soar_name="face"
+        )
 
         # Add pose WME for face
-        face_pose_attr_dict = {'rot': lambda: face.pose.rotation.angle_z.radians,
-                               'x': lambda: face.pose.position.x,
-                               'y': lambda: face.pose.position.y,
-                               'z': lambda: face.pose.position.z}
-        lc_pose_wme = face_wme.create_child_wme('pose', face_pose_attr_dict)
+        face_pose_attr_dict = {
+            "rot": lambda: face.pose.rotation.angle_z.radians,
+            "x": lambda: face.pose.position.x,
+            "y": lambda: face.pose.position.y,
+            "z": lambda: face.pose.position.z,
+        }
+        lc_pose_wme = face_wme.create_child_wme("pose", face_pose_attr_dict)
         self.faces[face.face_id] = face
         print("Added face {}".format(face.face_id))
 
@@ -683,6 +698,7 @@ class WorkingMemoryElement(object):
     Note that right now, a WME represented with this object requires each
     attribute to have a unique name, unlike Soar.
     """
+
     def __init__(self, name: str, wme_ref, agent: sml.Agent, attr_dict=None):
         """
         Create a new WorkingMemoryElement with the given parameters.
@@ -771,7 +787,9 @@ class WorkingMemoryElement(object):
                     return str(val)
                 else:
                     return val
+
             return type_check
+
         current_value = type_check_wrapper(value_or_getter)()
         self.__attr_vals[name] = type_check_wrapper(value_or_getter)
         self.attr_refs[name] = self.__create_simple_wme_ref(name, current_value)
@@ -801,22 +819,14 @@ class WorkingMemoryElement(object):
         :return: A reference to the WME
         """
         if type(val) == int:
-            new_wme = self.agent.CreateIntWME(self.wme_ref,
-                                              name,
-                                              val)
+            new_wme = self.agent.CreateIntWME(self.wme_ref, name, val)
         elif type(val) == float:
-            new_wme = self.agent.CreateFloatWME(self.wme_ref,
-                                                name,
-                                                val)
+            new_wme = self.agent.CreateFloatWME(self.wme_ref, name, val)
         elif type(val) == str:
-            new_wme = self.agent.CreateStringWME(self.wme_ref,
-                                                 name,
-                                                 val)
+            new_wme = self.agent.CreateStringWME(self.wme_ref, name, val)
         else:
             # TODO: Put a logging warning here
-            new_wme = self.agent.CreateStringWME(self.wme_ref,
-                                                 name,
-                                                 str(val))
+            new_wme = self.agent.CreateStringWME(self.wme_ref, name, str(val))
         self.agent.Commit()
         return new_wme
 

@@ -14,11 +14,13 @@ from c_soar_util import *
 
 def cozmo_soar_engine(robot: cozmo.robot):
     agent_name = "cozmo"
-    agent = psl.SoarAgent(agent_name=agent_name,
-                          agent_source="productions/test-agent.soar",
-                          watch_level=1,
-                          write_to_stdout=True,
-                          print_handler=lambda s: print(GREEN_STR+s+RESET_STR))
+    agent = psl.SoarAgent(
+        agent_name=agent_name,
+        agent_source="productions/test-agent.soar",
+        watch_level=1,
+        write_to_stdout=True,
+        print_handler=lambda s: print(GREEN_STR + s + RESET_STR),
+    )
 
     cozmo_robot = CozmoSoar(agent, robot)
     for command in COZMO_COMMANDS:
@@ -36,6 +38,7 @@ def cozmo_soar_engine(robot: cozmo.robot):
     while True:
         sleep(60)
     # agent.stop()
+
 
 # def CozmoSoarEngine(robot: cozmo.robot.Robot):
 #     kernel = sml.Kernel_CreateKernelInNewThread()
