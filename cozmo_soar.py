@@ -156,12 +156,15 @@ class CozmoSoar(psl.AgentConnector):
                 )
             )
             return False
-        if target_id not in self.objects.keys():
+
+        target_dsg = "obj{}".format(target_id)
+        if target_dsg not in self.objects.keys():
             print("Couldn't find target object")
+            print(self.objects)
             return False
 
-        print("Placing held object on top of {}".format(target_id))
-        target_obj = self.objects[target_id]
+        print("Placing held object on top of {}".format(target_dsg))
+        target_obj = self.objects[target_dsg]
         place_on_object_action = self.robot.place_on_object(target_obj)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)

@@ -16,7 +16,7 @@ def cozmo_soar_engine(robot: cozmo.robot):
     agent_name = "cozmo"
     agent = psl.SoarAgent(
         agent_name=agent_name,
-        agent_source="productions/test-agent.soar",
+        agent_source="productions/cube-stack.soar",
         watch_level=1,
         write_to_stdout=True,
         print_handler=lambda s: print(GREEN_STR + s + RESET_STR),
@@ -31,12 +31,11 @@ def cozmo_soar_engine(robot: cozmo.robot):
     agent.add_connector("cozmo", cozmo_robot)
     agent.add_connector("observer", soar_observer)
     agent.connect()
-    agent.start()
-    # for i in range(25):
-    #     agent.execute_command('step')
-    #     sleep(1)
-    while True:
-        sleep(60)
+    # agent.start()
+    for i in range(25):
+        agent.execute_command(input('>> '))
+    # while True:
+    #     sleep(60)
     # agent.stop()
 
 

@@ -1,0 +1,16 @@
+sp {cube-stack*elaborate*dist-from-origin
+   (state <s> ^name cube-stack
+              ^origin-pose <o-pose>
+              ^io.input-link.pose <pose>)
+   (<o-pose> ^rot <o-rot>
+             ^x <o-x>
+             ^y <o-y>
+             ^z <o-z>)
+   (<pose> ^rot <rot>
+           ^x <x>
+           ^y <y>
+           ^z <z>)
+-->
+   (<s> ^origin-dist (compute-range <x> <y> <o-x> <o-y>)
+        ^origin-hd (compute-heading <x> <y> <o-x> <o-y>))
+}
