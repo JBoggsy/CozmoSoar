@@ -22,6 +22,16 @@ Several libraries and tools are needed prior to installing the Cozmo-Soar interf
 4. Create a new directory, and download Aaron Mininger's `PySoarLib` (linked above) from GitHub to that folder, and add the new directory, which should contain the root directory of `PySoarLib`, to your `PYTHONPATH`.
 5. Finally, download the Cozmo-Soar Interface code from GitHub, and add its root directory to your `PYTHONPATH`.
 
+## How to Use
+To run a Soar agent using this interface, simply `cd` to the directory holding `main.py` and run 
+
+```
+python3 main.py [path/to/agent.soar]
+```
+replacing `[path/to/agent.soar]` appropriately. This will run the Soar agent in continuous run 
+mode. adding the `-i` flag will instead run in interactive mode, which allows you to send Soar 
+commands. In order to advance the agent in this mode, use the `step` command. 
+
 ## Cozmo-Soar Interface
 The Cozmo-Soar interface provides certain input-link attributes and values to a Soar agent, and listens for certain output-link attributes and their values to allow the agent to control the Cozmo. The nature of these are described below: 
 
