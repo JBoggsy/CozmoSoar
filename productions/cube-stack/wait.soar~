@@ -1,8 +1,7 @@
 sp {propose*wait
    (state <s> ^attribute state
-              ^choices none
-             -^operator.name wait)
+              ^choices none)
 -->
-   (<s> ^operator <op> =)
+   (<s> ^operator <op> + =)
    (<op> ^name wait)
 }
