@@ -544,7 +544,8 @@ class CozmoSoar(psl.AgentConnector):
                 faces_missing.add(face_dsg)
         for face_dsg in faces_missing:
             del self.faces[face_dsg]
-            remove_list = self.__destroy_wme_subtree(face_dsg)
+            remove_list = [(n, self.WMEs[n]) for n in self.WMEs.keys() if n.startswith(face_dsg)]
+            remove_list = sorted(remove_list, key=lambda s: 1/len(s[0]))
             for wme_name, wme in remove_list:
                 del self.WMEs[wme_name]
                 if isinstance(wme, psl.SoarWME):
@@ -574,7 +575,8 @@ class CozmoSoar(psl.AgentConnector):
                 objs_missing.add(obj_dsg)
         for obj_dsg in objs_missing:
             del self.objects[obj_dsg]
-            remove_list = self.__destroy_wme_subtree(obj_dsg)
+            remove_list = [(n, self.WMEs[n]) for n in self.WMEs.keys() if n.startswith(obj_dsg)]
+            remove_list = sorted(remove_list, key=lambda s: 1/len(s[0]))
             for wme_name, wme in remove_list:
                 del self.WMEs[wme_name]
                 if isinstance(wme, psl.SoarWME):
@@ -583,21 +585,6 @@ class CozmoSoar(psl.AgentConnector):
                     wme.DestroyWME()
                 else:
                     raise Exception("WME wasn't of proper type")
-
-    def __destroy_wme_subtree(self, wme_name):
-        """
-        Recursively destroy all WMEs rooted at the object with the given wme_name.
-
-        :param obj_dsg:
-        :return: None
-        """
-        remove_list = []
-        for sub_tree_root_name in self.WMEs.keys():
-            if sub_tree_root_name.startswith(wme_name) and sub_tree_root_name != wme_name:
-                remove_list += self.__destroy_wme_subtree(sub_tree_root_name)
-        wme = self.WMEs[wme_name]
-        remove_list.append((wme_name, wme))
-        return remove_list
 
     def __build_obj_wme_subtree(self, obj, obj_designation, obj_wme):
         """
@@ -611,18 +598,32 @@ class CozmoSoar(psl.AgentConnector):
         obj_input_dict = {
             "object_id": obj.object_id,
             "descriptive_name": obj.descriptive_name,
-            "distance": obj_distance_factory(self.r, obj)(),
-            "heading": obj_heading_factory(self.r, obj)(),
             "liftable": int(obj.pickupable),
             "type": "object",
+            "pose": {
+                "rot": lambda: obj.pose.rotation.angle_z.radians,
+                "x": lambda: obj.pose.position.x,
+                "y": lambda: obj.pose.position.y,
+                "z": lambda: obj.pose.position.z,
+            }
         }
         if isinstance(obj, cozmo.objects.LightCube):
             obj_input_dict["type"] = "cube"
             obj_input_dict["connected"] = obj.is_connected
             obj_input_dict["cube_id"] = obj.cube_id
             obj_input_dict["moving"] = obj.is_moving
+
         for input_name in obj_input_dict.keys():
+            new_val = obj_input_dict[input_name]
             wme = self.WMEs.get(obj_designation + "." + input_name)
+
+            if isinstance(new_val, dict):
+                if wme is None:
+                    wme = obj_wme.CreateIdWME(input_name)
+                    self.WMEs[obj_designation + "." + input_name] = wme
+                self.__input_recurse(new_val, obj_designation + "." + input_name, wme)
+                continue
+
             if wme is None:
                 wme = psl.SoarWME(input_name, obj_input_dict[input_name])
                 wme.add_to_wm(obj_wme)
@@ -645,11 +646,24 @@ class CozmoSoar(psl.AgentConnector):
             "exp_score": face.expression_score,
             "face_id": face.face_id,
             "name": face.name if face.name != "" else "unknown",
-            "distance": obj_distance_factory(self.r, face)(),
-            "heading": obj_heading_factory(self.r, face)(),
+            "pose": {
+                "rot": lambda: face.pose.rotation.angle_z.radians,
+                "x": lambda: face.pose.position.x,
+                "y": lambda: face.pose.position.y,
+                "z": lambda: face.pose.position.z,
+            }
         }
         for input_name in face_input_dict.keys():
+            new_val = face_input_dict[input_name]
             wme = self.WMEs.get(face_designation + "." + input_name)
+
+            if isinstance(new_val, dict):
+                if wme is None:
+                    wme = face_wme.CreateIdWME(input_name)
+                    self.WMEs[face_designation + "." + input_name] = wme
+                self.__input_recurse(new_val, face_designation + "." + input_name, wme)
+                continue
+
             if wme is None:
                 wme = psl.SoarWME(input_name, face_input_dict[input_name])
                 wme.add_to_wm(face_wme)
