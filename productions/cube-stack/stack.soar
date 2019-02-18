@@ -65,7 +65,7 @@ sp {cube-stack*propose*turn-to-bot
    (state <s> ^name cube-stack
               ^stack-top <tid>
               ^stack-bot <bid>
-              ^io.input-link <in>
+              ^io.input-link <in>)
    (<in> ^carrying_object_id <tid>
         -^object.cube_id <bid>)
 -->
