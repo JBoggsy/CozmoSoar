@@ -1,4 +1,4 @@
-35
+427
 SOAR_ID 0
 SOAR_ID 1
 SOAR_ID 2
@@ -6,7 +6,7 @@ SOAR_ID 3
 SOAR_ID 4
 ENUMERATION 5 1 state
 ENUMERATION 6 1 nil
-ENUMERATION 7 1 test-agent
+ENUMERATION 7 9 test-agent test-agent-dock-with-cube test-agent-drive-forward test-agent-face-recog test-agent-go-to-object test-agent-pick-up-object test-agent-point-nav test-agent-track-object test-agent-turn-in-place
 ENUMERATION 8 1 initialize-test-agent
 SOAR_ID 9
 ENUMERATION 10 1 lift-move
@@ -34,7 +34,401 @@ SOAR_ID 31
 ENUMERATION 32 1 track-object
 SOAR_ID 33
 ENUMERATION 34 1 wait
-35
+SOAR_ID 35
+INTEGER_RANGE 36 -2147483648 2147483647
+ENUMERATION 37 1 true
+ENUMERATION 38 1 true
+ENUMERATION 39 1 true
+ENUMERATION 40 1 true
+ENUMERATION 41 1 true
+ENUMERATION 42 1 true
+ENUMERATION 43 1 true
+ENUMERATION 44 1 true
+ENUMERATION 45 1 true
+ENUMERATION 46 1 true
+ENUMERATION 47 1 true
+ENUMERATION 48 1 true
+ENUMERATION 49 1 true
+ENUMERATION 50 1 true
+INTEGER_RANGE 51 -2147483648 2147483647
+INTEGER_RANGE 52 -2147483648 2147483647
+INTEGER_RANGE 53 -2147483648 2147483647
+INTEGER_RANGE 54 -2147483648 2147483647
+INTEGER_RANGE 55 -2147483648 2147483647
+INTEGER_RANGE 56 -2147483648 2147483647
+INTEGER_RANGE 57 -2147483648 2147483647
+INTEGER_RANGE 58 -2147483648 2147483647
+INTEGER_RANGE 59 -2147483648 2147483647
+INTEGER_RANGE 60 -2147483648 2147483647
+INTEGER_RANGE 61 -2147483648 2147483647
+INTEGER_RANGE 62 -2147483648 2147483647
+INTEGER_RANGE 63 -2147483648 2147483647
+INTEGER_RANGE 64 -2147483648 2147483647
+INTEGER_RANGE 65 -2147483648 2147483647
+INTEGER_RANGE 66 -2147483648 2147483647
+INTEGER_RANGE 67 -2147483648 2147483647
+INTEGER_RANGE 68 -2147483648 2147483647
+INTEGER_RANGE 69 -2147483648 2147483647
+INTEGER_RANGE 70 -2147483648 2147483647
+INTEGER_RANGE 71 -2147483648 2147483647
+INTEGER_RANGE 72 -2147483648 2147483647
+INTEGER_RANGE 73 -2147483648 2147483647
+INTEGER_RANGE 74 -2147483648 2147483647
+INTEGER_RANGE 75 -2147483648 2147483647
+INTEGER_RANGE 76 -2147483648 2147483647
+INTEGER_RANGE 77 -2147483648 2147483647
+INTEGER_RANGE 78 -2147483648 2147483647
+SOAR_ID 79
+ENUMERATION 80 1 true
+ENUMERATION 81 1 complete
+SOAR_ID 82
+SOAR_ID 83
+SOAR_ID 84
+SOAR_ID 85
+SOAR_ID 86
+SOAR_ID 87
+SOAR_ID 88
+SOAR_ID 89
+SOAR_ID 90
+SOAR_ID 91
+SOAR_ID 92
+SOAR_ID 93
+SOAR_ID 94
+SOAR_ID 95
+SOAR_ID 96
+SOAR_ID 97
+SOAR_ID 98
+SOAR_ID 99
+SOAR_ID 100
+SOAR_ID 101
+SOAR_ID 102
+SOAR_ID 103
+SOAR_ID 104
+SOAR_ID 105
+SOAR_ID 106
+SOAR_ID 107
+SOAR_ID 108
+SOAR_ID 109
+SOAR_ID 110
+SOAR_ID 111
+SOAR_ID 112
+SOAR_ID 113
+SOAR_ID 114
+SOAR_ID 115
+SOAR_ID 116
+SOAR_ID 117
+SOAR_ID 118
+SOAR_ID 119
+SOAR_ID 120
+SOAR_ID 121
+SOAR_ID 122
+SOAR_ID 123
+SOAR_ID 124
+SOAR_ID 125
+SOAR_ID 126
+SOAR_ID 127
+SOAR_ID 128
+SOAR_ID 129
+SOAR_ID 130
+SOAR_ID 131
+SOAR_ID 132
+SOAR_ID 133
+SOAR_ID 134
+SOAR_ID 135
+SOAR_ID 136
+SOAR_ID 137
+SOAR_ID 138
+SOAR_ID 139
+SOAR_ID 140
+SOAR_ID 141
+SOAR_ID 142
+INTEGER_RANGE 143 -2147483648 2147483647
+SOAR_ID 144
+ENUMERATION 145 1 lift-move-up
+FLOAT_RANGE 146 -Infinity Infinity
+FLOAT_RANGE 147 -Infinity Infinity
+FLOAT_RANGE 148 -Infinity Infinity
+FLOAT_RANGE 149 -Infinity Infinity
+FLOAT_RANGE 150 -Infinity Infinity
+FLOAT_RANGE 151 -Infinity Infinity
+FLOAT_RANGE 152 -Infinity Infinity
+FLOAT_RANGE 153 -Infinity Infinity
+FLOAT_RANGE 154 -Infinity Infinity
+FLOAT_RANGE 155 -Infinity Infinity
+FLOAT_RANGE 156 -Infinity Infinity
+FLOAT_RANGE 157 -Infinity Infinity
+FLOAT_RANGE 158 -Infinity Infinity
+FLOAT_RANGE 159 -Infinity Infinity
+FLOAT_RANGE 160 -Infinity Infinity
+SOAR_ID 161
+ENUMERATION 162 1 lift-move-down
+INTEGER_RANGE 163 -2147483648 2147483647
+INTEGER_RANGE 164 -2147483648 2147483647
+SOAR_ID 165
+SOAR_ID 166
+SOAR_ID 167
+SOAR_ID 168
+SOAR_ID 169
+SOAR_ID 170
+SOAR_ID 171
+SOAR_ID 172
+SOAR_ID 173
+SOAR_ID 174
+SOAR_ID 175
+SOAR_ID 176
+SOAR_ID 177
+SOAR_ID 178
+SOAR_ID 179
+ENUMERATION 180 1 place-object-down
+SOAR_ID 181
+SOAR_ID 182
+SOAR_ID 183
+SOAR_ID 184
+SOAR_ID 185
+SOAR_ID 186
+SOAR_ID 187
+SOAR_ID 188
+SOAR_ID 189
+SOAR_ID 190
+SOAR_ID 191
+SOAR_ID 192
+SOAR_ID 193
+SOAR_ID 194
+SOAR_ID 195
+ENUMERATION 196 1 place-on-object
+SOAR_ID 197
+SOAR_ID 198
+SOAR_ID 199
+SOAR_ID 200
+SOAR_ID 201
+SOAR_ID 202
+SOAR_ID 203
+SOAR_ID 204
+SOAR_ID 205
+SOAR_ID 206
+SOAR_ID 207
+SOAR_ID 208
+SOAR_ID 209
+SOAR_ID 210
+INTEGER_RANGE 211 -2147483648 2147483647
+INTEGER_RANGE 212 -2147483648 2147483647
+INTEGER_RANGE 213 -2147483648 2147483647
+SOAR_ID 214
+SOAR_ID 215
+SOAR_ID 216
+SOAR_ID 217
+SOAR_ID 218
+SOAR_ID 219
+SOAR_ID 220
+SOAR_ID 221
+SOAR_ID 222
+SOAR_ID 223
+SOAR_ID 224
+SOAR_ID 225
+SOAR_ID 226
+SOAR_ID 227
+INTEGER_RANGE 228 -2147483648 2147483647
+INTEGER_RANGE 229 -2147483648 2147483647
+INTEGER_RANGE 230 -2147483648 2147483647
+INTEGER_RANGE 231 -2147483648 2147483647
+INTEGER_RANGE 232 -2147483648 2147483647
+INTEGER_RANGE 233 -2147483648 2147483647
+INTEGER_RANGE 234 -2147483648 2147483647
+INTEGER_RANGE 235 -2147483648 2147483647
+INTEGER_RANGE 236 -2147483648 2147483647
+INTEGER_RANGE 237 -2147483648 2147483647
+INTEGER_RANGE 238 -2147483648 2147483647
+INTEGER_RANGE 239 -2147483648 2147483647
+INTEGER_RANGE 240 -2147483648 2147483647
+INTEGER_RANGE 241 -2147483648 2147483647
+INTEGER_RANGE 242 -2147483648 2147483647
+INTEGER_RANGE 243 -2147483648 2147483647
+INTEGER_RANGE 244 -2147483648 2147483647
+INTEGER_RANGE 245 -2147483648 2147483647
+SOAR_ID 246
+SOAR_ID 247
+SOAR_ID 248
+SOAR_ID 249
+SOAR_ID 250
+SOAR_ID 251
+SOAR_ID 252
+SOAR_ID 253
+SOAR_ID 254
+SOAR_ID 255
+SOAR_ID 256
+SOAR_ID 257
+SOAR_ID 258
+SOAR_ID 259
+SOAR_ID 260
+ENUMERATION 261 1 set-lights-green
+SOAR_ID 262
+SOAR_ID 263
+SOAR_ID 264
+SOAR_ID 265
+SOAR_ID 266
+SOAR_ID 267
+SOAR_ID 268
+SOAR_ID 269
+SOAR_ID 270
+SOAR_ID 271
+SOAR_ID 272
+SOAR_ID 273
+SOAR_ID 274
+SOAR_ID 275
+SOAR_ID 276
+ENUMERATION 277 1 move-lift-up
+SOAR_ID 278
+ENUMERATION 279 1 mark-visited
+SOAR_ID 280
+SOAR_ID 281
+SOAR_ID 282
+SOAR_ID 283
+SOAR_ID 284
+SOAR_ID 285
+SOAR_ID 286
+SOAR_ID 287
+SOAR_ID 288
+SOAR_ID 289
+SOAR_ID 290
+SOAR_ID 291
+SOAR_ID 292
+SOAR_ID 293
+SOAR_ID 294
+SOAR_ID 295
+SOAR_ID 296
+SOAR_ID 297
+SOAR_ID 298
+SOAR_ID 299
+SOAR_ID 300
+ENUMERATION 301 1 set-backpack-lights-green
+ENUMERATION 302 2 green red
+ENUMERATION 303 2 green red
+ENUMERATION 304 2 green red
+ENUMERATION 305 2 green red
+ENUMERATION 306 2 green red
+ENUMERATION 307 2 green red
+ENUMERATION 308 2 green red
+ENUMERATION 309 2 green red
+ENUMERATION 310 2 green red
+ENUMERATION 311 2 green red
+ENUMERATION 312 2 green red
+ENUMERATION 313 2 green red
+ENUMERATION 314 2 green red
+ENUMERATION 315 2 green red
+SOAR_ID 316
+SOAR_ID 317
+SOAR_ID 318
+SOAR_ID 319
+SOAR_ID 320
+SOAR_ID 321
+SOAR_ID 322
+SOAR_ID 323
+SOAR_ID 324
+SOAR_ID 325
+SOAR_ID 326
+SOAR_ID 327
+SOAR_ID 328
+SOAR_ID 329
+SOAR_ID 330
+SOAR_ID 331
+SOAR_ID 332
+ENUMERATION 333 1 state
+ENUMERATION 334 1 none
+SOAR_ID 335
+SOAR_ID 336
+SOAR_ID 337
+SOAR_ID 338
+SOAR_ID 339
+SOAR_ID 340
+SOAR_ID 341
+SOAR_ID 342
+SOAR_ID 343
+SOAR_ID 344
+SOAR_ID 345
+SOAR_ID 346
+SOAR_ID 347
+SOAR_ID 348
+SOAR_ID 349
+SOAR_ID 350
+SOAR_ID 351
+SOAR_ID 352
+SOAR_ID 353
+FLOAT_RANGE 354 -Infinity Infinity
+FLOAT_RANGE 355 -Infinity Infinity
+FLOAT_RANGE 356 -Infinity Infinity
+FLOAT_RANGE 357 -Infinity Infinity
+FLOAT_RANGE 358 -Infinity Infinity
+FLOAT_RANGE 359 -Infinity Infinity
+FLOAT_RANGE 360 -Infinity Infinity
+FLOAT_RANGE 361 -Infinity Infinity
+FLOAT_RANGE 362 -Infinity Infinity
+FLOAT_RANGE 363 -Infinity Infinity
+FLOAT_RANGE 364 -Infinity Infinity
+FLOAT_RANGE 365 -Infinity Infinity
+FLOAT_RANGE 366 -Infinity Infinity
+FLOAT_RANGE 367 -Infinity Infinity
+SOAR_ID 368
+SOAR_ID 369
+SOAR_ID 370
+SOAR_ID 371
+SOAR_ID 372
+SOAR_ID 373
+SOAR_ID 374
+SOAR_ID 375
+SOAR_ID 376
+SOAR_ID 377
+SOAR_ID 378
+SOAR_ID 379
+SOAR_ID 380
+SOAR_ID 381
+INTEGER_RANGE 382 -2147483648 2147483647
+INTEGER_RANGE 383 -2147483648 2147483647
+INTEGER_RANGE 384 -2147483648 2147483647
+INTEGER_RANGE 385 -2147483648 2147483647
+INTEGER_RANGE 386 -2147483648 2147483647
+INTEGER_RANGE 387 -2147483648 2147483647
+INTEGER_RANGE 388 -2147483648 2147483647
+INTEGER_RANGE 389 -2147483648 2147483647
+INTEGER_RANGE 390 -2147483648 2147483647
+INTEGER_RANGE 391 -2147483648 2147483647
+INTEGER_RANGE 392 -2147483648 2147483647
+INTEGER_RANGE 393 -2147483648 2147483647
+INTEGER_RANGE 394 -2147483648 2147483647
+INTEGER_RANGE 395 -2147483648 2147483647
+SOAR_ID 396
+SOAR_ID 397
+SOAR_ID 398
+SOAR_ID 399
+SOAR_ID 400
+SOAR_ID 401
+SOAR_ID 402
+SOAR_ID 403
+SOAR_ID 404
+SOAR_ID 405
+SOAR_ID 406
+SOAR_ID 407
+SOAR_ID 408
+SOAR_ID 409
+SOAR_ID 410
+SOAR_ID 411
+SOAR_ID 412
+SOAR_ID 413
+SOAR_ID 414
+SOAR_ID 415
+SOAR_ID 416
+SOAR_ID 417
+SOAR_ID 418
+SOAR_ID 419
+SOAR_ID 420
+SOAR_ID 421
+SOAR_ID 422
+SOAR_ID 423
+SOAR_ID 424
+SOAR_ID 425
+SOAR_ID 426
+427
+0 attribute 333
+0 choices 334
 0 io 1
 0 name 7
 0 operator 4
@@ -51,22 +445,412 @@ ENUMERATION 34 1 wait
 0 operator 29
 0 operator 31
 0 operator 33
+0 operator 144
+0 operator 161
+0 operator 179
+0 operator 195
+0 operator 260
+0 operator 276
+0 operator 278
+0 operator 300
+0 performing-action 80
+0 serial 336
 0 superstate 6
+0 superstate 82
 0 top-state 0
 0 type 5
+0 visited 211
 1 input-link 2
 1 output-link 3
+2 carrying_block 163
+2 face 318
+2 face_count 143
+2 lift 142
+2 object 35
+2 serial 335
+3 drive-forward 79
+3 turn-in-place 317
+4 actions 38
+4 actions 90
+4 angle 231
+4 distance 52
 4 name 8
+4 speed 66
+4 visited 284
+9 actions 44
+9 actions 96
+9 angle 238
+9 distance 58
 9 name 10
+9 speed 72
+9 visited 292
+11 actions 46
+11 actions 94
+11 angle 240
+11 distance 60
 11 name 12
+11 speed 74
+11 visited 294
+13 actions 45
+13 actions 102
+13 angle 239
+13 distance 59
 13 name 14
+13 speed 73
+13 visited 293
+15 actions 40
+15 actions 98
+15 angle 233
+15 distance 54
 15 name 16
+15 speed 68
+15 visited 286
+17 actions 49
+17 actions 112
+17 angle 243
+17 distance 63
 17 name 18
+17 speed 77
+17 visited 297
+19 actions 43
+19 actions 100
+19 angle 237
+19 distance 57
 19 name 20
+19 speed 71
+19 visited 291
+21 actions 37
+21 actions 106
+21 angle 228
+21 distance 51
 21 name 22
+21 speed 65
+21 visited 280
+23 actions 42
+23 actions 104
+23 angle 235
+23 distance 56
 23 name 24
+23 speed 70
+23 visited 288
+25 actions 50
+25 actions 88
+25 angle 244
+25 distance 64
 25 name 26
+25 speed 78
+25 visited 298
+27 actions 47
+27 actions 86
+27 angle 241
+27 distance 61
 27 name 28
+27 speed 75
+27 visited 295
+29 actions 48
+29 actions 110
+29 angle 242
+29 distance 62
 29 name 30
+29 speed 76
+29 visited 296
+31 actions 41
+31 actions 108
+31 angle 234
+31 distance 55
 31 name 32
+31 speed 69
+31 visited 287
+33 actions 39
+33 actions 92
+33 angle 232
+33 distance 53
 33 name 34
+33 speed 67
+33 visited 285
+35 cube_id 212
+35 distance 213
+35 heading 316
+35 liftable 164
+35 object_id 85
+35 visible 36
+79 distance 351
+79 speed 352
+79 status 81
+82 io 83
+82 operator 84
+84 name 353
+86 dock-with-cube 255
+86 go-to-object 87
+86 move-head 137
+86 move-lift 123
+86 pick-up-object 174
+86 place-object-down 190
+86 place-on-object 206
+86 set-backpack-lights 271
+86 turn-to-face 328
+87 target_object_id 214
+88 dock-with-cube 256
+88 go-to-object 89
+88 move-head 138
+88 move-lift 124
+88 pick-up-object 175
+88 place-object-down 191
+88 place-on-object 207
+88 set-backpack-lights 272
+88 turn-to-face 329
+89 target_object_id 217
+90 dock-with-cube 246
+90 go-to-object 91
+90 move-head 128
+90 move-lift 114
+90 pick-up-object 165
+90 place-object-down 181
+90 place-on-object 197
+90 set-backpack-lights 262
+90 turn-to-face 319
+91 target_object_id 226
+92 dock-with-cube 248
+92 go-to-object 93
+92 move-head 130
+92 move-lift 116
+92 pick-up-object 167
+92 place-object-down 183
+92 place-on-object 199
+92 set-backpack-lights 264
+92 turn-to-face 321
+93 target_object_id 227
+94 dock-with-cube 251
+94 go-to-object 95
+94 move-head 133
+94 move-lift 119
+94 pick-up-object 170
+94 place-object-down 186
+94 place-on-object 202
+94 set-backpack-lights 267
+94 turn-to-face 324
+95 target_object_id 216
+96 dock-with-cube 257
+96 go-to-object 97
+96 move-head 139
+96 move-lift 125
+96 pick-up-object 176
+96 place-object-down 192
+96 place-on-object 208
+96 set-backpack-lights 273
+96 turn-to-face 330
+97 target_object_id 222
+98 dock-with-cube 258
+98 go-to-object 99
+98 move-head 140
+98 move-lift 126
+98 pick-up-object 177
+98 place-object-down 193
+98 place-on-object 209
+98 set-backpack-lights 274
+98 turn-to-face 331
+99 target_object_id 224
+100 dock-with-cube 250
+100 go-to-object 101
+100 move-head 132
+100 move-lift 118
+100 pick-up-object 169
+100 place-object-down 185
+100 place-on-object 201
+100 set-backpack-lights 266
+100 turn-to-face 323
+101 target_object_id 221
+102 dock-with-cube 249
+102 go-to-object 103
+102 move-head 131
+102 move-lift 117
+102 pick-up-object 168
+102 place-object-down 184
+102 place-on-object 200
+102 set-backpack-lights 265
+102 turn-to-face 322
+103 target_object_id 220
+104 dock-with-cube 247
+104 go-to-object 105
+104 move-head 129
+104 move-lift 115
+104 pick-up-object 166
+104 place-object-down 182
+104 place-on-object 198
+104 set-backpack-lights 263
+104 turn-to-face 320
+105 target_object_id 225
+106 dock-with-cube 252
+106 go-to-object 107
+106 move-head 134
+106 move-lift 120
+106 pick-up-object 171
+106 place-object-down 187
+106 place-on-object 203
+106 set-backpack-lights 268
+106 turn-to-face 325
+107 target_object_id 218
+108 dock-with-cube 253
+108 go-to-object 109
+108 move-head 135
+108 move-lift 121
+108 pick-up-object 172
+108 place-object-down 188
+108 place-on-object 204
+108 set-backpack-lights 269
+108 turn-to-face 326
+109 target_object_id 219
+110 dock-with-cube 254
+110 go-to-object 111
+110 move-head 136
+110 move-lift 122
+110 pick-up-object 173
+110 place-object-down 189
+110 place-on-object 205
+110 set-backpack-lights 270
+110 turn-to-face 327
+111 target_object_id 223
+112 dock-with-cube 259
+112 go-to-object 113
+112 move-head 141
+112 move-lift 127
+112 pick-up-object 178
+112 place-object-down 194
+112 place-on-object 210
+112 set-backpack-lights 275
+112 turn-to-face 332
+113 target_object_id 215
+114 height 146
+115 height 149
+116 height 150
+117 height 157
+118 height 155
+119 height 152
+120 height 153
+121 height 158
+122 height 159
+123 height 148
+124 height 154
+125 height 147
+126 height 151
+127 height 156
+128 angle 363
+129 angle 364
+130 angle 366
+131 angle 367
+132 angle 360
+133 angle 365
+134 angle 355
+135 angle 358
+136 angle 356
+137 angle 361
+138 angle 357
+139 angle 354
+140 angle 359
+141 angle 362
+142 ratio 160
+144 angle 236
+144 name 145
+144 visited 290
+161 angle 229
+161 name 162
+161 visited 281
+165 object_id 370
+166 object_id 377
+167 object_id 378
+168 object_id 381
+169 object_id 380
+170 object_id 375
+171 object_id 379
+172 object_id 368
+173 object_id 372
+174 object_id 371
+175 object_id 373
+176 object_id 369
+177 object_id 374
+178 object_id 376
+179 angle 230
+179 name 180
+179 visited 282
+181 filler 393
+182 filler 386
+183 filler 395
+184 filler 382
+185 filler 384
+186 filler 394
+187 filler 388
+188 filler 390
+189 filler 387
+190 filler 389
+191 filler 385
+192 filler 383
+193 filler 391
+194 filler 392
+195 angle 245
+195 name 196
+195 visited 299
+197 target_object_id 399
+198 target_object_id 408
+199 target_object_id 396
+200 target_object_id 403
+201 target_object_id 404
+202 target_object_id 398
+203 target_object_id 401
+204 target_object_id 400
+205 target_object_id 397
+206 target_object_id 405
+207 target_object_id 407
+208 target_object_id 409
+209 target_object_id 402
+210 target_object_id 406
+246 object_id 337
+247 object_id 344
+248 object_id 339
+249 object_id 347
+250 object_id 349
+251 object_id 341
+252 object_id 338
+253 object_id 340
+254 object_id 342
+255 object_id 343
+256 object_id 348
+257 object_id 350
+258 object_id 345
+259 object_id 346
+260 name 261
+260 visited 289
+262 color 305
+263 color 314
+264 color 306
+265 color 303
+266 color 302
+267 color 309
+268 color 307
+269 color 311
+270 color 308
+271 color 312
+272 color 313
+273 color 304
+274 color 310
+275 color 315
+276 name 277
+276 visited 283
+278 name 279
+300 name 301
+317 angle 410
+317 speed 411
+318 face_id 412
+319 face-id 420
+320 face-id 419
+321 face-id 417
+322 face-id 425
+323 face-id 418
+324 face-id 414
+325 face-id 415
+326 face-id 423
+327 face-id 416
+328 face-id 422
+329 face-id 424
+330 face-id 426
+331 face-id 421
+332 face-id 413

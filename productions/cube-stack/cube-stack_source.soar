@@ -1,0 +1,14 @@
+source _firstload.soar
+pushd all
+source all_source.soar
+popd
+pushd elaborations
+source elaborations_source.soar
+popd
+source cozmo-actions.soar
+source general-action-elabs.soar
+source initialize-cube-stack.soar
+source location-elabs.soar
+source remember-cubes.soar
+source stack.soar
+source wait.soar

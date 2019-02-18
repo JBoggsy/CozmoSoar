@@ -1,0 +1,3 @@
+pushd cube-stack
+source cube-stack_source.soar
+popd
