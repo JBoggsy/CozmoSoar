@@ -348,18 +348,18 @@ class CozmoSoar(psl.AgentConnector):
 
         The Sour output should look like:
         (I3 ^go-to-object Vx)
-          (Vx ^target_object_id [id])
+          (Vx ^object_id [id])
         where [id] is the object id of the object to go to. Cozmo will stop 150mm from the object.
 
         :param command: Soar command object
         :return: True if successful, False otherwise
         """
         try:
-            target_id = int(command.GetParameterValue("target_object_id"))
+            target_id = int(command.GetParameterValue("object_id"))
         except ValueError as e:
             print(
                 "Invalid target-object-id format {}".format(
-                    command.GetParameterValue("target_object_id")
+                    command.GetParameterValue("object_id")
                 )
             )
             return False
