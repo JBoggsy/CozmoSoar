@@ -131,9 +131,22 @@ Provides information about a face Cozmo can currently see, such as its pose, exp
 #### [head-angle](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.head_angle)
 A float in [-0.44, 0.78]. Indicates the angle of Cozmo's head in radians, where 0 is looking directly forward. The bounds of the range are the minimum and maximum head angle Cozmo can achieve.
 
-#### lift
+#### [lift](http://cozmosdk.anki.com/docs/generated/cozmo.util.html#cozmo.util.Pose)
+The lift augmentation to the input-link provides information about the location of the lift in several forms:
+* `angle`: A float in [-0.20, 0.79]. The angle of Cozmo's lift relative to the ground in radians. 
+* `height`: A float in [32.00, 92.00]. The height of the lift off the ground in millimeters.
+* `ratio`: A float in [0.0, 1.0]. The ratio between how high the lift currently is and its maximum height. So a value of 0.0 means the lift is as low as possible, and a value of 1.0 is as high as possible.
 
 #### [object](http://cozmosdk.anki.com/docs/generated/cozmo.objects.html#cozmo.objects.ObservableObject)
+Provides information about an object Cozmo can currently see and recognize, such as its pose information, whether it can be lifted, and an ID for it. Each object augmentation corresponds to a unique object Cozmo can see, and can provide some or all of the following information:
+* `connected`: An string, either 'False' or 'True'. Indicates whether the object is connected to Cozmo via Bluetooth. Only given for Light Cube objects.
+* `cube_id`: An integer in [1, 3] which uniquely identifies which image is on the Light Cube. The paperclip with a lightning bolt is 1, the angled square with a curved tail is 2, and the one with a small square connected to a larger square is 3. Only provided if the object is a Light Cube.
+* `descriptive_name`: A descriptive string name given to the object.
+* `liftable`: An integer, either 0 for false or 1 for true. Indicates whether Cozmo can pick up the object with its lift.
+* `moving`: A string either "False" or "True". Indicates whether the object is moving based on its accelerometer. Only provided if the object is a Light Cube.
+* `object_id`: An integer uniquely identifying the object among all those Cozmo can currently see. Note that the ID of an object may not be the same if it leaves and then reenters Cozmo's vision.
+* `type`: A string indicating what kind of object it is. Normally "object", but will be "cube" if the object is a Light Cube.
+* `pose`: Pose information about the object. See [pose](#pose).
 
 #### [face-count](http://cozmosdk.anki.com/docs/generated/cozmo.world.html#cozmo.world.World.visible_face_count)
 An integer. Indicates how many faces Cozmo currently sees.
@@ -145,6 +158,11 @@ An integer. Indicates how many objects Cozmo currently sees.
 An integer, either 0 for false or 1 for true. Indicates whether Cozmo thinks it's been picked up off a surface.
 
 #### [pose](http://cozmosdk.anki.com/docs/generated/cozmo.util.html#cozmo.util.Pose)
+Provides information about the location and orientation of Cozmo, objects, and faces. Pose values are calculated by Cozmo relative to where Cozmo is on start-up, and the rotation is relative to Cozmo's initial heading. However, if Cozmo is de-localized, all existing pose information is invalidated, and a new origin is generated. Pose information includes:
+* `x`: A float indicating the distance in millimeters between the origin and Cozmo (or the object/face) on the x axis.
+* `y`: A float indicating the distance in millimeters between the origin and Cozmo (or the object/face) on the y axis.
+* `z`: A float indicating the distance in millimeters between the origin and Cozmo (or the object/face) on the z axis.
+* `rot`: The heading of Cozmo (or the object/face) in radians. 
 
 #### [robot-id](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.robot_id)
 An integer. The internal id number of the robot.
