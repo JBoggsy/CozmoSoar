@@ -11,7 +11,7 @@ import cv2
 from PIL import ImageTk
 from tkinter import *
 
-import Python_sml_ClientInterface as sml
+import soar.Python_sml_ClientInterface as sml
 
 
 class GUI:
