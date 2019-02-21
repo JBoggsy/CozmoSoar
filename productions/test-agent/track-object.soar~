@@ -1,12 +1,19 @@
 sp {test-agent*propose*track-object*turn-in-place
     (state <s> ^name test-agent-track-object
                ^io.input-link <in>)
-    (<in> ^object <obj>)
-    (<obj> ^heading <hd>)
+    (<in> ^object <obj>
+          ^pose <pose>)
+    (<obj> ^type cube
+           ^pose <c-pose>)
+    (<c-pose> ^x <c-x>
+            ^y <c-y>)
+    (<pose> ^x <r-x>
+            ^y <r-y>
+            ^rot <r-rot>)
 -->
     (<s> ^operator <op> + =)
     (<op> ^name turn-in-place
           ^actions true
-          ^angle <hd>
+          ^angle (- (compute-heading <r-y> <r-x> <c-y> <c-x>) <r-rot>)
           ^speed 30)
 }

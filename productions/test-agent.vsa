@@ -16,8 +16,8 @@ VERSION 4
 13	0	OPERATOR pick-up-object pick-up-object.soar 14
 14	0	OPERATOR point-nav point-nav.soar 15
 15	0	OPERATOR set-backpack-lights set-backpack-lights.soar 16
-16	0	OPERATOR track-object track-object.soar 19
-17	0	OPERATOR turn-in-place turn-in-place.soar 17
-18	0	OPERATOR turn-to-face turn-to-face.soar 18
+16	0	OPERATOR track-object track-object.soar 17
+17	0	OPERATOR turn-in-place turn-in-place.soar 18
+18	0	OPERATOR turn-to-face turn-to-face.soar 19
 19	0	OPERATOR wait wait.soar 20
 END

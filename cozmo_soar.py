@@ -1,7 +1,7 @@
 from time import sleep
 
 import PySoarLib as psl
-import Python_sml_ClientInterface as sml
+import soar.Python_sml_ClientInterface as sml
 
 import cozmo
 from cozmo.util import radians, degrees, distance_mm, speed_mmps
@@ -60,7 +60,7 @@ class CozmoSoar(psl.AgentConnector):
             "robot_id": lambda: self.r.robot_id,
             "serial": lambda: self.r.serial,
             "pose": {
-                "rot": lambda: self.r.pose.rotation.angle_z.radians,
+                "rot": lambda: self.r.pose.rotation.angle_z.degrees,
                 "x": lambda: self.r.pose.position.x,
                 "y": lambda: self.r.pose.position.y,
                 "z": lambda: self.r.pose.position.z,
@@ -601,7 +601,7 @@ class CozmoSoar(psl.AgentConnector):
             "liftable": int(obj.pickupable),
             "type": "object",
             "pose": {
-                "rot": lambda: obj.pose.rotation.angle_z.radians,
+                "rot": lambda: obj.pose.rotation.angle_z.degrees,
                 "x": lambda: obj.pose.position.x,
                 "y": lambda: obj.pose.position.y,
                 "z": lambda: obj.pose.position.z,
@@ -647,7 +647,7 @@ class CozmoSoar(psl.AgentConnector):
             "face_id": face.face_id,
             "name": face.name if face.name != "" else "unknown",
             "pose": {
-                "rot": lambda: face.pose.rotation.angle_z.radians,
+                "rot": lambda: face.pose.rotation.angle_z.degrees,
                 "x": lambda: face.pose.position.x,
                 "y": lambda: face.pose.position.y,
                 "z": lambda: face.pose.position.z,

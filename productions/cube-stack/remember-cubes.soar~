@@ -4,16 +4,24 @@ sp {cube-stack*propose*remember-cube
               ^io.input-link <in>)
    (<in> ^object <obj>)
    (<obj> ^type cube
-          ^cube_id <id>
-          ^distance <dist>
-          ^heading <hd>)
-  -(<s> ^block.id <id>)
+          ^cube_id <cid>
+          ^object_id <oid>
+          ^pose <p>)
+   (<p> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+  -(<s> ^block.cube_id <cid>)
 -->
    (<s> ^operator <op> + =)
    (<op> ^name remember-new-cube
-         ^id <id>
-         ^distance <dist>
-         ^heading <hd>)
+         ^cube_id <cid>
+         ^object_id <oid>
+         ^pose <pose>)
+   (<pose> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
 }
 
 sp {cube-stack*propose*update-cube
@@ -23,21 +31,25 @@ sp {cube-stack*propose*update-cube
               ^block <b>)
    (<in> ^object <obj>)
    (<obj> ^type cube
-          ^cube_id <id>
-          ^distance <dist>
-          ^heading <hd>)
-   (<b> ^id <id>
-        ^heading <old-hd>
-        ^distance <old-dist>)
+          ^cube_id <cid>
+          ^object_id <oid>
+          ^pose <p>)
+   (<p> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+   (<b> ^cube_id <cid>)
 -->
    (<s> ^operator <op> + =)
    (<op> ^name update-cube
          ^block <b>
-         ^id <id>
-         ^distance <dist>
-         ^heading <hd>
-         ^dist-diff (abs(- <dist> <old-dist>))
-         ^hd-diff (abs(- <hd> <old-hd>)))
+         ^cube_id <cid>
+         ^object_id <oid>
+         ^pose <pose>)
+   (<pose> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
 }
 
 
@@ -45,14 +57,22 @@ sp {apply*remember-new-cube
    "If a cube with this id not seen yet, add to wm"
    (state <s> ^operator <op>)
    (<op> ^name remember-new-cube
-         ^id <id>
-         ^distance <dist>
-         ^heading <hd>)
+         ^cube_id <cid>
+         ^object_id <oid>
+         ^pose <p>)
+   (<p> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
 -->
    (<s> ^block <b>)
-   (<b> ^id <id>
-        ^distance <dist>
-        ^heading <hd>)
+   (<b> ^cube_id <cid>
+        ^object_id <oid>
+        ^pose <pose>)
+   (<pose> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
 }
 
 sp {apply*update-cube-memory
@@ -60,16 +80,24 @@ sp {apply*update-cube-memory
    (state <s> ^operator <op>)
    (<op> ^name update-cube
          ^block <b>
-         ^id <id>
-         ^distance <dist>
-         ^heading <hd>)
+         ^cube_id <cid>
+         ^object_id <oid>
+         ^pose <p>)
+   (<p> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
    (<s> ^block <b>)
 -->
    (<s> ^block <b> -)
    (<s> ^block <new-b>)
-   (<new-b> ^id <id>
-            ^distance <dist>
-            ^heading <hd>)
+   (<new-b> ^cube_id <cid>
+            ^object_id <oid>
+            ^pose <pose>)
+   (<pose> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
 }
 
 sp {cube-stack*compare*remember-cube
@@ -89,9 +117,7 @@ sp {cube-stack*compare-heading*update-cube
               ^operator <op1> +
               ^operator <op2> +)
    (<op1> ^name update-cube
-          ^block <b>
-          ^distance <dist>
-          ^heading <hd>)
+          ^block <b>)
    (<op2> ^name <> update-cube)
 -->
    (<s> ^operator <op1> < <op2>)
