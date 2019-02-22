@@ -82,18 +82,18 @@ The Cozmo-Soar interface provides certain input-link attributes and values to a 
 
 ### Actions Overview
 * [dock-with-cube](#dock-with-cube)
-  * object_id (int)
+  * object-id (int)
 * [drive-forward](#drive-forward)
   * distance (float)
   * speed (float)
 * [go-to-object](#go-to-object)
-  * object_id (int)
+  * object-id (int)
 * [move-head](#move-head)
   * angle (float)
 * [move-lift](#move-lift)
   * height (float)
 * [pick-up-object](#pick-up-object)
-  * object_id (int)
+  * object-id (int)
 * [place-object-down](#place-object-down)
 * [set-backpack-lights](#set-backpack-lights)
   * color (str)
@@ -101,7 +101,7 @@ The Cozmo-Soar interface provides certain input-link attributes and values to a 
   * angle (float)
   * speed (float)
 * [turn-to-face](#turn-to-face)
-  * face_id (int)
+  * face-id (int)
   
 ### Input Details
 I've enumerated the different inputs a Soar agent receives from Cozmo and their meanings and potential values. Additionally, each is linked to their corresponding entry in Cozmo's SDK documentation, which may give more information.
@@ -123,7 +123,7 @@ An integer, either 0 for false or 1 for true. Indicates if Cozmo has detected a 
 #### [face](http://cozmosdk.anki.com/docs/generated/cozmo.faces.html#cozmo.faces.Face)
 Provides information about a face Cozmo can currently see, such as its pose, expression, and name. Each face Cozmo sees corresponds to a unique ^face augmentation to the input-link. Face augmentations provide the following information:
 * `expression`: A string indicating what expression Cozmo thinks the face is displaying. Possiblities include "happy", "angry", "sad", and "neutral". 
-* `exp_score`: An integer indicating Cozmo's confidence in its expression assignment. Maximum score is 100.
+* `exp-score`: An integer indicating Cozmo's confidence in its expression assignment. Maximum score is 100.
 * `face-id`: An integer ID given to the face internally, which uniquely identifies it among those seen. Note that this is not guaranteed to remain the same if the face leaves Cozmo's vision and then returns.
 * `name`: The name Cozmo associates with the face, if it has one.
 * `pose`: Pose information about the head. See [pose](#pose) 
@@ -140,11 +140,11 @@ The lift augmentation to the input-link provides information about the location 
 #### [object](http://cozmosdk.anki.com/docs/generated/cozmo.objects.html#cozmo.objects.ObservableObject)
 Provides information about an object Cozmo can currently see and recognize, such as its pose information, whether it can be lifted, and an ID for it. Each object augmentation corresponds to a unique object Cozmo can see, and can provide some or all of the following information:
 * `connected`: An string, either 'False' or 'True'. Indicates whether the object is connected to Cozmo via Bluetooth. Only given for Light Cube objects.
-* `cube_id`: An integer in [1, 3] which uniquely identifies which image is on the Light Cube. The paperclip with a lightning bolt is 1, the angled square with a curved tail is 2, and the one with a small square connected to a larger square is 3. Only provided if the object is a Light Cube.
-* `descriptive_name`: A descriptive string name given to the object.
+* `cube-id`: An integer in [1, 3] which uniquely identifies which image is on the Light Cube. The paperclip with a lightning bolt is 1, the angled square with a curved tail is 2, and the one with a small square connected to a larger square is 3. Only provided if the object is a Light Cube.
+* `descriptive-name`: A descriptive string name given to the object.
 * `liftable`: An integer, either 0 for false or 1 for true. Indicates whether Cozmo can pick up the object with its lift.
 * `moving`: A string either "False" or "True". Indicates whether the object is moving based on its accelerometer. Only provided if the object is a Light Cube.
-* `object_id`: An integer uniquely identifying the object among all those Cozmo can currently see. Note that the ID of an object may not be the same if it leaves and then reenters Cozmo's vision.
+* `object-id`: An integer uniquely identifying the object among all those Cozmo can currently see. Note that the ID of an object may not be the same if it leaves and then reenters Cozmo's vision.
 * `type`: A string indicating what kind of object it is. Normally "object", but will be "cube" if the object is a Light Cube.
 * `pose`: Pose information about the object. See [pose](#pose).
 
@@ -174,45 +174,39 @@ An string. The serial number of the robot in hex.
 
 #### [move-lift](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.set_lift_height)
 *parameters:*
-- height
+- `height`: `float`
 
 Moves Cozmo's lift to the specified height. The height is given as a a float in the range [0, 1] that represents the percentage of the maximum height the lift should be moved to. A height value of 0.0 will move the lift all the way down while a value of 1.0 will move it all the way up. A value of 0.5 will move it exactly half-way up.
 
-Presently this action is blocking, meaning the robot cannot do any other actions while this one is happening.
-
 #### [go-to-object](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.go_to_object)
 *parameters:*
-- target-object-id
+- `object-id`: `int`
 
-Instructs Cozmo to move itself to the object with the specified object ID. The object id must be one that Cozmo is currently aware of. Cozmo will stop once its center is 150mm from the object's.
-
-Presently this action is blocking, meaning the robot cannot do any other actions while this one is happening.
+Instructs Cozmo to move itself to the object with the specified object ID. The object id must be one that Cozmo can currently see. Cozmo will stop once its center is 100mm from the object's.
 
 #### [set-backpack-lights](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.set_all_backpack_lights)
 *parameters:*
-- color
+- `color`: `str`
 
-Changes the color of the lights on Cozmo's back. The lights can be set to either red, green, 
-blue, or white, or be turned off.
+Changes the color of the lights on Cozmo's back. The lights can be set to either "red", "green", "blue", or "white", or "off".
 
 #### [drive-forward](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.drive_straight)
 *parameters:*
-- distance
-- speed
+- `distance`: `float`
+- `speed`: `float`
 
-Instructs Cozmo to drive forward the given distance at the given speed. The distance is given in 
-mm and the speed in mm/s. 
+Instructs Cozmo to drive forward the given distance at the given speed. The distance is given in mm and the speed in mm/s. 
 
 #### [turn-in-place](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.turn_in_place)
 *parameters:*
-- angle
-- speed
+- `angle`: `float`
+- `speed`: `float`
 
 Instructs Cozmo to rotate in place, turning `angle` degrees at `speed` degrees a second. A positive value for `angle` rotates Cozmo counterclockwise, a negative value rotates clockwise.
 
 #### [pick-up-object](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.pickup_object)
 *parameters:*
-- object_id
+- `object-id`: `int`
 
 Instructs Cozmo to attempt to lift the specified object. The object must be known beforehand, and must be liftable. Cozmo will do its best to autonomously approach the object, get its lift hooks under the right spot, and the raise the lift. This is not super reliable, however, and is prone to failing a few times before Cozmo gets it right.
 
@@ -223,17 +217,21 @@ Instructs Cozmo to lower whatever object it is carrying to the ground, then back
 
 #### [place-object-on](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.place_on_object)
 *parameters:*
-- target_object_id
+- `object-id`: `int`
 
 Instructs Cozmo to place the block its currently carrying on top of the specified object.
    
 #### [dock-with-cube](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.dock_with_cube)
 *parameters:*
-- object_id
+- `object-id`: `int` 
 
 Instructs Cozmo to approach a cube and dock with it, so that the lift hooks are under the grip holes and if the lift were to move up, the cube would be lifted. The specified object must be liftable, and preferably a light cube.
 
 #### [move-head](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.set_head_angle)
+*parameters:*
+- `angle`: `float`
+
+Intstructs Cozmo to move its head to the specified angle, where the angle is in radians and relative to looking straight ahead. The angle should be in the range  [-0.44, 0.78], where -0.44 is looking as far down as possible, and 0.78 is looking as far up as possible.
 
 ## Future Work
 * Currently, if the agent sends a command to the Cozmo, the Soar cycle pauses until the Cozmo is completely done with the action. It'd be nice if Soar could continue to run while Cozmo is executing an action.
