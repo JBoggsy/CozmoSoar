@@ -1,16 +1,21 @@
 from time import sleep
 from argparse import ArgumentParser
+import os
 
 import cozmo
 from cozmo_soar import CozmoSoar, SoarObserver
 import PySoarLib as psl
 
-from mainGUI import GUI
 from c_soar_util import *
 
 
 def cse_factory(agent_file, interactive=False):
     """Create the Cozmo program using the CLI arguments."""
+
+    # Ensure the agent file exists
+    if not os.path.isfile(agent_file):
+        raise FileNotFoundError("ERROR: Agent file doesn't exist!")
+
 
     def cozmo_soar_engine(robot: cozmo.robot):
         agent_name = "cozmo"

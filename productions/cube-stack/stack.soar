@@ -3,10 +3,10 @@ sp {cube-stack*propose*begin-stack
    (state <s> ^name cube-stack
               ^block <b1>
               ^block {<> <b1> <b2>})
-   (<b1> ^cube_id <id1>
+   (<b1> ^cube-id <id1>
         -^under
         -^on)
-   (<b2> ^cube_id {< <id1> <id2>}
+   (<b2> ^cube-id {< <id1> <id2>}
         -^under
         -^on)
    (<s> -^stack-bot
@@ -36,10 +36,10 @@ sp {cube-stack*propose*turn-to-top
               ^stack-top <top-id>
               ^block <b>
               ^io.input-link <in>)
-   (<b> ^cube_id <top-id>
+   (<b> ^cube-id <top-id>
         ^heading <hd>)
-   (<in> ^carrying_block 0
-        -^object.cube_id <top-id>)
+   (<in> ^carrying-block 0
+        -^object.cube-id <top-id>)
 -->
    (<s> ^operator <op> + =)
    (<op> ^name turn-in-place
@@ -54,21 +54,21 @@ sp {cube-stack*propose*pick-up-top
               ^stack-top <top-id>
               ^io.input-link.object <obj>)
    (<obj> ^type cube
-          ^cube_id <top-id>
-          ^object_id <oid>)
+          ^cube-id <top-id>
+          ^object-id <oid>)
 -->
    (<s> ^operator <op> + =)
    (<op> ^name pick-up-object
          ^actions.pick-up-object <a>)
-   (<a> ^object_id <oid>)
+   (<a> ^object-id <oid>)
 }
 
 sp {cube-stack*propose*look-up-again
    "After we pick up a block, the head can end up tilted far down. Move it back up"
    (state <s> ^name cube-stack
               ^io.input-link <in>)
-   (<in> ^carrying_block 1
-         ^head_angle {< -0.05 <hd-ang>})
+   (<in> ^carrying-block 1
+         ^head-angle {< -0.05 <hd-ang>})
 -->
    (<s> ^operator <op> + =)
    (<op> ^name move-head-up
@@ -84,10 +84,10 @@ sp {cube-stack*propose*turn-to-bot
               ^stack-bot <bid>
               ^io.input-link <in>
               ^block <b>)
-   (<in> ^carrying_block 1
-        -^object.cube_id <bid>
-         ^head_angle > -0.05)
-   (<b> ^cube_id <bid>
+   (<in> ^carrying-block 1
+        -^object.cube-id <bid>
+         ^head-angle > -0.05)
+   (<b> ^cube-id <bid>
         ^heading <hd>)
 -->
    (<s> ^operator <op> + =)
@@ -104,15 +104,15 @@ sp {cube-stack*propose*place-on-bottom
               ^stack-bot <bid>
               ^io.input-link <in>)
    (<in> ^object <b>
-         ^carrying_block 1)
+         ^carrying-block 1)
    (<b> ^type cube
-        ^cube_id <bid>
-        ^object_id <oid>)
+        ^cube-id <bid>
+        ^object-id <oid>)
 -->
    (<s> ^operator <op> + =)
    (<op> ^name place-on-object
          ^actions.place-on-object <a>)
-   (<a> ^target_object_id <oid>)
+   (<a> ^object-id <oid>)
 }
 
 

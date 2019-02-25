@@ -151,8 +151,8 @@ class CozmoSoar(psl.AgentConnector):
             target_id = int(command.GetParameterValue("object-id"))
         except ValueError as e:
             print(
-                "Invalid target-object-id format {}".format(
-                    command.GetParameterValue("target_object_id")
+                "Invalid object-id format {}".format(
+                    command.GetParameterValue("object-id")
                 )
             )
             return False
@@ -192,7 +192,7 @@ class CozmoSoar(psl.AgentConnector):
             target_id = int(command.GetParameterValue("object-id"))
         except ValueError as e:
             print(
-                "Invalid target-object-id format {}".format(command.GetParameterValue("object0id"))
+                "Invalid target-object-id format {}".format(command.GetParameterValue("object-id"))
             )
             return False
         if target_id not in self.objects.keys():
