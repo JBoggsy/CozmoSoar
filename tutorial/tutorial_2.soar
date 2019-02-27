@@ -1,0 +1,39 @@
+# Propose initializing the Cozmo agent by giving it a name
+# and resetting the head and lift positions.
+sp {propose*initialize-cozmo
+    (state <s>  ^superstate nil
+               -^name
+                ^io.input-link.pose <p>)
+    (<p> ^rot <rot>
+         ^x <x-val>
+         ^y <y-val>
+         ^z <z-val>)
+-->
+    (<s>    ^operator <op> + =)
+    (<op>   ^name initialize-cozmo
+            ^origin <ogn>)
+    (<ogn>  ^rot <rot>
+            ^x <x-val>
+            ^y <y-val>
+            ^z <z-val>)
+}
+
+sp {apply*initialize-cozmo
+    (state <s>  ^operator <op>
+                ^io.output-link <out>)
+    (<op>   ^name initialize-cozmo
+            ^origin <ogn>)
+    (<ogn>  ^rot <rot>
+            ^x <x-val>
+            ^y <y-val>
+            ^z <z-val>)
+-->
+    (<s>    ^name cozmo
+            ^origin <origin>)
+    (<origin>   ^rot <rot>
+                ^x <x-val>
+                ^y <y-val>
+                ^z <z-val>)
+    (<out>  ^move-head.angle 0.0
+            ^move-lift.height 0.0)
+}
