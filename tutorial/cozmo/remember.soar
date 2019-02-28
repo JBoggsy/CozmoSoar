@@ -1,0 +1,107 @@
+sp {cozmo*propose*remember-new-cube
+   "Propose an operator to remember the location, heading, and id of new cube"
+   (state <s> ^name cozmo
+              ^io.input-link.object <obj>)
+   (<obj> ^type cube
+          ^cube-id <cid>
+          ^object-id <oid>
+          ^pose <p>)
+   (<p> ^rot <r-val>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+  -(<s> ^cube.cube-id <cid>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name remember-new-cube
+         ^cube-id <cid>
+         ^object-id <oid>
+         ^pose <pose>)
+   (<pose> ^rot <r-val>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+}
+
+sp {apply*remember-new-cube
+   "If a cube with this id not seen yet, add to wm"
+   (state <s> ^operator <op>)
+   (<op> ^name remember-new-cube
+         ^cube-id <cid>
+         ^object-id <oid>
+         ^pose <p>)
+   (<p> ^rot <r-val>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+-->
+   (<s> ^cube <c>)
+   (<c> ^cube-id <cid>
+        ^object-id <oid>
+        ^pose <pose>)
+   (<pose> ^rot <r-val>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+}
+
+sp {cozmo*propose*update-cube-knowledge
+   "Propose an operator to update cube information"
+   (state <s> ^name cozmo
+              ^io.input-link.object <obj>)
+   (<obj> ^type cube
+          ^cube-id <cid>
+          ^object-id <oid>
+          ^pose <p>)
+   (<p> ^rot <r-val>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+   (<s> ^cube.cube-id <cid>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name update-cube-knowledge
+         ^cube-id <cid>
+         ^object-id <oid>
+         ^pose <pose>)
+   (<pose> ^rot <r-val>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+}
+
+sp {apply*update-cube-knowledge
+   "If a cube with this id is already known, update what we know"
+   (state <s> ^operator <op>
+              ^cube <c>)
+   (<op> ^name update-cube-knowledge
+         ^cube-id <cid>
+         ^object-id <oid>
+         ^pose <p>)
+   (<p> ^rot <r-val>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+   (<c> ^cube-id <cid>)
+-->
+  -(<s> ^cube <c>)
+   (<s> ^cube <new-c>)
+   (<new-c> ^cube-id <cid>
+        ^object-id <oid>
+        ^pose <pose>)
+   (<pose> ^rot <r-val>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+}
+
+sp {cozmo*compare*remember-cube
+   "Make sure remembering new cubes has highest priority"
+   (state <s> ^name cube-stack
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name remember-new-cube)
+   (<op2> ^name {<> remember-new-cube })
+-->
+   (<s> ^operator <op1> > <op2>)
+}

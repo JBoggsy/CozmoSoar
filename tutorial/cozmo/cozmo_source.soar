@@ -1,0 +1,5 @@
+pushd elaborations
+source elaborations_source.soar
+popd
+source initialization.soar
+source remember.soar
