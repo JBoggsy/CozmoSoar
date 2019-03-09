@@ -127,7 +127,7 @@ class CozmoSoar(psl.AgentConnector):
         :return: True if successful, False otherwise
         """
         print("Placing object down")
-        place_object_down_action = self.r.place_object_on_ground_here(0)
+        place_object_down_action = self.r.place_object_on_ground_here(0, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
@@ -165,7 +165,7 @@ class CozmoSoar(psl.AgentConnector):
 
         print("Placing held object on top of {}".format(target_dsg))
         target_obj = self.objects[target_dsg]
-        place_on_object_action = self.robot.place_on_object(target_obj)
+        place_on_object_action = self.robot.place_on_object(target_obj, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
@@ -198,7 +198,7 @@ class CozmoSoar(psl.AgentConnector):
 
         print("Docking with cube with object id {}".format(target_id))
         target_obj = self.objects[target_id]
-        dock_with_cube_action = self.robot.dock_with_cube(target_obj)
+        dock_with_cube_action = self.robot.dock_with_cube(target_obj, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
@@ -232,7 +232,7 @@ class CozmoSoar(psl.AgentConnector):
 
         print("Picking up object {}".format(obj_designation))
         target_obj = self.objects[obj_designation]
-        pick_up_object_action = self.robot.pickup_object(target_obj)
+        pick_up_object_action = self.robot.pickup_object(target_obj, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
@@ -262,7 +262,7 @@ class CozmoSoar(psl.AgentConnector):
 
         print("Turning to face {}".format(fid))
         target_face = self.faces[fid]
-        turn_towards_face_action = self.r.turn_towards_face(target_face)
+        turn_towards_face_action = self.r.turn_towards_face(target_face, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
@@ -351,7 +351,7 @@ class CozmoSoar(psl.AgentConnector):
 
         print("Going to object {}".format(target_id))
         target_obj = self.objects[target_id]
-        go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(100))
+        go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(100), in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
@@ -416,7 +416,7 @@ class CozmoSoar(psl.AgentConnector):
             return False
 
         print("Driving forward {}mm at {}mm/s".format(distance.distance_mm, speed.speed_mmps))
-        drive_forward_action = self.r.drive_straight(distance, speed)
+        drive_forward_action = self.r.drive_straight(distance, speed, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
@@ -449,7 +449,7 @@ class CozmoSoar(psl.AgentConnector):
             return False
 
         print("Rotating in place {} degrees at {}deg/s".format(angle.degrees, speed.degrees))
-        turn_in_place_action = self.r.turn_in_place(angle=angle, speed=speed)
+        turn_in_place_action = self.r.turn_in_place(angle=angle, speed=speed, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
@@ -564,7 +564,7 @@ class CozmoSoar(psl.AgentConnector):
         # we just need to update that status if needed
         for action, status_wme, root_id in self.actions:
             if action.is_completed:
-                state = action.state
+                state = "succeeded" if action.has_succeeded else "failed"
                 failure_reason = action.failure_reason
 
                 status_wme.set_value(state)
