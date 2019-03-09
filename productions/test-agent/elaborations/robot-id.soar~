@@ -1,7 +1,0 @@
-sp {elaborations*elaborate*state
-   (state <s> ^superstate nil
-              ^io.input-link <in>)
-   (<in> ^serial <srl>)
--->
-   (<s> ^serial <srl>)
-}
