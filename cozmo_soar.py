@@ -1,7 +1,7 @@
 from time import sleep
 
 import PySoarLib as psl
-import Python_sml_ClientInterface as sml
+import soar.Python_sml_ClientInterface as sml
 
 import cozmo
 from cozmo.util import radians, degrees, distance_mm, speed_mmps
@@ -48,19 +48,19 @@ class CozmoSoar(psl.AgentConnector):
         #   Soar. A static input is one that won't ever disappear, in contrast to temporary inputs
         #   like faces or objects
         self.static_inputs = {
-            "battery_voltage": lambda: self.r.battery_voltage,
-            "carrying_block": lambda: int(self.r.is_carrying_block),
-            "carrying_object_id": lambda: self.r.carrying_object_id,
+            "battery-voltage": lambda: self.r.battery_voltage,
+            "carrying-block": lambda: int(self.r.is_carrying_block),
+            "carrying-object-id": lambda: self.r.carrying_object_id,
             "charging": lambda: int(self.r.is_charging),
-            "cliff_detected": lambda: int(self.r.is_cliff_detected),
-            "head_angle": lambda: self.r.head_angle.radians,
-            "face_count": self.w.visible_face_count,
-            "object_count": lambda: len(self.objects),
-            "picked_up": lambda: int(self.r.is_picked_up),
-            "robot_id": lambda: self.r.robot_id,
+            "cliff-detected": lambda: int(self.r.is_cliff_detected),
+            "head-angle": lambda: self.r.head_angle.radians,
+            "face-count": self.w.visible_face_count,
+            "object-count": lambda: len(self.objects),
+            "picked-up": lambda: int(self.r.is_picked_up),
+            "robot-id": lambda: self.r.robot_id,
             "serial": lambda: self.r.serial,
             "pose": {
-                "rot": lambda: self.r.pose.rotation.angle_z.radians,
+                "rot": lambda: self.r.pose.rotation.angle_z.degrees,
                 "x": lambda: self.r.pose.position.x,
                 "y": lambda: self.r.pose.position.y,
                 "z": lambda: self.r.pose.position.z,
@@ -140,7 +140,7 @@ class CozmoSoar(psl.AgentConnector):
 
         The Sour output should look like:
         (I3 ^place-on-object Vx)
-          (Vx ^target_object_id [id])
+          (Vx ^object-id [id])
         where [id] is the object id of the object that Cozmo should place to object its holding
         on top of.
 
@@ -148,11 +148,11 @@ class CozmoSoar(psl.AgentConnector):
         :return: True if successful, False otherwise
         """
         try:
-            target_id = int(command.GetParameterValue("target_object_id"))
+            target_id = int(command.GetParameterValue("object-id"))
         except ValueError as e:
             print(
-                "Invalid target-object-id format {}".format(
-                    command.GetParameterValue("target_object_id")
+                "Invalid object-id format {}".format(
+                    command.GetParameterValue("object-id")
                 )
             )
             return False
@@ -181,7 +181,7 @@ class CozmoSoar(psl.AgentConnector):
 
         The Sour output should look like:
         (I3 ^dock-with-cube Vx)
-          (Vx ^object_id [id])
+          (Vx ^object-id [id])
         where [id] is the object id of the cube to dock with. Cozmo will approach the cube until
         its lift hooks are under the grip holes.
 
@@ -189,10 +189,10 @@ class CozmoSoar(psl.AgentConnector):
         :return: True if successful, False otherwise
         """
         try:
-            target_id = int(command.GetParameterValue("object_id"))
+            target_id = int(command.GetParameterValue("object-id"))
         except ValueError as e:
             print(
-                "Invalid target-object-id format {}".format(command.GetParameterValue("object_id"))
+                "Invalid target-object-id format {}".format(command.GetParameterValue("object-id"))
             )
             return False
         if target_id not in self.objects.keys():
@@ -217,7 +217,7 @@ class CozmoSoar(psl.AgentConnector):
 
         The Sour output should look like:
         (I3 ^pick-up-object Vx)
-          (Vx ^object_id [id])
+          (Vx ^object-id [id])
         where [id] is the object id of the object to pick up. Cozmo will approach the object
         autonomously and try to grasp it with its lift, then lift the lift up. This action is
         partiularly prone to failing.
@@ -226,9 +226,9 @@ class CozmoSoar(psl.AgentConnector):
         :return: True if successful, False otherwise
         """
         try:
-            target_id = int(command.GetParameterValue("object_id"))
+            target_id = int(command.GetParameterValue("object-id"))
         except ValueError as e:
-            print("Invalid object-id format {}".format(command.GetParameterValue("object_id")))
+            print("Invalid object-id format {}".format(command.GetParameterValue("object-id")))
             return False
 
         obj_designation = "obj{}".format(target_id)
@@ -348,18 +348,18 @@ class CozmoSoar(psl.AgentConnector):
 
         The Sour output should look like:
         (I3 ^go-to-object Vx)
-          (Vx ^target_object_id [id])
+          (Vx ^object-id [id])
         where [id] is the object id of the object to go to. Cozmo will stop 150mm from the object.
 
         :param command: Soar command object
         :return: True if successful, False otherwise
         """
         try:
-            target_id = int(command.GetParameterValue("target_object_id"))
+            target_id = int(command.GetParameterValue("object-id"))
         except ValueError as e:
             print(
                 "Invalid target-object-id format {}".format(
-                    command.GetParameterValue("target_object_id")
+                    command.GetParameterValue("object-id")
                 )
             )
             return False
@@ -596,12 +596,12 @@ class CozmoSoar(psl.AgentConnector):
         :return: None
         """
         obj_input_dict = {
-            "object_id": obj.object_id,
-            "descriptive_name": obj.descriptive_name,
+            "object-id": obj.object_id,
+            "descriptive-name": obj.descriptive_name,
             "liftable": int(obj.pickupable),
             "type": "object",
             "pose": {
-                "rot": lambda: obj.pose.rotation.angle_z.radians,
+                "rot": lambda: obj.pose.rotation.angle_z.degrees,
                 "x": lambda: obj.pose.position.x,
                 "y": lambda: obj.pose.position.y,
                 "z": lambda: obj.pose.position.z,
@@ -610,7 +610,7 @@ class CozmoSoar(psl.AgentConnector):
         if isinstance(obj, cozmo.objects.LightCube):
             obj_input_dict["type"] = "cube"
             obj_input_dict["connected"] = obj.is_connected
-            obj_input_dict["cube_id"] = obj.cube_id
+            obj_input_dict["cube-id"] = obj.cube_id
             obj_input_dict["moving"] = obj.is_moving
 
         for input_name in obj_input_dict.keys():
@@ -643,11 +643,11 @@ class CozmoSoar(psl.AgentConnector):
         """
         face_input_dict = {
             "expression": face.expression,
-            "exp_score": face.expression_score,
-            "face_id": face.face_id,
+            "exp-score": face.expression_score,
+            "face-id": face.face_id,
             "name": face.name if face.name != "" else "unknown",
             "pose": {
-                "rot": lambda: face.pose.rotation.angle_z.radians,
+                "rot": lambda: face.pose.rotation.angle_z.degrees,
                 "x": lambda: face.pose.position.x,
                 "y": lambda: face.pose.position.y,
                 "z": lambda: face.pose.position.z,

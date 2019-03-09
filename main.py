@@ -1,22 +1,22 @@
 from time import sleep
 from argparse import ArgumentParser
+from pathlib import Path
+import os
 
 import cozmo
 from cozmo_soar import CozmoSoar, SoarObserver
 import PySoarLib as psl
 
-from mainGUI import GUI
 from c_soar_util import *
 
 
-def cse_factory(agent_file, interactive=False):
+def cse_factory(agent_file: Path, interactive=False):
     """Create the Cozmo program using the CLI arguments."""
-
     def cozmo_soar_engine(robot: cozmo.robot):
         agent_name = "cozmo"
         agent = psl.SoarAgent(
             agent_name=agent_name,
-            agent_source=agent_file,
+            agent_source=str(agent_file.absolute()).replace("\\", "\\\\"),
             watch_level=1,
             write_to_stdout=True,
             print_handler=lambda s: print(GREEN_STR + s + RESET_STR),
@@ -59,5 +59,10 @@ def gen_cli_parser():
 if __name__ == "__main__":
     cli_parser = gen_cli_parser()
     args = cli_parser.parse_args()
-    cse = cse_factory(args.agent, args.interactive)
+    agent_file_path = Path(args.agent)
+    if not agent_file_path.is_file():
+        raise FileNotFoundError("ERROR: Agent file doesn't exist!")
+    else:
+        print("Sourcing from file {}".format(agent_file_path.absolute()))
+    cse = cse_factory(agent_file_path, args.interactive)
     cozmo.run_program(cse)

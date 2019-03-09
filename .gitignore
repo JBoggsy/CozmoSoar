@@ -1,7 +1,6 @@
 soar/
 .idea/
 __pycache__/
-PySoarLib
-*.vsa~
-*.soar~
-*.dm~
+.vs/
+PySoarLib/
+soar/

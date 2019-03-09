@@ -4,19 +4,19 @@ sp {cube-stack*propose*remember-cube
               ^io.input-link <in>)
    (<in> ^object <obj>)
    (<obj> ^type cube
-          ^cube-id <cid>
-          ^object-id <oid>
+          ^cube_id <cid>
+          ^object_id <oid>
           ^pose <p>)
    (<p> ^rot <rot>
         ^x <x-val>
         ^y <y-val>
         ^z <z-val>)
-  -(<s> ^block.cube-id <cid>)
+  -(<s> ^block.cube_id <cid>)
 -->
    (<s> ^operator <op> + =)
    (<op> ^name remember-new-cube
-         ^cube-id <cid>
-         ^object-id <oid>
+         ^cube_id <cid>
+         ^object_id <oid>
          ^pose <pose>)
    (<pose> ^rot <rot>
         ^x <x-val>
@@ -31,20 +31,20 @@ sp {cube-stack*propose*update-cube
               ^block <b>)
    (<in> ^object <obj>)
    (<obj> ^type cube
-          ^cube-id <cid>
-          ^object-id <oid>
+          ^cube_id <cid>
+          ^object_id <oid>
           ^pose <p>)
    (<p> ^rot <rot>
         ^x <x-val>
         ^y <y-val>
         ^z <z-val>)
-   (<b> ^cube-id <cid>)
+   (<b> ^cube_id <cid>)
 -->
    (<s> ^operator <op> + =)
    (<op> ^name update-cube
          ^block <b>
-         ^cube-id <cid>
-         ^object-id <oid>
+         ^cube_id <cid>
+         ^object_id <oid>
          ^pose <pose>)
    (<pose> ^rot <rot>
         ^x <x-val>
@@ -57,8 +57,8 @@ sp {apply*remember-new-cube
    "If a cube with this id not seen yet, add to wm"
    (state <s> ^operator <op>)
    (<op> ^name remember-new-cube
-         ^cube-id <cid>
-         ^object-id <oid>
+         ^cube_id <cid>
+         ^object_id <oid>
          ^pose <p>)
    (<p> ^rot <rot>
         ^x <x-val>
@@ -66,8 +66,8 @@ sp {apply*remember-new-cube
         ^z <z-val>)
 -->
    (<s> ^block <b>)
-   (<b> ^cube-id <cid>
-        ^object-id <oid>
+   (<b> ^cube_id <cid>
+        ^object_id <oid>
         ^pose <pose>)
    (<pose> ^rot <rot>
         ^x <x-val>
@@ -80,8 +80,8 @@ sp {apply*update-cube-memory
    (state <s> ^operator <op>)
    (<op> ^name update-cube
          ^block <b>
-         ^cube-id <cid>
-         ^object-id <oid>
+         ^cube_id <cid>
+         ^object_id <oid>
          ^pose <p>)
    (<p> ^rot <rot>
         ^x <x-val>
@@ -91,8 +91,8 @@ sp {apply*update-cube-memory
 -->
    (<s> ^block <b> -)
    (<s> ^block <new-b>)
-   (<new-b> ^cube-id <cid>
-            ^object-id <oid>
+   (<new-b> ^cube_id <cid>
+            ^object_id <oid>
             ^pose <pose>)
    (<pose> ^rot <rot>
         ^x <x-val>

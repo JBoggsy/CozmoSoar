@@ -1,11 +1,13 @@
+import sys
+
 from math import sqrt, atan2, pi
 
 COLORS = ["red", "blue", "green", "white", "off"]
 
-RED_STR = "\u001b[31m"
-GREEN_STR = "\u001b[32m"
-BLUE_STR = "\u001b[34m"
-RESET_STR = "\u001b[0m"
+RED_STR = "\u001b[31m" if sys.platform != "win32" else ""
+GREEN_STR = "\u001b[32m" if sys.platform != "win32" else ""
+BLUE_STR = "\u001b[34m" if sys.platform != "win32" else ""
+RESET_STR = "\u001b[0m" if sys.platform != "win32" else ""
 
 COZMO_COMMANDS = [
     "move-lift",
