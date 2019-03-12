@@ -8,7 +8,7 @@ First, it is important to note that the interface code is purely *reactive* to t
 
 ## Input
 
-The input is achieved by a callback triggered when the Soar cycle is about to enter the input phase. When the cycle reaches that point, the interface polls the Cozmo robot for all the information which needs to be presented to Soar such as its pose, the status of its lift, and any objects or faces it can see. We will cover the details of how this information is presented later. Once it has the appropriate information from Cozmo, the interface updates the agent's working memory elements through the Soar Markup Language, and passes control back to the kernel, which proceeds into the input phase. By updating the working memory elements before the input phase, we ensure that the agent has the latest information available.
+The input is achieved by a callback triggered when the Soar cycle is about to enter the input phase. When the cycle reaches that point, the interface polls the Cozmo robot for all the information which needs to be presented to Soar such as its pose, the status of its lift, and any objects or faces it can see. Additionally, a list of ongoing Cozmo actions is scanned, and each action is checked for completion. We will cover the details of how this information is presented later. Once it has the appropriate information from Cozmo, the interface updates the agent's working memory elements through the Soar Markup Language, and passes control back to the kernel, which proceeds into the input phase. By updating the working memory elements before the input phase, we ensure that the agent has the latest information available.
 
 ## Output
 
@@ -19,14 +19,28 @@ Control of the Cozmo robot is achieved by a callback which listens for changes t
   (M1 ^height 0.5)
 ```
 
-and the output callback would be triggered. It would be given the new output link identifier augmentation `^move-lift M1`, and then see if the attribute name "move-lift" is an action it recognizes. Since it is, it will look at the identifier `M1` and try and find the `^height` attribute. The value of the `^height` attribute is used in a function call to the Cozmo SDK which will move the lift to the specified level, in this case 50% of its maximum height. Once the Cozmo finishes the action, a `^status complete` augmentation is added `M1`, so the final output link looks like
+and the output callback would be triggered. It would be given the new output link identifier augmentation `^move-lift M1`, and then see if the attribute name "move-lift" is an action it recognizes. Since it is, it will look at the identifier `M1` and try and find the `^height` attribute. The value of the `^height` attribute is used in a function call to the Cozmo SDK which will move the lift to the specified level, in this case 50% of its maximum height. When the action is first parsed by the 
+output handler, a new `^status running` augmentation is added to the output WME, so that it looks
+ like
 
 ```
 (I3 ^move-lift M1)
-  (M1 ^height 0.5 ^status complete)
+  (M1 ^height 0.5 ^status running)
 ```
 
-Control is then handed back to the Soar kernel, which continues to run its cycle. If more than one new valid action is added to the output link Cozmo will execute all of them before handing back control. The order of execution should be treated as random.
+Once the Cozmo SDK call has been made and the `^status` attribute added, the Cozmo `action` and the status WME are stored in a list of ongoing actions and control returns to Soar while the action is being performed. This is the list scanned during the input phase.
+
+If, during the input phase, the interface scans the action list and finds a completed action, it updates the `^status` attribute and, if necessary, adds `^failure-code` and `^failure-reason` 
+attributes. If the action was successfully completed, the `^status` augmentation will have the 
+value `succeeded`, like so:
+
+```
+(I3 ^move-lift M1)
+  (M1 ^height 0.5 ^status succeeded)
+```
+
+Otherwise, the augmentation will be `^status failed`. The `^failure-code` and `^failure-reason` 
+augmentation values are specific to each action.
 
 # Lesson 1: Reset Cozmo's Head and Lift
 
