@@ -28,11 +28,9 @@ and the output callback would be triggered. It would be given the new output lin
 
 Control is then handed back to the Soar kernel, which continues to run its cycle. If more than one new valid action is added to the output link Cozmo will execute all of them before handing back control. The order of execution should be treated as random.
 
-# Lessons
+# Lesson 1: Reset Cozmo's Head and Lift
 
 To ground that rather abstract description of the interface, and to provide examples of the specific inputs and outputs the interface provides and handles, we will go through a series of lessons which incrementally build on each other, ultimately producing a Soar agent which will look around its environment for light cubes and a face, and then bring the "most valuable" light cube to the face.
-
-## Lesson 1: Reset Cozmo's Head and Lift
 
 First, we'll explore how to move Cozmo's head and lift to specific positions using the `move-head` and `move-lift` commands. The `move-head` action sets the angle on Cozmo's head relative to a horizontal plane through its axis of rotation. Thus, if the angle specified is -0.25, Cozmo's head will move so that it forms a -0.25 radian angle with the plane, which ends up having Cozmo look towards the ground. An angle of 0.25 will similarly have Cozmo look upwards. The `move-lift` action moves the lift to a position specified in the command by a real number between 0 and 1. The number indicates the percentage of the lifts maximum height it should move to, so a value of 0 is the lowest possible height for the lift, a value of 1 is the highest, and 0.5 is the lift's midpoint.
 
@@ -45,7 +43,7 @@ We will be using the `move-head` and `move-lift` actions to reset Cozmo's head a
 
 This part of the right hand side (RHS) adds two working memory elements to the output link, `^move-head` and `move-lift`, and gives them each an augmentation, `^angle` for `^move-head` and `^height` for `move-lift`, which are set to 0.0. Recall that the interface listens for new additions to the output link. This means that when this rule fires, the interface will pause the kernel to look for valid actions, which both new WMEs are. The interface will be looking for an `^angle` attribute on the `^move-head` identifier and a `^height` attribute on the `^move-lift` identifier. Since both are present and supply valid values, the interface will execute the specified actions in the Cozmo robot.
 
-## Lesson 2: Saving the Origin Pose
+# Lesson 2: Saving the Origin Pose
 
 The first input we will be looking at will be Cozmo's pose information, which is always placed by the interface on the agent's input link and will look similar to:
 
@@ -109,13 +107,13 @@ Note that the name of the new identifier (i.e., `<origin>`) must be different th
 
 Note that `<origin>` is an augmentation to the top state, rather than the input link, because it is not an input but a memory. Additionally, because we check for an operator in the LHS, the `<origin>` WME is  *o-supported*, meaning it will persist even after the rule which added it (`apply*initialize-cozmo`) is retracted. Thus, we have a permanent record of where Cozmo started.
 
-## Lesson 3: Remembering Objects and Faces
+# Lesson 3: Remembering Objects and Faces
 
 Now that Cozmo moves its face and lift so that it can see, and remembers where it started, we need to begin giving it some capabilities for observing the world around it. In order to keep the tutorial files small, from here on out we'll be working on a single Soar project, contained in the `cozmo/` folder. If you want to work through the this tutorial, I suggest similarly creating a folder to house multiple soar files and to copy and paste the `elaborations/` sub-folder and the `cozmo_source.soar` file to it. These provide some basic functionality like elaborating the top state and giving you a single soar file to run. Specifically, you can run the tutorial agent by using `cozmo_source.soar` as your agent file. For this lesson, look at the file `cozmo/remember.soar`.
 
 Before Cozmo can bring you the most valuable light cube it sees, it must not only find light cubes and your face but be able to remember where those things are. First, we will be giving Cozmo the ability to remember details like the location, name, and id of objects and faces it sees, even after they leave its pereption. The core of this process is watching for new objects or faces, copying the various augmentations attached to these, and then storing them on the top state as o-supported WMEs for later access. Additionally, we want Cozmo to be able to update its old knowledge if anything about the object (e.g., it's locaton) changes, so we need Cozmo to be comparing objects in its perception with those it remembers and be able to update the information in its memory if needed.
 
-### Remembering New Cubes
+## Remembering New Cubes
 
 For this task, the only kinds of objects we need to remember are light cubes, which is helpful because light cubes have some unique pieces of information which we want to capture, and we can do so without needing to separately check for plain objects. The first thing we need to do is have the Soar agent propose an operator remembering a cube which it hasn't seen before, and attach whatever information is pertinent to that operator. We will call this rule `cozmo*propose*remember-new-cube`, and it should look for an `^object <obj>` identifier augmentation on the input-link with certain augmentations of its own, and should also make sure that the object seen isn't one we already remember. The entire LHS of the proposal should look like:
 
@@ -177,7 +175,7 @@ sp {apply*remember-new-cube
 }
 ```
 
-### Updating Known Cubes
+## Updating Known Cubes
 Just memorizing all the information about a cube the first time we see it isn't enough, since cubes may move around. Cozmo also needs to be checking whether it sees a cube it already memorized in a different place than expected, and merely update the existing `^cube` attribute if it does. Since we still need all the information about the cube, the LHS will look very similar to the LHS of the initial remembering rule, but instead of looking for the *absence* of a remembered cube with the same cube id, we want to look for its *presence*. Thus, we want to copy and then slightly change `cozmo*propose*remember-new-cube` into a new rule `cozmo*propose*update-cube-knowledge`. Just like before, we want to search the input link for an object with the relevant attributes. However, we also want to match a `^cube` attribute on the top state which has a cube id equal to the cube id of the object on the input link to ensure we actually know about this cube. Thus, the new rule looks like
 
 ```soar
@@ -229,21 +227,44 @@ The RHS is also quite similar to the RHS of the remembering production, because 
 -(<s> ^cube <c>)
 ```
 
-### Prioritization of Remembering Cubes
+## Remembering and Updating Faces
 
-As of now, Cozmo can both remember and update its memory of cubes and their locations. However, since the operators are prioritized equally Cozmo will choose between them at random if both `remember-new-cube` and `update-cube-knowledge` are proposed. Although this will usually be fine in the long run, we really want Cozmo to prefer remembering new cubes over updating its memory of old ones. In fact, there are very few proposals we might want to prioritize equally or more than remembering a newly-seen cube, since that is both fast and often quite important. To ensure remembering a cube always has priority, we will introduce a very simple operator comparison. The comparison will check whether two operators are both `remember-new-cube` operators and, if not, prioritize the remembering operator over the other operator. This means that `remember-new-cube` operators will *always* be chosen first. The comparison production will look fairly standard:
+The productions to remember and update faces are very similar to those for remembering and updating cubes. The difference is purely in what augmentations we're capturing from faces on the input link. Faces, like objects, have pose information which we want to capture, so this much of the Soar code is unchanged. However, where cubes have cube-id and object-id information, faces only have face-ids. Additionlly, faces have a name (potentially "unknown") and an expression (also possibly "unknown") associated with them. Given the overall similarity to the `remember-new-cube` and `update-cube-knowledge` operations, we can just copy the cube productions and make small alterations.
+
+First, faces are represented as `^face` augmentations on the input link rather than `^object` augmentations, so we need to change the relevant conditions appropriately. These conditions occur in the proposal productions, and in the cube rules they look like 
 
 ```soar
-sp {cozmo*compare*remember-cube
-   "Make sure remembering new cubes has highest priority"
+(state <s> ^name cozmo
+           ^io.input-link.object <obj>)
+```
+
+We need to change these to match with `^face` augmentations, which we can do simply by changing `.object <obj>` to `.face <f>`. Then we need to collect the right data from the face augmentation. Of the four conditions which are  matched against the `<obj>` variable in the cube memory productions, only `^pose <p>` is still applicable. We need to replace `^type cube` with `^name <n>`, the `^cube-id <cid>` with `^face-id <fid>`, and `^object-id <oid>` with `^expression <exp>`. I also recommend changing variable names like `<c>` to `<f>` to better represent that they are capturing a `^face` augmentation. We also need to alter the effects of the productions. For the most part, we make the same replacements in the RHS of the four new productions as we did to their LHS. However, when creating the operators in the proposal productions, we can't use the `^name` attribute to keep the face's assigned name, since the `^name` attribute is already used for the operator's name. Instead, use `^face-name` or something similar. This also means that the application rule condition checking for that attribute must match with the `^face-name` attribute rather than just `^name`.
+
+## Prioritize Remembering
+
+As of now, Cozmo can both remember and update its memory of cubes and faces. However, since these operators are prioritized equally Cozmo will choose between them at random if more than one of these operators is proposed. Although this will usually be fine in the long run, we really want Cozmo to prefer remembering new cubes and faces over updating its memory of old ones. In fact, there are very few proposals we might want to prioritize equally or more than remembering a newly-seen cube or face, since that is both fast and often quite important. To ensure remembering a new things always has priority, we will introduce a very simple operator comparison. The comparison will check whether two operators are both `remember-new-cube` or `remember-new-faces` operators and, if not, prioritize the remembering operator over the other operator. This means that `remember-new-cube` and `remember-new-face` operators will *always* be chosen first. The comparison production will look fairly standard:
+
+```soar
+sp {cozmo*compare*remember-new
+   "Make sure remembering new cubes and faces has highest priority"
    (state <s> ^name cube-stack
               ^operator <op1> +
                         <op2> +)
-   (<op1> ^name remember-new-cube)
-   (<op2> ^name {<> remember-new-cube })
+   (<op1> ^name << remember-new-cube remember-new-face>>)
+   (<op2> ^name {<> << remember-new-cube remember-new-face>> })
 -->
    (<s> ^operator <op1> > <op2>)
 }
 ```
 
-The critical condition is the final one, which only matches if `<op2>` isn't a `remember-new-cube` operator. 
+The critical condition is the final one, which only matches if `<op2>` isn't a `remember-new-cube` or `remember-new-face` operator. This ensures that all other operators happen after a new cube is memorized, if one is present.
+
+# Lesson 4: Taking a Look Around
+
+Now that Cozmo is looking ahead and can remember what it sees, it's time for Cozmo to take a look around and take stock of its situation. Specifically, we want Cozmo to just spin around in a circle and find all the different cubes and faces around it. Since faces are usually not at table level, we want Cozmo to spin twice, once looking straight ahead to find cubes and once looking up to find faces. We'll be creating a new soar file, `scan.soar`, to hold the productions necessary for this part. 
+
+Preliminarily, we need to give Cozmo a way of knowing whether it has or hasn't looked around its environment yet. If it hasn't, it should start looking and not to do anything else until its done, but if it has it shouldn't look around again (at least for now). Our method for doing this is simple: if there is *not* a `^scanned` attribute on the top state, then Cozmo hasn't scanned its environment for either cubes or faces. Once it is doone scanning for cubes, it will add the `^scanned 1` augmentation to the top state. Then it will scan for faces and, when complete, update that to be `^scanned 2`. 
+
+Since Cozmo will be scanning twice, once at table height and once at head height, we'll need to add four new productions: two proposals and two applicators. Additionally, we'll need a proposal and application for simply moving Cozmo's head up to scan at head height, and a final one to move its head back down once it's done. The four primary productions are nearly identical, the only difference being the second scanning rotation should be proposed only once Cozmo's head is looking up.
+
+Since Cozmo starts with its head at the correct inclination initially, the only conditions we need on the LHS of the first proposal, `cozmo*propose*scan-cubes`, are that there is no `^scannned` augmentation and that the has `^name cozmo`.

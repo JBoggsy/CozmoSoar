@@ -1,0 +1,8 @@
+sp {cozmo*propose*scan-cubes
+    "If we haven't scanned for cubes yet, do so"
+    (state <s> ^name cozmo
+              -^scanned)
+-->
+    (<s> ^operator <op>)
+    (<op> ^name scan-cubes)
+}

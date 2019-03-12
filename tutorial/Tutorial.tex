@@ -505,34 +505,87 @@ production and add an additional effect before the other effects:
 -(<s> ^cube <c>)
 \end{verbatim}
 
-\hypertarget{prioritization-of-remembering-cubes}{%
-\subsubsection{Prioritization of Remembering
-Cubes}\label{prioritization-of-remembering-cubes}}
+\hypertarget{remembering-and-updating-faces}{%
+\subsubsection{Remembering and Updating
+Faces}\label{remembering-and-updating-faces}}
 
-As of now, Cozmo can both remember and update its memory of cubes and
-their locations. However, since the operators are prioritized equally
-Cozmo will choose between them at random if both
-\texttt{remember-new-cube} and \texttt{update-cube-knowledge} are
-proposed. Although this will usually be fine in the long run, we really
-want Cozmo to prefer remembering new cubes over updating its memory of
-old ones. In fact, there are very few proposals we might want to
-prioritize equally or more than remembering a newly-seen cube, since
-that is both fast and often quite important. To ensure remembering a
-cube always has priority, we will introduce a very simple operator
-comparison. The comparison will check whether two operators are both
-\texttt{remember-new-cube} operators and, if not, prioritize the
-remembering operator over the other operator. This means that
-\texttt{remember-new-cube} operators will \emph{always} be chosen first.
-The comparison production will look fairly standard:
+The productions to remember and update faces are very similar to those
+for remembering and updating cubes. The difference is purely in what
+augmentations we're capturing from faces on the input link. Faces, like
+objects, have pose information which we want to capture, so this much of
+the Soar code is unchanged. However, where cubes have cube-id and
+object-id information, faces only have face-ids. Additionlly, faces have
+a name (potentially ``unknown'') and an expression (also possibly
+``unknown'') associated with them. Given the overall similarity to the
+\texttt{remember-new-cube} and \texttt{update-cube-knowledge}
+operations, we can just copy the cube productions and make small
+alterations.
+
+First, faces are represented as \texttt{\^{}face} augmentations on the
+input link rather than \texttt{\^{}object} augmentations, so we need to
+change the relevant conditions appropriately. These conditions occur in
+the proposal productions, and in the cube rules they look like
 
 \begin{verbatim}
-sp {cozmo*compare*remember-cube
-   "Make sure remembering new cubes has highest priority"
+(state <s> ^name cozmo
+           ^io.input-link.object <obj>)
+\end{verbatim}
+
+We need to change these to match with \texttt{\^{}face} augmentations,
+which we can do simply by changing
+\texttt{.object\ \textless{}obj\textgreater{}} to
+\texttt{.face\ \textless{}f\textgreater{}}. Then we need to collect the
+right data from the face augmentation. Of the four conditions which are
+matched against the \texttt{\textless{}obj\textgreater{}} variable in
+the cube memory productions, only
+\texttt{\^{}pose\ \textless{}p\textgreater{}} is still applicable. We
+need to replace \texttt{\^{}type\ cube} with
+\texttt{\^{}name\ \textless{}n\textgreater{}}, the
+\texttt{\^{}cube-id\ \textless{}cid\textgreater{}} with
+\texttt{\^{}face-id\ \textless{}fid\textgreater{}}, and
+\texttt{\^{}object-id\ \textless{}oid\textgreater{}} with
+\texttt{\^{}expression\ \textless{}exp\textgreater{}}. I also recommend
+changing variable names like \texttt{\textless{}c\textgreater{}} to
+\texttt{\textless{}f\textgreater{}} to better represent that they are
+capturing a \texttt{\^{}face} augmentation. We also need to alter the
+effects of the productions. For the most part, we make the same
+replacements in the RHS of the four new productions as we did to their
+LHS. However, when creating the operators in the proposal productions,
+we can't use the \texttt{\^{}name} attribute to keep the face's assigned
+name, since the \texttt{\^{}name} attribute is already used for the
+operator's name. Instead, use \texttt{\^{}face-name} or something
+similar. This also means that the application rule condition checking
+for that attribute must match with the \texttt{\^{}face-name} attribute
+rather than just \texttt{\^{}name}.
+
+\hypertarget{prioritize-remembering}{%
+\subsubsection{Prioritize Remembering}\label{prioritize-remembering}}
+
+As of now, Cozmo can both remember and update its memory of cubes and
+faces. However, since these operators are prioritized equally Cozmo will
+choose between them at random if more than one of these operators is
+proposed. Although this will usually be fine in the long run, we really
+want Cozmo to prefer remembering new cubes and faces over updating its
+memory of old ones. In fact, there are very few proposals we might want
+to prioritize equally or more than remembering a newly-seen cube or
+face, since that is both fast and often quite important. To ensure
+remembering a new things always has priority, we will introduce a very
+simple operator comparison. The comparison will check whether two
+operators are both \texttt{remember-new-cube} or
+\texttt{remember-new-faces} operators and, if not, prioritize the
+remembering operator over the other operator. This means that
+\texttt{remember-new-cube} and \texttt{remember-new-face} operators will
+\emph{always} be chosen first. The comparison production will look
+fairly standard:
+
+\begin{verbatim}
+sp {cozmo*compare*remember-new
+   "Make sure remembering new cubes and faces has highest priority"
    (state <s> ^name cube-stack
               ^operator <op1> +
                         <op2> +)
-   (<op1> ^name remember-new-cube)
-   (<op2> ^name {<> remember-new-cube })
+   (<op1> ^name << remember-new-cube remember-new-face>>)
+   (<op2> ^name {<> << remember-new-cube remember-new-face>> })
 -->
    (<s> ^operator <op1> > <op2>)
 }
@@ -540,4 +593,5 @@ sp {cozmo*compare*remember-cube
 
 The critical condition is the final one, which only matches if
 \texttt{\textless{}op2\textgreater{}} isn't a \texttt{remember-new-cube}
-operator.
+or \texttt{remember-new-face} operator. This ensures that all other
+operators happen after a new cube is memorized, if one is present.

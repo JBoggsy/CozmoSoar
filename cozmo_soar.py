@@ -632,7 +632,7 @@ class CozmoSoar(psl.AgentConnector):
                 wme.set_value(obj_input_dict[input_name])
                 wme.update_wm()
 
-    def __build_face_wme_subtree(self, face, face_designation, face_wme):
+    def     __build_face_wme_subtree(self, face, face_designation, face_wme):
         """
         Build a working memory sub-tree for a given perceived face
 
