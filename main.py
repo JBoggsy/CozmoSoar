@@ -32,7 +32,7 @@ def cse_factory(agent_file: Path, interactive=False):
         agent.add_connector("observer", soar_observer)
         agent.connect()
         if interactive:
-            for i in range(25):
+            while True:
                 agent.execute_command(input(">> "))
         else:
             agent.start()

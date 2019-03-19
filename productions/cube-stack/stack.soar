@@ -68,7 +68,7 @@ sp {cube-stack*propose*look-up-again
    (state <s> ^name cube-stack
               ^io.input-link <in>)
    (<in> ^carrying-block 1
-         ^head-angle {< -0.05 <hd-ang>})
+         ^head-angle {< -3.0 <hd-ang>})
 -->
    (<s> ^operator <op> + =)
    (<op> ^name move-head-up
@@ -86,7 +86,7 @@ sp {cube-stack*propose*turn-to-bot
               ^block <b>)
    (<in> ^carrying-block 1
         -^object.cube-id <bid>
-         ^head-angle > -0.05)
+         ^head-angle > -3.0)
    (<b> ^cube-id <bid>
         ^heading <hd>)
 -->
