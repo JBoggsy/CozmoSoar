@@ -1,6 +1,7 @@
 sp {test-agent*apply*turn-in-place
     (state <s> ^operator <op>
-              ^io.output-link <out>)
+              ^io.output-link <out>
+             -^io.output-link.<old-act>.status running)
     (<op> ^name turn-in-place
           ^actions true
           ^angle <ang>

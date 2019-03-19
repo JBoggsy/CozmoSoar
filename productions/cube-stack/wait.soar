@@ -1,6 +1,7 @@
-sp {propose*wait
+sp {test-agent*propose*wait
    (state <s> ^attribute state
-              ^choices none)
+              ^choices none
+             -^operator.name wait)
 -->
    (<s> ^operator <op> + =)
    (<op> ^name wait)

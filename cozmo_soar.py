@@ -564,7 +564,7 @@ class CozmoSoar(psl.AgentConnector):
         # we just need to update that status if needed
         for action, status_wme, root_id in self.actions:
             if action.is_completed:
-                state = "succeeded" if action.has_succeeded else "failed"
+                state = "complete" if action.has_succeeded else "failed"
                 failure_reason = action.failure_reason
 
                 status_wme.set_value(state)

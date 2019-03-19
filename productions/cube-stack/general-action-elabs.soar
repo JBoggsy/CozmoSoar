@@ -1,6 +1,7 @@
 sp {apply*operator*create-action-command
    (state <s> ^operator <o>
-              ^io.output-link <out>)
+              ^io.output-link <out>
+             -^io.output-link.<old-act>.status running)
    (<o> ^actions <act>)
    (<act> ^<att> <value>)
    (<value> ^<att2> <value2>)
