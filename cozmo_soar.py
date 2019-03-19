@@ -4,7 +4,7 @@ import PySoarLib as psl
 import soar.Python_sml_ClientInterface as sml
 
 import cozmo
-from cozmo.util import radians, degrees, distance_mm, speed_mmps
+from cozmo.util import degrees, distance_mm, speed_mmps
 
 from c_soar_util import *
 
@@ -54,7 +54,7 @@ class CozmoSoar(psl.AgentConnector):
             "carrying-object-id": lambda: self.r.carrying_object_id,
             "charging": lambda: int(self.r.is_charging),
             "cliff-detected": lambda: int(self.r.is_cliff_detected),
-            "head-angle": lambda: self.r.head_angle.radians,
+            "head-angle": lambda: self.r.head_angle.degrees,
             "face-count": self.w.visible_face_count,
             "object-count": lambda: len(self.objects),
             "picked-up": lambda: int(self.r.is_picked_up),
@@ -67,7 +67,7 @@ class CozmoSoar(psl.AgentConnector):
                 "z": lambda: self.r.pose.position.z,
             },
             "lift": {
-                "angle": lambda: self.r.lift_angle.radians,
+                "angle": lambda: self.r.lift_angle.degrees,
                 "height": lambda: self.r.lift_height.distance_mm,
                 "ratio": lambda: self.r.lift_ratio,
             },
@@ -304,7 +304,7 @@ class CozmoSoar(psl.AgentConnector):
         (I3 ^move-head Vx)
           (Vx ^angle [ang])
         where [ang] is a real number in the range [-0.44, 0.78]. This command moves the head to the
-        the given angle, where 0 is looking straight ahead and the angle is radians from that
+        the given angle, where 0 is looking straight ahead and the angle is degrees from that
         position.
 
         :param command: Soar command object
@@ -317,7 +317,7 @@ class CozmoSoar(psl.AgentConnector):
             return False
 
         print("Moving head {}".format(angle))
-        set_head_angle_action = self.robot.set_head_angle(radians(angle), in_parallel=True)
+        set_head_angle_action = self.robot.set_head_angle(degrees(angle), in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()

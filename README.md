@@ -129,11 +129,11 @@ Provides information about a face Cozmo can currently see, such as its pose, exp
 * `pose`: Pose information about the head. See [pose](#pose) 
 
 #### [head-angle](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.head_angle)
-A float in [-0.44, 0.78]. Indicates the angle of Cozmo's head in radians, where 0 is looking directly forward. The bounds of the range are the minimum and maximum head angle Cozmo can achieve.
+A float in [-25.00, 44.50]. Indicates the angle of Cozmo's head in degrees, where 0 is looking directly forward. The bounds of the range are the minimum and maximum head angle Cozmo can achieve.
 
 #### [lift](http://cozmosdk.anki.com/docs/generated/cozmo.util.html#cozmo.util.Pose)
 The lift augmentation to the input-link provides information about the location of the lift in several forms:
-* `angle`: A float in [-0.20, 0.79]. The angle of Cozmo's lift relative to the ground in radians. 
+* `angle`: A float in [-11.36, 45.41]. The angle of Cozmo's lift relative to the ground in degrees. 
 * `height`: A float in [32.00, 92.00]. The height of the lift off the ground in millimeters.
 * `ratio`: A float in [0.0, 1.0]. The ratio between how high the lift currently is and its maximum height. So a value of 0.0 means the lift is as low as possible, and a value of 1.0 is as high as possible.
 
@@ -162,7 +162,7 @@ Provides information about the location and orientation of Cozmo, objects, and f
 * `x`: A float indicating the distance in millimeters between the origin and Cozmo (or the object/face) on the x axis.
 * `y`: A float indicating the distance in millimeters between the origin and Cozmo (or the object/face) on the y axis.
 * `z`: A float indicating the distance in millimeters between the origin and Cozmo (or the object/face) on the z axis.
-* `rot`: The heading of Cozmo (or the object/face) in radians. 
+* `rot`: The heading of Cozmo (or the object/face) in degrees. 
 
 #### [robot-id](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.robot_id)
 An integer. The internal id number of the robot.
@@ -231,7 +231,7 @@ Instructs Cozmo to approach a cube and dock with it, so that the lift hooks are 
 *parameters:*
 - `angle`: `float`
 
-Intstructs Cozmo to move its head to the specified angle, where the angle is in radians and relative to looking straight ahead. The angle should be in the range  [-0.44, 0.78], where -0.44 is looking as far down as possible, and 0.78 is looking as far up as possible.
+Intstructs Cozmo to move its head to the specified angle, where the angle is in degrees and relative to looking straight ahead. The angle should be in the range  [-0.44, 0.78], where -0.44 is looking as far down as possible, and 0.78 is looking as far up as possible.
 
 ## Future Work
 * Currently, if the agent sends a command to the Cozmo, the Soar cycle pauses until the Cozmo is completely done with the action. It'd be nice if Soar could continue to run while Cozmo is executing an action.
