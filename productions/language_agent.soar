@@ -1,0 +1,3 @@
+pushd language_agent
+source language_agent_source.soar
+popd

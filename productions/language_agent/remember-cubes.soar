@@ -1,0 +1,124 @@
+sp {language-agent*propose*remember-cube
+   "Propose an operator to remember the location, heading, and id of new cube"
+   (state <s> ^name language-agent
+              ^io.input-link <in>)
+   (<in> ^object <obj>)
+   (<obj> ^type cube
+          ^cube-id <cid>
+          ^object-id <oid>
+          ^pose <p>)
+   (<p> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+  -(<s> ^block.cube-id <cid>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name remember-new-cube
+         ^cube-id <cid>
+         ^object-id <oid>
+         ^pose <pose>)
+   (<pose> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+}
+
+sp {language-agent*propose*update-cube
+   "Propose an operator to update cube information"
+   (state <s> ^name language-agent
+              ^io.input-link <in>
+              ^block <b>)
+   (<in> ^object <obj>)
+   (<obj> ^type cube
+          ^cube-id <cid>
+          ^object-id <oid>
+          ^pose <p>)
+   (<p> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+   (<b> ^cube-id <cid>)
+-->
+   (<s> ^operator <op> + =)
+   (<op> ^name update-cube
+         ^block <b>
+         ^cube-id <cid>
+         ^object-id <oid>
+         ^pose <pose>)
+   (<pose> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+}
+
+
+sp {apply*remember-new-cube
+   "If a cube with this id not seen yet, add to wm"
+   (state <s> ^operator <op>)
+   (<op> ^name remember-new-cube
+         ^cube-id <cid>
+         ^object-id <oid>
+         ^pose <p>)
+   (<p> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+-->
+   (<s> ^block <b>)
+   (<b> ^cube-id <cid>
+        ^object-id <oid>
+        ^pose <pose>)
+   (<pose> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+}
+
+sp {apply*update-cube-memory
+   "If cube with id was previously found, update it in wm"
+   (state <s> ^operator <op>)
+   (<op> ^name update-cube
+         ^block <b>
+         ^cube-id <cid>
+         ^object-id <oid>
+         ^pose <p>)
+   (<p> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+   (<s> ^block <b>)
+-->
+   (<s> ^block <b> -)
+   (<s> ^block <new-b>)
+   (<new-b> ^cube-id <cid>
+            ^object-id <oid>
+            ^pose <pose>)
+   (<pose> ^rot <rot>
+        ^x <x-val>
+        ^y <y-val>
+        ^z <z-val>)
+}
+
+sp {language-agent*compare*remember-cube
+   "Make sure remembering new cubes has highest priority"
+   (state <s> ^name language-agent
+              ^operator <op1> +
+                        <op2> +)
+   (<op1> ^name remember-new-cube)
+   (<op2> ^name {<> remember-new-cube <> save-origin-pose })
+-->
+   (<s> ^operator <op1> > <op2>)
+}
+
+sp {language-agent*compare-heading*update-cube
+   "Make sure updating cube information is the lowest priority"
+   (state <s> ^name language-agent
+              ^operator <op1> +
+              ^operator <op2> +)
+   (<op1> ^name update-cube
+          ^block <b>)
+   (<op2> ^name <> update-cube)
+-->
+   (<s> ^operator <op1> < <op2>)
+}

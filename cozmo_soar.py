@@ -1,5 +1,3 @@
-from time import sleep
-
 import PySoarLib as psl
 import soar.Python_sml_ClientInterface as sml
 
@@ -20,7 +18,7 @@ class CozmoSoar(psl.AgentConnector):
     the resulting output link commands.
     """
 
-    def __init__(self, agent: psl.SoarAgent, robot: cozmo.robot):
+    def __init__(self, agent: psl.SoarAgent, robot: cozmo.robot, language_buf=None):
         """
         Create an instance of the `CozmoSoar` class connecting the agent to the robot.
 
@@ -40,6 +38,11 @@ class CozmoSoar(psl.AgentConnector):
         self.objects = {}
         self.faces = {}
         self.actions = []
+
+        if type(language_buf) == str:
+            self.language_buf = open(language_buf, 'r')
+        else:
+            self.language_buf = language_buf
 
         #######################
         # Working Memory data #
@@ -494,6 +497,14 @@ class CozmoSoar(psl.AgentConnector):
             else:
                 wme.set_value(new_val)
                 wme.update_wm()
+
+        ##################
+        # LANGUAGE INPUT #
+        ##################
+        if self.language_buf is not None:
+            next_line = self.language_buf.readline()
+            if next_line != '':
+
 
         # Then, check through the visible faces and objects to see if they need to be added,
         # updated, or removed
