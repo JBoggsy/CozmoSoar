@@ -1,62 +1,62 @@
-from pysoarlib import *
 from math import *
+from PySoarLib import *
 
-class RobotDataUnwrapper:
-    def __init__(self, robot_data):
-        self.data = robot_data
-
-    def yaw(self):
-        # Remapped so yaw=0 is down x-axis and yaw=90 is down y-axis
-        return ((450 - int(self.data["rotation"]["y"])) % 360) * pi / 180.0
-
-    def pos(self):
-        p = self.data["position"]
-        return [ p["x"], p["z"], p["y"] ]
-
-    def held_obj(self):
-        if len(self.data["inventoryObjects"]) > 0:
-            return self.data["inventoryObjects"][0]["objectId"]
-        return None
+# Info for view region
+VIEW_DIST = 4.0
+VIEW_ANGLE = pi/2 * 0.7
+VIEW_HEIGHT = 1.2
 
 class RobotInfo(WMInterface):
-    def __init__(self, agent):
+    def __init__(self, world_objs):
         WMInterface.__init__(self)
 
+        self.world_objs = world_objs
+
         self.self_id = None
-        self.arm_id = None
+        self.wmes = {}
+
         self.pose_id = None
-        self.pose_wmes = []
-        for dim in [ "x", "y", "z", "roll", "pitch", "yaw"]:
-            self.pose_wmes.append(SoarWME(dim, 0.0))
+        self.pose_wmes = [ SoarWME(dim, 0.0) for dim in [ "x", "y", "z", "roll", "pitch", "yaw" ] ]
+        self.pose = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+        self.dims = [.5, .2, .3]
 
-        self.held_object = SoarWME("holding-object", "none")
-        self.moving_state = SoarWME("moving-status", "stopped")
-
-        self.dims = [.5, .5, 1.0]
+        #self.held_object = SoarWME("holding-object", "none")
 
         self.wm_dirty = False
-        self.added = False
 
         self.svs_cmd_queue = []
 
+        self.robot_inputs = {
+            "battery-voltage": lambda: self.robot_data.battery_voltage,
+            "charging": lambda: int(self.robot_data.is_charging),
+            "cliff-detected": lambda: int(self.robot_data.is_cliff_detected),
+            "head-angle": lambda: self.robot_data.head_angle.radians,
+            "picked-up": lambda: int(self.robot_data.is_picked_up),
+            "robot-id": lambda: self.robot_data.robot_id,
+            "arm": {
+                "carrying-object-id": lambda: str(self.robot_data.carrying_object_id),
+                "is-carrying-block": lambda: str(self.robot_data.is_carrying_block),
+                "holding-object": lambda: str(self.world_objs.get_soar_handle(str(self.robot_data.carrying_object_id))),
+                "angle": lambda: self.robot_data.lift_angle.radians,
+                "height": lambda: self.robot_data.lift_height.distance_mm,
+                "ratio": lambda: self.robot_data.lift_ratio,
+            },
+        }
+
     def update(self, robot_data):
-        unwrapper = RobotDataUnwrapper(robot_data)
-        pos = unwrapper.pos()
-        yaw = unwrapper.yaw()
-        pose = [ pos[0], pos[1], pos[2], 0.0, 0.0, yaw ]
+        self.robot_data = robot_data
+        yaw = self.robot_data.pose.rotation.angle_z.radians
+        pos = self.robot_data.pose.position
+        self.pose = [ pos.x/100.0, pos.y/100.0, pos.z/100.0, 0.0, 0.0, yaw ]
         for d, pose_wme in enumerate(self.pose_wmes):
-            pose_wme.set_value(pose[d])
-
-        held_obj = unwrapper.held_obj()
-        held_obj_h = self.agent.connectors["perception"].objects.get_soar_handle(held_obj) if held_obj else "none"
-        self.held_object.set_value(held_obj_h)
-
+            pose_wme.set_value(self.pose[d])
         self.wm_dirty = True
 
-    #def get_svs_commands(self):
-    #    q = self.svs_cmd_queue
-    #    self.svs_cmd_queue = []
-    #    return q
+
+    def get_svs_commands(self):
+        q = self.svs_cmd_queue
+        self.svs_cmd_queue = []
+        return q
 
     #################################################
     #
@@ -65,43 +65,52 @@ class RobotInfo(WMInterface):
     #################################################
 
     def _add_to_wm_impl(self, parent_id):
-        self.self_id = parent_id.CreateIdWME("self");
-        self.moving_state.add_to_wm(self.self_id)
+        self.self_id = parent_id.CreateIdWME("self")
+        SoarUtils.update_wm_from_tree(self.self_id, "self", self.robot_inputs, self.wmes)
 
         self.pose_id = self.self_id.CreateIdWME("pose")
         for wme in self.pose_wmes:
             wme.add_to_wm(self.pose_id)
 
-        self.arm_id = self.self_id.CreateIdWME("arm")
-        self.arm_id.CreateStringWME("moving-status", "wait")
-        self.held_object.add_to_wm(self.arm_id)
-        
-        # TODO: Fix SVS 
-        #svsCommands.append(String.format("add robot world p %s r %s\n", 
-        #        SVSCommands.posToStr(pos), SVSCommands.rotToStr(rot)));
-        #svsCommands.append(String.format("add robot_pos robot\n"));
-        #svsCommands.append(String.format("add robot_body robot v %s p .2 0 0 s %s\n", 
-        #        SVSCommands.bboxVertices(), SVSCommands.scaleToStr(dims)));
-        #svsCommands.append(String.format("add robot_view robot v %s p %f %f %f\n", 
-        #        getViewRegionVertices(), VIEW_DIST/2 + .5, 0.0, VIEW_HEIGHT/2 - dims[2]/2));
+        self.svs_cmd_queue.append("add robot world p {:s} r {:s}\n".format(
+            SVSCommands.pos_to_str(self.pose[0:3]), SVSCommands.rot_to_str(self.pose[3:6])))
+        self.svs_cmd_queue.append("add robot_pos robot\n")
+        self.svs_cmd_queue.append(SVSCommands.add_box("robot_body", parent="robot", scl=self.dims))
+        self.svs_cmd_queue.append("add robot_view robot v {:s} p {:f} {:f} {:f}\n".format(
+            self._get_view_region_vertices(), VIEW_DIST/2 + 0.5, 0.0, 0.0))
 
     def _update_wm_impl(self):
+        if not self.wm_dirty:
+            return
+
+        SoarUtils.update_wm_from_tree(self.self_id, "self", self.robot_inputs, self.wmes)
+
         for pose_wme in self.pose_wmes:
             pose_wme.update_wm()
-        self.moving_state.update_wm()
-        self.held_object.update_wm()
+        self.svs_cmd_queue.append(SVSCommands.change_pos("robot", self.pose[0:3]))
+        self.svs_cmd_queue.append(SVSCommands.change_rot("robot", self.pose[3:6]))
 
     def _remove_from_wm_impl(self):
-        self.held_object.remove_from_wm()
-        self.arm_id = None
-
-        for wme in self.pose_wmes:
-            wme.remove_from_wm()
-        self.pose_id = None
-
-        self.moving_state.remove_from_wm()
         self.self_id.DestroyWME()
         self.self_id = None
+        self.wmes = {}
 
-        #svsCommands.append(String.format("delete robot\n"));
+        self.svs_cmd_queue.append(String.format("delete robot\n"))
+
+    def _get_view_region_vertices(self):
+        """ Creates a triangular view region of height VIEW_DIST and angle VIEW_ANGLE """
+        verts = []
+        dx = VIEW_DIST/2
+        dy = VIEW_DIST * sin(VIEW_ANGLE/2)
+        dz = VIEW_HEIGHT/2
+        # Top triangle
+        verts.append("{:f} {:f} {:f}".format(-dx, 0.0, dz))
+        verts.append("{:f} {:f} {:f}".format(dx, -dy, dz))
+        verts.append("{:f} {:f} {:f}".format(dx, dy, dz))
+        # Bottom triangle
+        verts.append("{:f} {:f} {:f}".format(-dx, 0.0, -dz))
+        verts.append("{:f} {:f} {:f}".format(dx, -dy, -dz))
+        verts.append("{:f} {:f} {:f}".format(dx, dy, -dz))
+
+        return " ".join(verts)
 

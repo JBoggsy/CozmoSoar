@@ -1,48 +1,69 @@
-from pysoarlib import *
 import re
+import cozmo
+
+from PySoarLib import *
 
 from .ObjectProperty import ObjectProperty
 
-class ObjectDataUnwrapper(WMInterface):
-    def __init__(self, data):
-        WMInterface.__init__(self)
-        self.data = data
+class CozmoObjectUnwrapper:
+    def __init__(self, cozmo_obj):
+        self.cozmo_obj = cozmo_obj
 
     def id(self):
-        return str(self.data["objectId"])
+        return self.cozmo_obj.object_id
 
     def name(self):
-        return re.match(r"[a-zA-Z]*", self.id()).group(0).lower()
+        return self.cozmo_obj.descriptive_name
 
     #def yaw(self):
     #    # Remapped so yaw=0 is down x-axis and yaw=90 is down y-axis
-    #    return ((450 - int(self.data["rotation"]["y"])) % 360) * pi / 180.0
+    #    return ((450 - int(self.cozmo_obj["rotation"]["y"])) % 360) * pi / 180.0
 
     def pos(self):
-        # Swap y and z axes
-        b = self.data["bounds3D"]
-        [x, z, y] = [ (float(b[d+3]) + float(b[d]))/2 for d in range(0, 3) ]
-        return [x, y, z]
+        pos = self.cozmo_obj.pose.position
+        return [ pos.x/100.0, pos.y/100.0, pos.z/100.0 ]
 
     def rot(self):
-        return ( 0.0, 0.0, 0.0 )
+        return [ 0.0, 0.0, self.cozmo_obj.pose.rotation.angle_z.radians ]
 
     def scl(self):
-        b = self.data["bounds3D"]
-        [x, z, y] = [ (float(b[d+3]) - float(b[d])) for d in range(0, 3) ]
-        return [x, y, z]
+        return [ 0.25, 0.25, 0.25 ]
 
     def is_grabbable(self):
-        return self.data.pickupable
+        return "grabbable1" if self.cozmo_obj.pickupable else "not-grabbable1"
+
+    def is_light_cube(self):
+        return isinstance(self.cozmo_obj, cozmo.objects.LightCube)
+
+    def cube_id(self):
+        return self.cozmo_obj.cube_id if self.is_light_cube() else None
+
+    def is_connected(self):
+        if self.is_light_cube():
+            return "connected1" if self.cozmo_obj.is_connected else "not-connected1"
+        return None
 
     def is_moving(self):
-        return sefl.data.is_moving
+        if self.is_light_cube():
+            return "moving1" if self.cozmo_obj.is_moving else "not-moving1"
+        return None
 
+    def color(self):
+        cube_id = self.cube_id()
+        if cube_id == None:
+            return "white1"
+        elif cube_id == 1:
+            return "red1"
+        elif cube_id == 2:
+            return "green1"
+        elif cube_id == 3:
+            return "blue1"
 
-class WorldObject(object):
-    def __init__(self, handle, obj_data=None):
+class WorldObject(WMInterface):
+    def __init__(self, handle, cozmo_obj=None):
+        WMInterface.__init__(self)
         self.handle = handle
-        self.objectId = obj_data["objectId"] if obj_data else None
+        self.objectId = cozmo_obj.object_id if cozmo_obj else None
 
         self.properties = {}
 
@@ -56,8 +77,9 @@ class WorldObject(object):
 
         self.obj_id = None
 
-        if obj_data:
-            self.update(obj_data)
+        self.cozmo_obj = None
+        if cozmo_obj:
+            self.update(cozmo_obj)
 
         self.svs_cmd_queue = []
 
@@ -98,13 +120,19 @@ class WorldObject(object):
         self.bbox_scl = list(scl)
         self.scl_changed = True
 
-    def update(self, obj_data):
-        unwrapper = ObjectDataUnwrapper(obj_data)
+    def update(self, cozmo_obj):
+        self.cozmo_obj = cozmo_obj
+        unwrapper = CozmoObjectUnwrapper(cozmo_obj)
 
         self.objectId = unwrapper.id()
         self.update_bbox(unwrapper)
 
-        self.properties["moving"].set_value( "true" if unwrapper.is_moving() else "false" )
+        if len(self.properties) == 0:
+            self.create_properties(unwrapper)
+
+        if unwrapper.is_light_cube():
+            self.properties["is-connected"].set_value(unwrapper.is_connected())
+            self.properties["is-moving"].set_value(unwrapper.is_moving())
 
     def update_bbox(self, unwrapper):
         self.set_pos(unwrapper.pos())
@@ -113,13 +141,16 @@ class WorldObject(object):
 
     # Properties
     def create_properties(self, unwrapper):
-        self.properties["category"] = ObjectProperty("category", "object")
+        if unwrapper.is_light_cube():
+            self.properties["category"] = ObjectProperty("category", "light-cube")
+            self.properties["is-connected"] = ObjectProperty("is-connected1", unwrapper.is_connected())
+            self.properties["is-moving"] = ObjectProperty("is-moving1", unwrapper.is_moving())
+        else:
+            self.properties["category"] = ObjectProperty("category", "object")
 
-        if unwrapper.is_grabbable():
-            self.properties["grabbable"] = ObjectProperty("is-grabbable1", "grabbable1")
-
-        self.properties["moving"] = ObjectProperty("moving", "false")
-
+        self.properties["grabbable"] = ObjectProperty("is-grabbable1", unwrapper.is_grabbable())
+        self.properties["color"] = ObjectProperty("color", unwrapper.color())
+        self.properties["shape"] = ObjectProperty("shape", "cube1")
 
     ### Methods for managing working memory structures ###
 

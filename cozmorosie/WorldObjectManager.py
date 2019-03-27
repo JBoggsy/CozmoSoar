@@ -1,4 +1,4 @@
-from pysoarlib import WMInterface
+from PySoarLib import *
 
 from .WorldObject import WorldObject
 
@@ -28,8 +28,11 @@ class WorldObjectManager(WMInterface):
             return self.objects[handle].get_perception_id()
         return None
 
+    def __str__(self):
+        return "objects: {}".format(", ".join([ str(obj.get_perception_id()) for obj in self.objects.values() ]))
+
     def get_soar_handle(self, perc_id):
-        return self.object_links.get(perc_id, None)
+        return self.object_links.get(perc_id, perc_id)
 
     def link_objects(self, src_handle, dest_handle):
         self.object_links[src_handle] = dest_handle
@@ -41,24 +44,24 @@ class WorldObjectManager(WMInterface):
                 self.objects[dest_handle] = wobj.copy(dest_handle)
         self.wm_dirty = True
 
-    def update(self, world_data):
-        new_obj_data = {}
+    def update(self, cozmo_objs):
+        linked_cozmo_objs = {}
 
-        for obj_data in world_data:
-            perc_id = obj_data.object_id
-            handle = self.object_links.get(perc_id, perc_id)
-            new_obj_data[handle] = obj_data
+        for cozmo_obj in cozmo_objs:
+            perc_id = str(cozmo_obj.object_id)
+            handle = self.get_soar_handle(perc_id)
+            linked_cozmo_objs[handle] = cozmo_obj
 
         stale_objs = set(self.objects.keys())
         
         # For each object, either update existing or create if new
-        for handle, obj_data in new_obj_data.items():
+        for handle, cozmo_obj in linked_cozmo_objs.items():
             if handle in self.objects:
                 wobj = self.objects[handle]
-                wobj.update(obj_data)
+                wobj.update(cozmo_obj)
                 stale_objs.remove(handle)
             else:
-                self.objects[handle] = WorldObject(handle, obj_data)
+                self.objects[handle] = WorldObject(handle, cozmo_obj)
 
         # Remove all stale objects from WM
         for handle in stale_objs:

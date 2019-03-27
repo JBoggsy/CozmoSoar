@@ -9,6 +9,9 @@ import PySoarLib as psl
 
 from c_soar_util import *
 
+from cozmorosie.ChatGUI import ChatGUI
+
+from tkinter import *
 
 def cse_factory(agent_file: Path, interactive=False):
     """Create the Cozmo program using the CLI arguments."""
@@ -42,6 +45,35 @@ def cse_factory(agent_file: Path, interactive=False):
 
     return cozmo_soar_engine
 
+def cre_factory(rosie_config_file: Path):
+    """Create the Cozmo program using the CLI arguments."""
+    def cozmo_rosie_engine(robot: cozmo.robot):
+        agent_name = "cozmo"
+        agent = psl.SoarAgent(
+            agent_name=agent_name,
+            config_filename = str(rosie_config_file.absolute()).replace("\\", "\\\\"),
+        )
+
+        cozmo_robot = CozmoSoar(agent, robot)
+        for command in COZMO_COMMANDS:
+            cozmo_robot.add_output_command(command)
+
+        #soar_observer = SoarObserver(agent)
+
+        agent.add_connector("cozmo", cozmo_robot)
+        #agent.add_connector("observer", soar_observer)
+
+        root = Tk()
+        chat_gui = ChatGUI(agent, master=root)
+        def shutdown():
+            agent.kill()
+            root.destroy()
+        root.protocol("WM_DELETE_WINDOW", shutdown)
+        agent.connect()
+        root.mainloop()
+
+    return cozmo_rosie_engine
+
 
 def gen_cli_parser():
     cli_parser = ArgumentParser(description="Run a Soar agent in a Cozmo robot.")
@@ -50,6 +82,13 @@ def gen_cli_parser():
         "--interactive",
         dest="interactive",
         help="If present, the interface will run in interactive mode.",
+        action="store_true",
+    )
+    cli_parser.add_argument(
+        "-r", 
+        "--rosie",
+        dest="rosie",
+        help="If present, it will run the rosie agent with a chat window",
         action="store_true",
     )
     cli_parser.add_argument("agent")
@@ -64,5 +103,10 @@ if __name__ == "__main__":
         raise FileNotFoundError("ERROR: Agent file doesn't exist!")
     else:
         print("Sourcing from file {}".format(agent_file_path.absolute()))
-    cse = cse_factory(agent_file_path, args.interactive)
-    cozmo.run_program(cse)
+
+    if args.rosie:
+        prog = cre_factory(agent_file_path)
+    else:
+        prog = cse_factory(agent_file_path, args.interactive)
+
+    cozmo.run_program(prog)

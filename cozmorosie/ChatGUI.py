@@ -4,8 +4,26 @@ import tkinter.font
 import sys
 
 from cozmorosie import *
+from PySoarLib import LanguageConnector
 
-class RosieGUI(Frame):
+class ChatGUI(Frame):
+    def __init__(self, soar_agent, master=None):
+        Frame.__init__(self, master, width=800, height=600)
+        self.soar_agent = soar_agent
+
+        master.columnconfigure(0, weight=1)
+        master.rowconfigure(0, weight=1)
+
+        self.message_history = []
+        self.history_index = 0
+
+        self.create_widgets()
+        self.create_script_buttons()
+
+        self.language_connector = LanguageConnector(soar_agent)
+        self.language_connector.register_message_callback(self.receive_message)
+        soar_agent.add_connector("language", self.language_connector)
+
     def create_widgets(self):
         self.grid(row=0, column=0, sticky=N+S+E+W)
         self.columnconfigure(0, weight=3, minsize=600)
@@ -38,15 +56,10 @@ class RosieGUI(Frame):
         self.run_button["command"] = self.on_run_click
         self.run_button.grid(row=1, column=2, sticky=N+S+E+W)
 
-    def init_soar_agent(self, config_file):
-        self.agent = CozmoRosieAgent(config_filename=config_file)
-        self.agent.connectors["language"].register_message_callback(self.receive_message)
-        self.agent.connect()
-
     def create_script_buttons(self):
         self.script = []
-        if self.agent.messages_file != None:
-            with open(self.agent.messages_file, 'r') as f:
+        if self.soar_agent.messages_file != None:
+            with open(self.soar_agent.messages_file, 'r') as f:
                 self.script = [ line.rstrip('\n') for line in f.readlines() if len(line.rstrip('\n')) > 0 and line[0] != '#']
 
         row = 0
@@ -62,7 +75,7 @@ class RosieGUI(Frame):
         if len(self.message_history) == 0 or self.message_history[-1] != message:
             self.message_history.append(message)
         self.history_index = len(self.message_history)
-        self.agent.connectors["language"].send_message(message)
+        self.language_connector.send_message(message)
 
     def receive_message(self, message):
         self.messages_list.insert(END, "Rosie: " + message)
@@ -71,7 +84,7 @@ class RosieGUI(Frame):
         self.send_message(self.chat_entry.get())
         
     def on_run_click(self):
-        self.agent.start()
+        self.soar_agent.start()
 
     def scroll_history(self, delta):
         if self.history_index == 0 and delta == -1:
@@ -84,26 +97,3 @@ class RosieGUI(Frame):
         if self.history_index < len(self.message_history):
             self.chat_entry.insert(END, self.message_history[self.history_index])
 
-    def on_exit(self):
-        self.agent.kill()
-        root.destroy()
-
-    def __init__(self, rosie_config, master=None):
-        Frame.__init__(self, master, width=800, height=600)
-        master.columnconfigure(0, weight=1)
-        master.rowconfigure(0, weight=1)
-
-        self.message_history = []
-        self.history_index = 0
-
-        self.create_widgets()
-        self.init_soar_agent(rosie_config)
-        self.create_script_buttons()
-
-if len(sys.argv) == 1:
-    print("Need to specify rosie config file as argument")
-else:
-    root = Tk()
-    rosie_gui = RosieGUI(sys.argv[1], master=root)
-    root.protocol("WM_DELETE_WINDOW", rosie_gui.on_exit)
-    root.mainloop()
