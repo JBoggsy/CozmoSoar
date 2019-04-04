@@ -109,7 +109,7 @@ class CozmoSoar(psl.AgentConnector):
         if len(svs_commands) > 0:
             self.agent.agent.SendSVSInput("\n".join(svs_commands))
 
-        SoarUtils.remove_tree_from_wm(self.WMEs)
+        psl.SoarUtils.remove_tree_from_wm(self.WMEs)
         self.actions = []
 
 
@@ -449,9 +449,7 @@ class CozmoSoar(psl.AgentConnector):
         :param input_link: The Soar WME corresponding to the input link of the agent.
         :return: None
         """
-        print("INPUT PHASE")
         psl.SoarUtils.update_wm_from_tree(input_link, "", self.static_inputs, self.WMEs)
-        print("UPDATE WME TREE")
 
         #####################################################
         # UPDATE ROBOT INFORMATION 
@@ -462,7 +460,6 @@ class CozmoSoar(psl.AgentConnector):
         if len(svs_commands) > 0:
             self.agent.agent.SendSVSInput("\n".join(svs_commands))
 
-        print("UPDATE ROBOT")
         ## First, we handle inputs which will always be present
         #for input_name in self.static_inputs.keys():
         #    new_val = self.static_inputs[input_name]
@@ -517,7 +514,6 @@ class CozmoSoar(psl.AgentConnector):
                 else:
                     raise Exception("WME wasn't of proper type")
 
-        print("UPDATE FACES")
 
         #########################
         # OBJECT INPUT HANDLING #
@@ -528,7 +524,6 @@ class CozmoSoar(psl.AgentConnector):
         if len(svs_commands) > 0:
             self.agent.agent.SendSVSInput("\n".join(svs_commands))
 
-        print("UPDATE WORLD")
 
 #
         # Finally, we want to check all our on-going actions and handle them appropriately:
@@ -550,7 +545,6 @@ class CozmoSoar(psl.AgentConnector):
                 status_wme.update_wm()
                 self.actions.remove((action, status_wme, root_id))
 
-        print("UPDATE CATIONS")
 
 
     def __build_face_wme_subtree(self, face, face_designation, face_wme):
