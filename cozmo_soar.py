@@ -1,7 +1,7 @@
 from time import sleep
 
-import PySoarLib as psl
-import soar.Python_sml_ClientInterface as sml
+import pysoarlib as psl
+import Python_sml_ClientInterface as sml
 
 import cozmo
 from cozmo.util import radians, degrees, distance_mm, speed_mmps
@@ -17,7 +17,7 @@ class CozmoSoar(psl.AgentConnector):
     A class representing the Soar interface with a Cozmo robot.
 
     The `CozmoSoar`class is a concrete instantiation of the `AgentConnector` class from Aaron
-    Mininger's PySoarLib, which provides a way to connect with a running Soar kernel in Python
+    Mininger's pysoarlib, which provides a way to connect with a running Soar kernel in Python
     with callbacks. The purpose of the `CozmoSoar` class is to provide a custom way to connect
     the Cozmo robot with Soar by updating the appropriate input link attributes and interpreting
     the resulting output link commands.
@@ -99,6 +99,19 @@ class CozmoSoar(psl.AgentConnector):
         action, status_wme = self.command_map[command_name](root_id)
         print(action)
         self.actions.append((action, status_wme, root_id))
+
+    def on_init_soar(self):
+        self.world_objs.remove_from_wm()
+        self.robot_info.remove_from_wm()
+
+        svs_commands = self.world_objs.get_svs_commands()
+        svs_commands.extend(self.robot_info.get_svs_commands())
+        if len(svs_commands) > 0:
+            self.agent.agent.SendSVSInput("\n".join(svs_commands))
+
+        SoarUtils.remove_tree_from_wm(self.WMEs)
+        self.actions = []
+
 
     def __handle_place_object_down(self, command: sml.Identifier):
         """
@@ -436,7 +449,9 @@ class CozmoSoar(psl.AgentConnector):
         :param input_link: The Soar WME corresponding to the input link of the agent.
         :return: None
         """
+        print("INPUT PHASE")
         psl.SoarUtils.update_wm_from_tree(input_link, "", self.static_inputs, self.WMEs)
+        print("UPDATE WME TREE")
 
         #####################################################
         # UPDATE ROBOT INFORMATION 
@@ -447,6 +462,7 @@ class CozmoSoar(psl.AgentConnector):
         if len(svs_commands) > 0:
             self.agent.agent.SendSVSInput("\n".join(svs_commands))
 
+        print("UPDATE ROBOT")
         ## First, we handle inputs which will always be present
         #for input_name in self.static_inputs.keys():
         #    new_val = self.static_inputs[input_name]
@@ -501,6 +517,8 @@ class CozmoSoar(psl.AgentConnector):
                 else:
                     raise Exception("WME wasn't of proper type")
 
+        print("UPDATE FACES")
+
         #########################
         # OBJECT INPUT HANDLING #
         #########################
@@ -509,6 +527,8 @@ class CozmoSoar(psl.AgentConnector):
         svs_commands = self.world_objs.get_svs_commands()
         if len(svs_commands) > 0:
             self.agent.agent.SendSVSInput("\n".join(svs_commands))
+
+        print("UPDATE WORLD")
 
 #
         # Finally, we want to check all our on-going actions and handle them appropriately:
@@ -529,6 +549,8 @@ class CozmoSoar(psl.AgentConnector):
                     reason_wme.update_wm()
                 status_wme.update_wm()
                 self.actions.remove((action, status_wme, root_id))
+
+        print("UPDATE CATIONS")
 
 
     def __build_face_wme_subtree(self, face, face_designation, face_wme):

@@ -5,7 +5,7 @@ import os
 
 import cozmo
 from cozmo_soar import CozmoSoar, SoarObserver
-import PySoarLib as psl
+import pysoarlib as psl
 
 from c_soar_util import *
 
@@ -57,10 +57,10 @@ def cre_factory(rosie_config_file: Path):
         cozmo_robot = CozmoSoar(agent, robot)
         for command in COZMO_COMMANDS:
             cozmo_robot.add_output_command(command)
+        agent.add_connector("cozmo", cozmo_robot)
 
         #soar_observer = SoarObserver(agent)
 
-        agent.add_connector("cozmo", cozmo_robot)
         #agent.add_connector("observer", soar_observer)
 
         root = Tk()

@@ -1,6 +1,5 @@
-__all__ = ["CozmoRosieAgent", "PerceptionConnector" ]
+__all__ = ["PerceptionConnector" ]
 
-from .CozmoRosieAgent import CozmoRosieAgent
 from .PerceptionConnector import PerceptionConnector
 #from .RobotConnector import RobotConnector
 

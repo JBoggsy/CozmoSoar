@@ -4,7 +4,7 @@ import tkinter.font
 import sys
 
 from cozmorosie import *
-from PySoarLib import LanguageConnector
+from pysoarlib import LanguageConnector
 
 class ChatGUI(Frame):
     def __init__(self, soar_agent, master=None):

@@ -1,5 +1,5 @@
 from math import *
-from PySoarLib import *
+from pysoarlib import *
 
 # Info for view region
 VIEW_DIST = 4.0
@@ -91,11 +91,14 @@ class RobotInfo(WMInterface):
         self.svs_cmd_queue.append(SVSCommands.change_rot("robot", self.pose[3:6]))
 
     def _remove_from_wm_impl(self):
+        for wme in self.pose_wmes:
+            wme.remove_from_wm()
+        self.pose_id = None
+        SoarUtils.remove_tree_from_wm(self.wmes)
         self.self_id.DestroyWME()
         self.self_id = None
-        self.wmes = {}
 
-        self.svs_cmd_queue.append(String.format("delete robot\n"))
+        self.svs_cmd_queue.append("delete robot\n")
 
     def _get_view_region_vertices(self):
         """ Creates a triangular view region of height VIEW_DIST and angle VIEW_ANGLE """

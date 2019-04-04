@@ -2,5 +2,5 @@ soar/
 .idea/
 __pycache__/
 .vs/
-PySoarLib/
+pysoarlib/
 soar/

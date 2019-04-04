@@ -1,4 +1,4 @@
-from PySoarLib import *
+from pysoarlib import *
 
 from .WorldObject import WorldObject
 

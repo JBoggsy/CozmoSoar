@@ -1,7 +1,7 @@
 import re
 import cozmo
 
-from PySoarLib import *
+from pysoarlib import *
 
 from .ObjectProperty import ObjectProperty
 
