@@ -10,6 +10,7 @@ from c_soar_util import *
 
 from cozmorosie.WorldObjectManager import WorldObjectManager
 from cozmorosie.RobotInfo import RobotInfo
+from cozmorosie.CustomWalls import define_custom_walls
 
 
 class CozmoSoar(psl.AgentConnector):
@@ -45,6 +46,8 @@ class CozmoSoar(psl.AgentConnector):
         self.faces = {}
         self.actions = []
 
+        define_custom_walls(self.world)
+
         #######################
         # Working Memory data #
         #######################
@@ -69,8 +72,10 @@ class CozmoSoar(psl.AgentConnector):
         self.command_map = {
             "move-lift": self.__handle_move_lift,
             "go-to-object": self.__handle_go_to_object,
+            "go-to-pose": self.__handle_go_to_pose,
             "move-head": self.__handle_move_head,
             "turn-to-face": self.__handle_turn_to_face,
+            "turn-to-object": self.__handle_turn_to_object,
             "set-backpack-lights": self.__handle_set_backpack_lights,
             "drive-forward": self.__handle_drive_forward,
             "turn-in-place": self.__handle_turn_in_place,
@@ -78,6 +83,8 @@ class CozmoSoar(psl.AgentConnector):
             "place-object-down": self.__handle_place_object_down,
             "place-on-object": self.__handle_place_on_object,
             "dock-with-cube": self.__handle_dock_with_cube,
+            "pop-a-wheelie": self.__handle_pop_a_wheelie,
+            "roll-cube": self.__handle_roll_cube,
         }
 
     def on_output_event(self, command_name: str, root_id: sml.Identifier):
@@ -97,8 +104,12 @@ class CozmoSoar(psl.AgentConnector):
             [root_id.GetChild(c) for c in range(root_id.GetNumberChildren())],
         )
         action, status_wme = self.command_map[command_name](root_id)
-        print(action)
-        self.actions.append((action, status_wme, root_id))
+        if action:
+            print(action)
+            self.actions.append((action, status_wme, root_id))
+        else:
+            print("Output Command " + command_name + " had a syntax error")
+            root_id.CreateStringWME("status", "error")
 
     def on_init_soar(self):
         self.world_objs.remove_from_wm()
@@ -250,6 +261,37 @@ class CozmoSoar(psl.AgentConnector):
 
         return turn_towards_face_action, status_wme
 
+    def __handle_turn_to_object(self, command: sml.Identifier):
+        """
+        Handle a Soar turn-to-object action.
+
+        The Sour output should look like:
+        (I3 ^turn-to-object Vx)
+          (Vx ^object-id [id])
+        where [id] is the object id of the object to face towards. 
+        Cozmo will turn to face the object. 
+
+        :param command: Soar command object
+        :return: True if successful, False otherwise
+        """
+
+        target_id = command.GetParameterValue("object-id")
+        target_obj = self.world_objs.get_object(target_id)
+        if not target_obj:
+            print("Couldn't find target object: {}".format(target_id))
+            print(self.world_objs)
+            return False
+
+
+        print("Turning to face {}".format(target_id))
+        turn_towards_object_action = self.r.turn_towards_object(target_obj.cozmo_obj, in_parallel=True)
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+
+        return turn_towards_object_action, status_wme
+
+
     def __handle_move_lift(self, command: sml.Identifier):
         """
         Handle a Soar move-lift action.
@@ -333,6 +375,42 @@ class CozmoSoar(psl.AgentConnector):
 
         return go_to_object_action, status_wme
 
+    def __handle_go_to_pose(self, command: sml.Identifier):
+        """
+        Handle a Soar go-to-pose action.
+
+        The Sour output should look like:
+        (I3 ^go-to-pose Vx)
+          (Vx ^x <x> ^y <y> ^orientation <orient> ^relative << true false >> )
+
+        where x and y are floats representing coordinates in millimeters
+        and orient is a float representing heading in degrees
+        relative is an optional Boolean, if True then the pose will be relative to the robot
+
+        :param command: Soar command object
+        :return: True if successful, False otherwise
+        """
+
+        x = command.GetChildFloat("x")
+        y = command.GetChildFloat("y")
+        orient = command.GetChildFloat("orientation")
+
+        if x == None or y == None or orient == None:
+            print("go-to-pose requires x, y, and orientation")
+            return False
+
+        relative = command.GetChildString("relative")
+        relative = (relative == "true" or relative == "True")
+
+        print("Going to ({}, {}) with orientation {}, relative={}".format(x, y, orient, relative))
+        pose = cozmo.util.pose_z_angle(x=x, y=y, z=0.0, angle_z=degrees(orient))
+        go_to_pose_action = self.robot.go_to_pose(pose, relative_to_robot=relative, in_parallel=True)
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+
+        return go_to_pose_action, status_wme
+
     def __handle_set_backpack_lights(self, command: sml.Identifier):
         """
         Handle a Soar set-backpack-lights action.
@@ -405,9 +483,12 @@ class CozmoSoar(psl.AgentConnector):
         The Sour output should look like:
         (I3 ^turn-in-place Vx)
           (Vx ^angle [ang]
-              ^speed [spd])
+              ^speed [spd]
+              ^absolute << true false >>)
         where [ang] is the amount Cozmo should rotate in degrees and speed is the speed at which
-        Cozmo should rotate in deg/s.
+        Cozmo should rotate in deg/s. 
+        If absolute=true, the angle is an absolute angle (turn to face angle theta)
+            This is optional and defaults to false
 
         :param command: Soar command object
         :return: True if successful, False otherwise
@@ -423,13 +504,74 @@ class CozmoSoar(psl.AgentConnector):
             print("Invalid speed format {}".format(command.GetParameterValue("speed")))
             return False
 
+        absolute = command.GetChildString("absolute")
+        absolute = (absolute == "true" or absolute == "True")
+
         print("Rotating in place {} degrees at {}deg/s".format(angle.degrees, speed.degrees))
-        turn_in_place_action = self.r.turn_in_place(angle=angle, speed=speed, in_parallel=True)
+        turn_in_place_action = self.r.turn_in_place(angle=angle, speed=speed, is_absolute=absolute, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
 
         return turn_in_place_action, status_wme
+
+    def __handle_roll_cube(self, command: sml.Identifier):
+        """
+        Handle a Soar roll-cube action.
+
+        The Sour output should look like:
+        (I3 ^roll-cube Vx)
+          (Vx ^object-id [id])
+        where [id] is the object id of the cube to roll (must be a light cube).
+        Cozmo will attempt to rotate the cube by one face
+
+        :param command: Soar command object
+        :return: True if successful, False otherwise
+        """
+
+        target_id = command.GetParameterValue("object-id")
+        target_obj = self.world_objs.get_object(target_id)
+        if not target_obj:
+            print("Couldn't find target object: {}".format(target_id))
+            print(self.world_objs)
+            return False
+
+        print("Rolling object {}".format(target_id))
+        roll_cube_action = self.robot.roll_cube(target_obj.cozmo_obj, in_parallel=True)
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+
+        return roll_cube_action, status_wme
+
+    def __handle_pop_a_wheelie(self, command: sml.Identifier):
+        """
+        Handle a Soar pop-a-wheelie action.
+
+        The Sour output should look like:
+        (I3 ^pop-a-wheelie Vx)
+          (Vx ^object-id [id])
+        where [id] is the object id of the cube to use to help it do a wheelie. (must be a light cube).
+
+        :param command: Soar command object
+        :return: True if successful, False otherwise
+        """
+
+        target_id = command.GetParameterValue("object-id")
+        target_obj = self.world_objs.get_object(target_id)
+        if not target_obj:
+            print("Couldn't find target object: {}".format(target_id))
+            print(self.world_objs)
+            return False
+
+        print("Rolling object {}".format(target_id))
+        wheelie_action = self.robot.pop_a_wheelie(target_obj.cozmo_obj, in_parallel=True)
+        status_wme = psl.SoarWME("status", "running")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+
+        return wheelie_action, status_wme
+
 
     def on_input_phase(self, input_link: sml.Identifier):
         """

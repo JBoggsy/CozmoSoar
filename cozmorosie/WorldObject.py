@@ -27,7 +27,10 @@ class CozmoObjectUnwrapper:
         return [ 0.0, 0.0, self.cozmo_obj.pose.rotation.angle_z.radians ]
 
     def scl(self):
-        return [ 0.25, 0.25, 0.25 ]
+        co = self.cozmo_obj
+        if isinstance(co, cozmo.objects.CustomObject):
+            return [ co.x_size_mm/100.0, co.y_size_mm/100.0, co.z_size_mm/100.0 ]
+        return [0.25, 0.25, 0.25]
 
     def is_grabbable(self):
         return "grabbable1" if self.cozmo_obj.pickupable else "not-grabbable1"

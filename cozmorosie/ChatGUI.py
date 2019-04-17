@@ -24,6 +24,7 @@ class ChatGUI(Frame):
         self.language_connector.register_message_callback(self.receive_message)
         soar_agent.add_connector("language", self.language_connector)
 
+
     def create_widgets(self):
         self.grid(row=0, column=0, sticky=N+S+E+W)
         self.columnconfigure(0, weight=3, minsize=600)

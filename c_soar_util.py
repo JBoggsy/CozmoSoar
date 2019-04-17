@@ -12,6 +12,7 @@ RESET_STR = "\u001b[0m" if sys.platform != "win32" else ""
 COZMO_COMMANDS = [
     "move-lift",
     "go-to-object",
+    "go-to-pose",
     "move-head",
     "turn-to-face",
     "turn-to-object",
@@ -22,6 +23,8 @@ COZMO_COMMANDS = [
     "place-object-down",
     "place-on-object",
     "dock-with-cube",
+    "pop-a-wheelie",
+    "roll-cube"
 ]
 
 

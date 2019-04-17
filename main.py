@@ -10,6 +10,7 @@ import pysoarlib as psl
 from c_soar_util import *
 
 from cozmorosie.ChatGUI import ChatGUI
+from cozmorosie.CameraView import CameraView
 
 from tkinter import *
 
@@ -65,6 +66,7 @@ def cre_factory(rosie_config_file: Path):
 
         root = Tk()
         chat_gui = ChatGUI(agent, master=root)
+        camera_view = CameraView(cozmo_robot.robot, master=root)
         def shutdown():
             agent.kill()
             root.destroy()
