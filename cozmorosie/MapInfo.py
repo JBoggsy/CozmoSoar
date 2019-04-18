@@ -22,11 +22,11 @@ class RectRegion:
             pass
 
         self.id = params[0]
-        self.x = float(params[1]) * 0.254
-        self.y = float(params[2]) * 0.254
+        self.x = float(params[1]) 
+        self.y = float(params[2])
         self.rot = float(params[3])
-        self.width = float(params[4])  * 0.254
-        self.length = float(params[5]) * 0.254
+        self.width = float(params[4])
+        self.length = float(params[5])
         self.label = params[6]
 
     def get_distance_sq(self, point):
