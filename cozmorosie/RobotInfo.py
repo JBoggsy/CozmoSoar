@@ -1,13 +1,15 @@
 from math import *
 from pysoarlib import *
 
+from .MapInfo import MapInfo
+
 # Info for view region
 VIEW_DIST = 4.0
 VIEW_ANGLE = pi/2 * 0.7
 VIEW_HEIGHT = 1.2
 
 class RobotInfo(WMInterface):
-    def __init__(self, world_objs):
+    def __init__(self, world_objs, map_filename):
         WMInterface.__init__(self)
 
         self.world_objs = world_objs
@@ -19,6 +21,11 @@ class RobotInfo(WMInterface):
         self.pose_wmes = [ SoarWME(dim, 0.0) for dim in [ "x", "y", "z", "roll", "pitch", "yaw" ] ]
         self.pose = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
         self.dims = [.5, .2, .3]
+
+        self.map_info = MapInfo(map_filename)
+        self.current_region = None
+        self.wp_id = None
+        self.wp_dirty = False
 
         #self.held_object = SoarWME("holding-object", "none")
 
@@ -43,6 +50,10 @@ class RobotInfo(WMInterface):
             },
         }
 
+    def get_current_region(self):
+        return self.current_region
+
+
     def update(self, robot_data):
         self.robot_data = robot_data
         yaw = self.robot_data.pose.rotation.angle_z.radians
@@ -50,8 +61,17 @@ class RobotInfo(WMInterface):
         self.pose = [ pos.x/100.0, pos.y/100.0, pos.z/100.0, 0.0, 0.0, yaw ]
         for d, pose_wme in enumerate(self.pose_wmes):
             pose_wme.set_value(self.pose[d])
+        self.update_region()
         self.wm_dirty = True
 
+    def update_region(self):
+        regions = self.map_info.get_containing_regions(self.pose)
+        closest = None
+        if len(regions) > 0:
+            closest = min(regions, key=lambda reg: reg.get_distance_sq(self.pose))
+        if closest != self.current_region:
+            self.current_region = closest
+            self.wp_dirty = True
 
     def get_svs_commands(self):
         q = self.svs_cmd_queue
@@ -66,6 +86,7 @@ class RobotInfo(WMInterface):
 
     def _add_to_wm_impl(self, parent_id):
         self.self_id = parent_id.CreateIdWME("self")
+        self.update_waypoint_wm()
         SoarUtils.update_wm_from_tree(self.self_id, "self", self.robot_inputs, self.wmes)
 
         self.pose_id = self.self_id.CreateIdWME("pose")
@@ -79,7 +100,20 @@ class RobotInfo(WMInterface):
         self.svs_cmd_queue.append("add robot_view robot v {:s} p {:f} {:f} {:f}\n".format(
             self._get_view_region_vertices(), VIEW_DIST/2 + 0.5, 0.0, 0.0))
 
+    def update_waypoint_wm(self):
+        if self.wp_id:
+            self.wp_id.DestroyWME()
+            self.wp_id = None
+        if self.current_region:
+            self.wp_id = self.self_id.CreateIdWME("current-waypoint")
+            self.wp_id.CreateStringWME("waypoint-handle", self.current_region.id)
+            self.wp_id.CreateStringWME("classification", self.current_region.label)
+        self.wp_dirty = False
+
     def _update_wm_impl(self):
+        if self.wp_dirty:
+            self.update_waypoint_wm()
+
         if not self.wm_dirty:
             return
 
@@ -91,6 +125,9 @@ class RobotInfo(WMInterface):
         self.svs_cmd_queue.append(SVSCommands.change_rot("robot", self.pose[3:6]))
 
     def _remove_from_wm_impl(self):
+        self.current_region = None
+        self.update_waypoint_wm()
+
         for wme in self.pose_wmes:
             wme.remove_from_wm()
         self.pose_id = None

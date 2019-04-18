@@ -42,7 +42,7 @@ class CozmoSoar(psl.AgentConnector):
         self.r.enable_facial_expression_estimation()
 
         self.world_objs = WorldObjectManager()
-        self.robot_info = RobotInfo(self.world_objs)
+        self.robot_info = RobotInfo(self.world_objs, agent.settings.get("map_info_file"))
         self.faces = {}
         self.actions = []
 

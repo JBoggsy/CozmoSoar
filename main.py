@@ -66,7 +66,7 @@ def cre_factory(rosie_config_file: Path):
 
         root = Tk()
         chat_gui = ChatGUI(agent, master=root)
-        camera_view = CameraView(cozmo_robot.robot, master=root)
+        #camera_view = CameraView(cozmo_robot.robot, master=root)
         def shutdown():
             agent.kill()
             root.destroy()

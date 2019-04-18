@@ -14,10 +14,13 @@ class CameraView(Toplevel):
         self.canvas = Canvas(self, width=400, height=300)
         self.canvas.pack()
         cozmo_robot.world.image_annotator.enable_annotator('objects')
-        cozmo_robot.world.add_event_handler(cozmo.world.EvtNewCameraImage, lambda evt,image,**kwargs: self.camera_image = image.annotate_image())
+        cozmo_robot.world.add_event_handler(cozmo.world.EvtNewCameraImage, lambda evt,image,**kwargs: self.handle_new_camera_image(image))
         self.camera_image = None
         self.canvas_image = None
         self.after(200, lambda: self.update_image())
+
+    def handle_new_camera_image(self, image):
+        self.camera_image = image
 
     def update_image(self):
         img = self.camera_image
