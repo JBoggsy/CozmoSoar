@@ -1,8 +1,11 @@
 import sys
-
 from math import sqrt, atan2, pi
 
+from cozmo.lights import green_light, red_light, blue_light, white_light, off_light
+
 COLORS = ["red", "blue", "green", "white", "off"]
+LIGHTS = [red_light, blue_light, green_light, white_light, off_light]
+LIGHTS_DICT = dict(zip(COLORS, LIGHTS))
 
 RED_STR = "\u001b[31m" if sys.platform != "win32" else ""
 GREEN_STR = "\u001b[32m" if sys.platform != "win32" else ""
@@ -22,6 +25,7 @@ COZMO_COMMANDS = [
     "place-object-down",
     "place-on-object",
     "dock-with-cube",
+    "change-block-color"
 ]
 
 

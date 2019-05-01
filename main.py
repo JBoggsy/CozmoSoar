@@ -10,7 +10,7 @@ import PySoarLib as psl
 from c_soar_util import *
 
 
-def cse_factory(agent_file: Path, interactive=False):
+def cse_factory(agent_file: Path, auto_run=False):
     """Create the Cozmo program using the CLI arguments."""
     def cozmo_soar_engine(robot: cozmo.robot):
         agent_name = "cozmo"
@@ -31,7 +31,7 @@ def cse_factory(agent_file: Path, interactive=False):
         agent.add_connector("cozmo", cozmo_robot)
         agent.add_connector("observer", soar_observer)
         agent.connect()
-        if interactive:
+        if not auto_run:
             while True:
                 agent.execute_command(input(">> "))
         else:
@@ -46,10 +46,10 @@ def cse_factory(agent_file: Path, interactive=False):
 def gen_cli_parser():
     cli_parser = ArgumentParser(description="Run a Soar agent in a Cozmo robot.")
     cli_parser.add_argument(
-        "-i",
-        "--interactive",
-        dest="interactive",
-        help="If present, the interface will run in interactive mode.",
+        "-r",
+        "--run",
+        dest="autorun",
+        help="If present, the interface will run without prompting for input.",
         action="store_true",
     )
     cli_parser.add_argument("agent")
@@ -64,5 +64,5 @@ if __name__ == "__main__":
         raise FileNotFoundError("ERROR: Agent file doesn't exist!")
     else:
         print("Sourcing from file {}".format(agent_file_path.absolute()))
-    cse = cse_factory(agent_file_path, args.interactive)
+    cse = cse_factory(agent_file_path, args.autorun)
     cozmo.run_program(cse)

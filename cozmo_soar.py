@@ -1,4 +1,4 @@
-from time import sleep
+from time import sleep, time
 
 import PySoarLib as psl
 import soar.Python_sml_ClientInterface as sml
@@ -32,6 +32,8 @@ class CozmoSoar(psl.AgentConnector):
         self.name = self.agent.agent_name
         self.robot = self.r = robot
         self.world = self.w = self.r.world
+
+        self.start_time = time()
 
         self.cam = self.r.camera
         self.cam.image_stream_enabled = True
@@ -93,6 +95,7 @@ class CozmoSoar(psl.AgentConnector):
             "place-object-down": self.__handle_place_object_down,
             "place-on-object": self.__handle_place_on_object,
             "dock-with-cube": self.__handle_dock_with_cube,
+            "change-block-color": self.__handle_change_block_color
         }
 
     def on_output_event(self, command_name: str, root_id: sml.Identifier):
@@ -456,6 +459,51 @@ class CozmoSoar(psl.AgentConnector):
 
         return turn_in_place_action, status_wme
 
+    def __handle_change_block_color(self, command: sml.Identifier):
+        """
+        Handle a Soar change-block-color command.
+
+        The Soar output should look like:
+        (I3 ^change-block-color Vx)
+            (Vx ^color [red, blue, green, white, off]
+                ^object-id [id])
+        where id is the object-id of the cube which should have its color
+        changed.
+
+        :param command: Soar command object
+        :return: True if successful, False otherwise
+        """
+        try:
+            target_id = int(command.GetParameterValue("object-id"))
+        except ValueError as e:
+            #TODO: Update action WME to have failure codes
+            print("Invalid object-id format, must be int")
+            return False
+        if f"obj{target_id}" not in self.objects.keys():
+            #TODO: Update action WME to have failure codes
+            print(f"Invalid object-id {target_id}, can't find it")
+            return False
+
+        color = command.GetParameterValue("color").lower()
+        if color not in COLORS:
+            print(f"Invalid color choice: {color}")
+            status_wme = psl.SoarWME("status", "failed")
+            fail_code_wme = psl.SoarWME("failure-code", "invalid-color")
+            fail_reason_wme = psl.SoarWME("failure-reason", "invalid-color: {}".format(color))
+            status_wme.add_to_wm(command)
+            fail_code_wme.add_to_wm(command)
+            fail_reason_wme.add_to_wm(command)
+            status_wme.update_wm()
+            return False
+
+        print(f"Changing object {target_id} to color {color}")
+        target_block = self.objects[f"obj{target_id}"]
+        target_block.set_lights(LIGHTS_DICT[color])
+        status_wme = psl.SoarWME("status", "complete")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+        return (None, None)
+
     def on_input_phase(self, input_link: sml.Identifier):
         """
         Prior to each input phase, update the changed values of Soar's input link
@@ -563,6 +611,9 @@ class CozmoSoar(psl.AgentConnector):
         # Actions are by default on the output link and have a `status` attribute already,
         # we just need to update that status if needed
         for action, status_wme, root_id in self.actions:
+            if action is None and status_wme is None:
+                self.actions.remove((action, status_wme, root_id))
+                continue
             if action.is_completed:
                 state = "complete" if action.has_succeeded else "failed"
                 failure_reason = action.failure_reason
@@ -577,7 +628,6 @@ class CozmoSoar(psl.AgentConnector):
                     reason_wme.update_wm()
                 status_wme.update_wm()
                 self.actions.remove((action, status_wme, root_id))
-
 
     def __build_obj_wme_subtree(self, obj, obj_designation, obj_wme):
         """
@@ -605,6 +655,8 @@ class CozmoSoar(psl.AgentConnector):
             obj_input_dict["connected"] = obj.is_connected
             obj_input_dict["cube-id"] = obj.cube_id
             obj_input_dict["moving"] = obj.is_moving
+            obj_input_dict["last-tapped"] = obj.last_tapped_time - self.start_time\
+                                            if obj.last_tapped_time is not None else -1.0
 
         for input_name in obj_input_dict.keys():
             new_val = obj_input_dict[input_name]
