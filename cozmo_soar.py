@@ -645,7 +645,6 @@ class CozmoSoar(psl.AgentConnector):
             "object-id": obj.object_id,
             "descriptive-name": obj.descriptive_name,
             "liftable": int(obj.pickupable),
-            "type": "object",
             "pose": {
                 "rot": lambda: obj.pose.rotation.angle_z.degrees,
                 "x": lambda: obj.pose.position.x,
@@ -654,12 +653,17 @@ class CozmoSoar(psl.AgentConnector):
             }
         }
         if isinstance(obj, cozmo.objects.LightCube):
-            obj_input_dict["type"] = "cube"
+            obj_input_dict["type"] = "led-cube"
             obj_input_dict["connected"] = obj.is_connected
             obj_input_dict["cube-id"] = obj.cube_id
             obj_input_dict["moving"] = obj.is_moving
             obj_input_dict["last-tapped"] = obj.last_tapped_time - self.start_time\
                                             if obj.last_tapped_time is not None else -1.0
+        else:
+            cozmo_obj_type = obj.object_type
+            obj_type, obj_name = cozmo_obj_type.name.split("-")
+            obj_input_dict["type"] = obj_type
+            obj_input_dict["name"] = obj_name
 
         for input_name in obj_input_dict.keys():
             new_val = obj_input_dict[input_name]
