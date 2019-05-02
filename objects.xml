@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<objects>
+    <cube unique="true">
+        <name>cutting-board</name>
+        <marker width="37" height="37">Diamonds5</marker>
+        <size>43</size>
+    </cube>
+    <wall unique="false">
+        <name>wall</name>
+        <marker width="37" height="37">Triangles2</marker>
+        <width>300</width>
+        <height>150</height>
+    </wall>
+</objects>

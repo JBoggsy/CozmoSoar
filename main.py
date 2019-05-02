@@ -10,7 +10,7 @@ import PySoarLib as psl
 from c_soar_util import *
 
 
-def cse_factory(agent_file: Path, auto_run=False):
+def cse_factory(agent_file: Path, auto_run=False, object_file=None):
     """Create the Cozmo program using the CLI arguments."""
     def cozmo_soar_engine(robot: cozmo.robot):
         agent_name = "cozmo"
@@ -22,7 +22,7 @@ def cse_factory(agent_file: Path, auto_run=False):
             print_handler=lambda s: print(GREEN_STR + s + RESET_STR),
         )
 
-        cozmo_robot = CozmoSoar(agent, robot)
+        cozmo_robot = CozmoSoar(agent, robot, object_file)
         for command in COZMO_COMMANDS:
             cozmo_robot.add_output_command(command)
 
@@ -52,6 +52,14 @@ def gen_cli_parser():
         help="If present, the interface will run without prompting for input.",
         action="store_true",
     )
+
+    cli_parser.add_argument(
+        "-o",
+        "--objects",
+        dest="obj_file",
+        help="If present, points to an XML file defining custom objects for an environment.",
+        nargs=1
+    )
     cli_parser.add_argument("agent")
     return cli_parser
 
@@ -64,5 +72,5 @@ if __name__ == "__main__":
         raise FileNotFoundError("ERROR: Agent file doesn't exist!")
     else:
         print("Sourcing from file {}".format(agent_file_path.absolute()))
-    cse = cse_factory(agent_file_path, args.autorun)
+    cse = cse_factory(agent_file_path, args.autorun, args.obj_file[0])
     cozmo.run_program(cse)

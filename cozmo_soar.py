@@ -1,4 +1,5 @@
 from time import sleep, time
+import xml.etree.ElementTree as ET
 
 import PySoarLib as psl
 import soar.Python_sml_ClientInterface as sml
@@ -20,7 +21,7 @@ class CozmoSoar(psl.AgentConnector):
     the resulting output link commands.
     """
 
-    def __init__(self, agent: psl.SoarAgent, robot: cozmo.robot):
+    def __init__(self, agent: psl.SoarAgent, robot: cozmo.robot, object_file=None):
         """
         Create an instance of the `CozmoSoar` class connecting the agent to the robot.
 
@@ -32,6 +33,8 @@ class CozmoSoar(psl.AgentConnector):
         self.name = self.agent.agent_name
         self.robot = self.r = robot
         self.world = self.w = self.r.world
+        if object_file:
+            self.custom_objects = define_custom_objects_from_file(self.world, object_file)
 
         self.start_time = time()
 
@@ -769,3 +772,42 @@ class SoarObserver(psl.AgentConnector):
         self.agent.execute_command("print --depth 3 i2")
         print("Output link:")
         self.agent.execute_command("print --depth 4 i3")
+
+
+def define_custom_objects_from_file(world: cozmo.world.World, filename: str):
+    obj_tree = ET.parse(filename)
+    obj_root = obj_tree.getroot()
+    custom_objects = []
+    for obj_node in obj_root:
+        obj_type = obj_node.tag
+        obj_unique = True if obj_node.attrib['unique'] == "true" else False
+        obj_name = obj_node.find('name').text
+        obj_marker_node = obj_node.find('marker')
+        obj_marker = obj_marker_node.text
+        obj_marker_height = int(obj_marker_node.attrib['height'])
+        obj_marker_width = int(obj_marker_node.attrib['width'])
+        cozmo_object_type = custom_object_type_factory(obj_type, obj_name)
+        if obj_type == "cube":
+            obj_size = int(obj_node.find('size').text)
+            custom_object = world.define_custom_cube(
+                custom_object_type=cozmo_object_type,
+                marker=MARKER_DICT[obj_marker],
+                size_mm=obj_size,
+                marker_width_mm=obj_marker_width,
+                marker_height_mm=obj_marker_height,
+                is_unique=obj_unique)
+            custom_objects.append(custom_object)
+        if obj_type == "wall":
+            obj_width = int(obj_node.find('width').text)
+            obj_height = int(obj_node.find('height').text)
+            custom_object = world.define_custom_wall(
+                custom_object_type=cozmo_object_type,
+                marker=MARKER_DICT[obj_marker],
+                width_mm=obj_width,
+                height_mm=obj_height,
+                marker_width_mm=obj_marker_width,
+                marker_height_mm=obj_marker_height,
+                is_unique=obj_unique)
+            custom_object.name = obj_name
+            custom_objects.append(custom_object)
+    return custom_objects

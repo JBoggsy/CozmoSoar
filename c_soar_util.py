@@ -2,6 +2,7 @@ import sys
 from math import sqrt, atan2, pi
 
 from cozmo.lights import green_light, red_light, blue_light, white_light, off_light
+from cozmo.objects import CustomObjectMarkers, CustomObjectTypes, _CustomObjectType
 
 COLORS = ["red", "blue", "green", "white", "off"]
 LIGHTS = [red_light, blue_light, green_light, white_light, off_light]
@@ -28,6 +29,50 @@ COZMO_COMMANDS = [
     "change-block-color"
 ]
 
+MARKER_DICT = {"Circles2": CustomObjectMarkers.Circles2,
+               "Circles3": CustomObjectMarkers.Circles3,
+               "Circles4": CustomObjectMarkers.Circles4,
+               "Circles5": CustomObjectMarkers.Circles5,
+               "Diamonds2": CustomObjectMarkers.Diamonds2,
+               "Diamonds3": CustomObjectMarkers.Diamonds3,
+               "Diamonds4": CustomObjectMarkers.Diamonds4,
+               "Diamonds5": CustomObjectMarkers.Diamonds5,
+               "Hexagons2": CustomObjectMarkers.Hexagons2,
+               "Hexagons3": CustomObjectMarkers.Hexagons3,
+               "Hexagons4": CustomObjectMarkers.Hexagons4,
+               "Hexagons5": CustomObjectMarkers.Hexagons5,
+               "Triangles2": CustomObjectMarkers.Triangles2,
+               "Triangles3": CustomObjectMarkers.Triangles3,
+               "Triangles4": CustomObjectMarkers.Triangles4,
+               "Triangles5": CustomObjectMarkers.Triangles5}
+CUSTOM_OBJECT_TYPES = [CustomObjectTypes.CustomType00,
+                       CustomObjectTypes.CustomType01,
+                       CustomObjectTypes.CustomType02,
+                       CustomObjectTypes.CustomType03,
+                       CustomObjectTypes.CustomType04,
+                       CustomObjectTypes.CustomType05,
+                       CustomObjectTypes.CustomType06,
+                       CustomObjectTypes.CustomType07,
+                       CustomObjectTypes.CustomType08,
+                       CustomObjectTypes.CustomType09,
+                       CustomObjectTypes.CustomType10,
+                       CustomObjectTypes.CustomType11,
+                       CustomObjectTypes.CustomType12,
+                       CustomObjectTypes.CustomType13,
+                       CustomObjectTypes.CustomType14,
+                       CustomObjectTypes.CustomType15,
+                       CustomObjectTypes.CustomType16,
+                       CustomObjectTypes.CustomType17,
+                       CustomObjectTypes.CustomType18,
+                       CustomObjectTypes.CustomType19]
+CUSTOM_OBJECT_NUM = 0
+
+def custom_object_type_factory(type, name):
+    global CUSTOM_OBJECT_NUM
+    type_name = f"{type}-{name}"
+    cozmo_obj_type = _CustomObjectType(type_name, 17 + CUSTOM_OBJECT_NUM)
+    CUSTOM_OBJECT_NUM += 1
+    return cozmo_obj_type
 
 def obj_distance_factory(obj1, obj2):
     """
