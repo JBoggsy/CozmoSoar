@@ -57,8 +57,7 @@ def gen_cli_parser():
         "-o",
         "--objects",
         dest="obj_file",
-        help="If present, points to an XML file defining custom objects for an environment.",
-        nargs=1
+        help="If present, points to an XML file defining custom objects for an environment."
     )
     cli_parser.add_argument("agent")
     return cli_parser
@@ -72,5 +71,5 @@ if __name__ == "__main__":
         raise FileNotFoundError("ERROR: Agent file doesn't exist!")
     else:
         print("Sourcing from file {}".format(agent_file_path.absolute()))
-    cse = cse_factory(agent_file_path, args.autorun, args.obj_file[0])
+    cse = cse_factory(agent_file_path, args.autorun, args.obj_file)
     cozmo.run_program(cse)

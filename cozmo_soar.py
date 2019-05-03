@@ -88,17 +88,17 @@ class CozmoSoar(psl.AgentConnector):
         ###############################
         self.command_map = {
             "move-lift": self.__handle_move_lift,
-            "go-to-object": self.__handle_go_to_object,
             "move-head": self.__handle_move_head,
+            "go-to-object": self.__handle_go_to_object,
             "turn-to-face": self.__handle_turn_to_face,
-            "set-backpack-lights": self.__handle_set_backpack_lights,
             "drive-forward": self.__handle_drive_forward,
             "turn-in-place": self.__handle_turn_in_place,
             "pick-up-object": self.__handle_pick_up_object,
-            "place-object-down": self.__handle_place_object_down,
-            "place-on-object": self.__handle_place_on_object,
             "dock-with-cube": self.__handle_dock_with_cube,
-            "change-block-color": self.__handle_change_block_color
+            "place-on-object": self.__handle_place_on_object,
+            "place-object-down": self.__handle_place_object_down,
+            "change-block-color": self.__handle_change_block_color,
+            "set-backpack-lights": self.__handle_set_backpack_lights
         }
 
     def on_output_event(self, command_name: str, root_id: sml.Identifier):
@@ -336,14 +336,17 @@ class CozmoSoar(psl.AgentConnector):
 
         The Sour output should look like:
         (I3 ^go-to-object Vx)
-          (Vx ^object-id [id])
-        where [id] is the object id of the object to go to. Cozmo will stop 150mm from the object.
+          (Vx ^object-id [id]
+              ^distance [dist])
+        where [id] is the object id of the object to go to and [dist] indicates
+        how far to stop from the object in mm. Only works on LightCubes.
 
         :param command: Soar command object
         :return: True if successful, False otherwise
         """
         try:
             target_id = int(command.GetParameterValue("object-id"))
+            target_id = f"obj{target_id}"
         except ValueError as e:
             print(
                 "Invalid target-object-id format {}".format(
@@ -355,9 +358,15 @@ class CozmoSoar(psl.AgentConnector):
             print("Couldn't find target object")
             return False
 
+        try:
+            distance = distance_mm(float(command.GetParameterValue("distance")))
+        except ValueError as e:
+            print("Invalid distance format {}".format(command.GetParameterValue("distance")))
+            return False
+
         print("Going to object {}".format(target_id))
         target_obj = self.objects[target_id]
-        go_to_object_action = self.robot.go_to_object(target_obj, distance_mm(100), in_parallel=True)
+        go_to_object_action = self.robot.go_to_object(target_obj, distance, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()

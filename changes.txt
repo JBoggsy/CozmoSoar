@@ -1,0 +1,9 @@
+Updates:
+- change-block-color action, takes a ^color string (red, green, blue, white, or off) and the id of the cube to change (its object ID)
+- when remembering a block, you need to add a NEW attribute not on the input-link: color. You have to manually update this every time you change the color. 
+- light cube objects have a "last-tapped" attribute on the input-link which says when it was last tapped. This needds to be in the remember operator now
+- object config files
+- All objects now have type based on their object config type
+- Light cube type is now "led-cube"
+- Go-to-object now takes distance parameter
+- Go-to-object only works for LightCubes
