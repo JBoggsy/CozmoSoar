@@ -29,7 +29,7 @@ def cse_factory(agent_file: Path, auto_run=False, object_file=None):
         soar_observer = SoarObserver(agent)
 
         agent.add_connector("cozmo", cozmo_robot)
-        agent.add_connector("observer", soar_observer)
+        # agent.add_connector("observer", soar_observer)
         agent.connect()
         if not auto_run:
             while True:
