@@ -67,6 +67,10 @@ CUSTOM_OBJECT_TYPES = [CustomObjectTypes.CustomType00,
                        CustomObjectTypes.CustomType19]
 CUSTOM_OBJECT_NUM = 0
 
+LIGHT_CUBE_NAMES = {1: "paperclip",
+                    2: "lamp",
+                    3: "deli*slicer"}
+
 def custom_object_type_factory(type, name):
     global CUSTOM_OBJECT_NUM
     type_name = f"{type}-{name}"

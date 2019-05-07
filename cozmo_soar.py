@@ -668,6 +668,7 @@ class CozmoSoar(psl.AgentConnector):
             obj_input_dict["moving"] = obj.is_moving
             obj_input_dict["last-tapped"] = obj.last_tapped_time - self.start_time\
                                             if obj.last_tapped_time is not None else -1.0
+            obj_input_dict["name"] = LIGHT_CUBE_NAMES[obj.cube_id]
         else:
             cozmo_obj_type = obj.object_type
             obj_type, obj_name = cozmo_obj_type.name.split("-")

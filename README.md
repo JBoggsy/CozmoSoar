@@ -33,6 +33,13 @@ python3 main.py [path/to/agent.soar] -r
 ```
 which will run without waiting for user input. Currently there is no good way to stop the agent from running, so this mode is not recommended. 
 
+## Objects
+Cozmo comes with three interactive Bluetooth-enabled "light cubes", each of which comes with its own unique fiducial marker on each side. In the image below, you can see wht these fiducials look like and which cubes they correspond to. The number in red after the name indicates the `cube-id` of the light cube with that fiducial. The names given in the image also correspond to what is put on the `^name` attribute of the cube on the input-link when the cube is being observed, with the minor exception of the "Anglepoise Lamp", which is just called "lamp."
+
+![Cozmo light cube fiducials](https://www.cs.cmu.edu/~dst/Calypso/Curriculum/01/light-cube-markers.png)
+
+The cubes connect to Cozmo via Bluetooth (as long as their batteries are charged), and can transmit information about being tapped or moved to Cozmo. Likewise, Cozmo can transmit an instruction to the cubes which turns on or off the RGB LEDs of the cubes and can change their color. Cubes are the only objects which are compatible with the high-level object-based commands such as `pick-up-object` or `go-to-objecct`.
+
 ### Custom Objects
 In addition to the three light cubes included with Cozmo, you can define custom objects using an xml file. Custom objects can currently be either cubes or walls, where walls can have arbitrary heights and widths but are assumed to be 10mm thick. Custom objects must use the fiducial images found [here](http://cozmosdk.anki.com/docs/generated/cozmo.objects.html#cozmo.objects.CustomObjectMarkers). The same fiducial should be applied to each side of the cube or wall which the robot might see, which means up to six fiducials are needed for cubes and up to 2 for walls. We recommend that fiducials be printed out at least 25mm x 25mm, so Cozmo will be able to detect them. 
 
@@ -97,6 +104,7 @@ The Cozmo-Soar interface provides certain input-link attributes and values to a 
   * descriptive_name (str)
   * last-tapped (float)
   * moving (str)
+  * name (str)
   * liftable (int)
   * type (str)
   * pose
@@ -183,6 +191,7 @@ Provides information about an object Cozmo can currently see and recognize, such
 * `last-tapped`: Indicates when the light cube object last detected being tapped, based on its internal accelerometer. The value will be in seconds since the Soar agent began.
 * `liftable`: An integer, either 0 for false or 1 for true. Indicates whether Cozmo can pick up the object with its lift.
 * `moving`: A string either "False" or "True". Indicates whether the object is moving based on its accelerometer. Only provided if the object is a Light Cube.
+* `name`: A string naming the object. For the light cubes, it is given by default as laid out in the [Objects](#objects) section. For custom objects, including walls, the name is given by the `objects.xml` file, where it is defined in a `<name>` tag.
 * `object-id`: An integer uniquely identifying the object among all those Cozmo can currently see. Note that the ID of an object may not be the same if it leaves and then reenters Cozmo's vision.
 * `type`: A string indicating what kind of object it is. The possible types are "led-cube", "cube", and "wall". The light cubes that come with Cozmo will register as "led-cubes", while custom-defined cubes will simply be "cube."
 * `pose`: Pose information about the object. See [pose](#pose).
