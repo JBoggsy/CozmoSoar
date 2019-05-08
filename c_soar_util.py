@@ -1,11 +1,37 @@
 import sys
 from math import sqrt, atan2, pi
 
-from cozmo.lights import green_light, red_light, blue_light, white_light, off_light
+from cozmo.lights import green_light, red_light, blue_light, white_light, off_light, Color, Light
 from cozmo.objects import CustomObjectMarkers, CustomObjectTypes, _CustomObjectType
 
-COLORS = ["red", "blue", "green", "white", "off"]
-LIGHTS = [red_light, blue_light, green_light, white_light, off_light]
+#################
+# DEFINE COLORS #
+#################
+brown_color = Color(name="brown",
+                    rgb=(80, 20, 0))
+yellow_color = Color(name="yellow",
+                     rgb=(255, 255, 0))
+orange_color = Color(name="orange",
+                     rgb=(255, 80, 0))
+purple_color = Color(name="purple",
+                     rgb=(255, 0, 255))
+teal_color = Color(name="teal",
+                   rgb=(0, 255, 255))
+
+brown_light = Light(on_color=brown_color)
+yellow_light = Light(on_color=yellow_color)
+orange_light = Light(on_color=orange_color)
+purple_light = Light(on_color=purple_color)
+teal_light = Light(on_color=teal_color)
+
+COLORS = ["red", "blue", "green",
+          "brown", "yellow", "orange",
+          "purple", "teal", "white",
+          "off"]
+LIGHTS = [red_light, blue_light, green_light,
+          brown_light, yellow_light, orange_light,
+          purple_light, teal_light, white_light,
+          off_light]
 LIGHTS_DICT = dict(zip(COLORS, LIGHTS))
 
 RED_STR = "\u001b[31m" if sys.platform != "win32" else ""

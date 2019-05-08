@@ -477,10 +477,10 @@ class CozmoSoar(psl.AgentConnector):
 
         The Soar output should look like:
         (I3 ^change-block-color Vx)
-            (Vx ^color [red, blue, green, white, off]
+            (Vx ^color [str]
                 ^object-id [id])
-        where id is the object-id of the cube which should have its color
-        changed.
+        where color is the color name to change to from the valid colors and id
+        is the object-id of the cube which should have its color changed.
 
         :param command: Soar command object
         :return: True if successful, False otherwise
@@ -510,6 +510,8 @@ class CozmoSoar(psl.AgentConnector):
 
         print(f"Changing object {target_id} to color {color}")
         target_block = self.objects[f"obj{target_id}"]
+        print("Target object: {}".format(target_block.cube_id))
+        target_block.set_lights_off()
         target_block.set_lights(LIGHTS_DICT[color])
         status_wme = psl.SoarWME("status", "complete")
         status_wme.add_to_wm(command)

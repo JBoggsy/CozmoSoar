@@ -225,7 +225,7 @@ An string. The serial number of the robot in hex.
 - `object-id`: `int`
 - `color`: `str`
 
-Change the color of the specified light cube to the given color. The object-id parameter indicates which object to change the color of, and obviously must belong to a light cube. The light cube must be in Cozmo's line of sight (and thus on the input-link). The color can be one of red, green, blue, white, or off, in lower-case. 
+Change the color of the specified light cube to the given color. The object-id parameter indicates which object to change the color of, and obviously must belong to a light cube. The light cube must be in Cozmo's line of sight (and thus on the input-link). The available colors are red, green, blue, brown, yellow, orange, purple, teal, white, and off.
 
 
 #### [move-lift](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.set_lift_height)
