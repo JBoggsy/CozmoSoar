@@ -10,7 +10,7 @@ import PySoarLib as psl
 from c_soar_util import *
 
 
-def cse_factory(agent_file: Path, auto_run=False, object_file=None):
+def cse_factory(agent_file: Path, auto_run=False, object_file=None, debugger=False):
     """Create the Cozmo program using the CLI arguments."""
     def cozmo_soar_engine(robot: cozmo.robot):
         agent_name = "cozmo"
@@ -20,16 +20,14 @@ def cse_factory(agent_file: Path, auto_run=False, object_file=None):
             watch_level=1,
             write_to_stdout=True,
             print_handler=lambda s: print(GREEN_STR + s + RESET_STR),
+            spawn_debugger=debugger
         )
 
         cozmo_robot = CozmoSoar(agent, robot, object_file)
         for command in COZMO_COMMANDS:
             cozmo_robot.add_output_command(command)
 
-        soar_observer = SoarObserver(agent)
-
         agent.add_connector("cozmo", cozmo_robot)
-        # agent.add_connector("observer", soar_observer)
         agent.connect()
         if not auto_run:
             while True:
@@ -59,6 +57,14 @@ def gen_cli_parser():
         dest="obj_file",
         help="If present, points to an XML file defining custom objects for an environment."
     )
+
+    cli_parser.add_argument(
+        "-d",
+        "--debugger",
+        dest="debugger",
+        help="If present, will launch the Java soar debugger as long as it is in your SOAR_HOME.",
+        action="store_true"
+    )
     cli_parser.add_argument("agent")
     return cli_parser
 
@@ -71,5 +77,6 @@ if __name__ == "__main__":
         raise FileNotFoundError("ERROR: Agent file doesn't exist!")
     else:
         print("Sourcing from file {}".format(agent_file_path.absolute()))
-    cse = cse_factory(agent_file_path, args.autorun, args.obj_file)
+    print(args.debugger)
+    cse = cse_factory(agent_file_path, args.autorun, args.obj_file, args.debugger)
     cozmo.run_program(cse)
