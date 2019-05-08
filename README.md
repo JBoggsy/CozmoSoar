@@ -33,6 +33,8 @@ python3 main.py [path/to/agent.soar] -r
 ```
 which will run without waiting for user input. Currently there is no good way to stop the agent from running, so this mode is not recommended. 
 
+You can also spawn an instance of the Soar Java debugger with the `-d` flag.
+
 ## Objects
 Cozmo comes with three interactive Bluetooth-enabled "light cubes", each of which comes with its own unique fiducial marker on each side. In the image below, you can see wht these fiducials look like and which cubes they correspond to. The number in red after the name indicates the `cube-id` of the light cube with that fiducial. The names given in the image also correspond to what is put on the `^name` attribute of the cube on the input-link when the cube is being observed, with the minor exception of the "Anglepoise Lamp", which is just called "lamp."
 
