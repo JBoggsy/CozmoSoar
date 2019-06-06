@@ -3,7 +3,7 @@ sp {cube-stack*propose*remember-cube
    (state <s> ^name cube-stack
               ^io.input-link <in>)
    (<in> ^object <obj>)
-   (<obj> ^type cube
+   (<obj> ^type led-cube
           ^cube-id <cid>
           ^object-id <oid>
           ^pose <p>)
@@ -30,7 +30,7 @@ sp {cube-stack*propose*update-cube
               ^io.input-link <in>
               ^block <b>)
    (<in> ^object <obj>)
-   (<obj> ^type cube
+   (<obj> ^type led-cube
           ^cube-id <cid>
           ^object-id <oid>
           ^pose <p>)

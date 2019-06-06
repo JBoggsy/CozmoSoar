@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 
 import cozmo
-from cozmo_soar import CozmoSoar, SoarObserver
+from cozmo_soar import CozmoSoar
 import PySoarLib as psl
 
 from c_soar_util import *
@@ -65,6 +65,13 @@ def gen_cli_parser():
         help="If present, will launch the Java soar debugger as long as it is in your SOAR_HOME.",
         action="store_true"
     )
+
+    cli_parser.add_argument(
+        "--3d-view",
+        dest="debugger",
+        help="If present, open the 3D viewer.",
+        action="store_true"
+    )
     cli_parser.add_argument("agent")
     return cli_parser
 
@@ -79,4 +86,4 @@ if __name__ == "__main__":
         print("Sourcing from file {}".format(agent_file_path.absolute()))
     print(args.debugger)
     cse = cse_factory(agent_file_path, args.autorun, args.obj_file, args.debugger)
-    cozmo.run_program(cse)
+    cozmo.run_program(cse, use_3d_viewer=False, use_viewer=True)

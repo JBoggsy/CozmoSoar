@@ -117,9 +117,13 @@ class CozmoSoar(psl.AgentConnector):
             command_name,
             [root_id.GetChild(c) for c in range(root_id.GetNumberChildren())],
         )
-        action, status_wme = self.command_map[command_name](root_id)
-        print(action)
-        self.actions.append((action, status_wme, root_id))
+        results = self.command_map[command_name](root_id)
+        if not results:
+            print("Error execcuting command")
+        else:
+            action, status_wme = results
+            # print(action)
+            self.actions.append((action, status_wme, root_id))
 
     def __handle_place_object_down(self, command: sml.Identifier):
         """
@@ -193,6 +197,7 @@ class CozmoSoar(psl.AgentConnector):
         """
         try:
             target_id = int(command.GetParameterValue("object-id"))
+            target_id = "obj{}".format(target_id)
         except ValueError as e:
             print(
                 "Invalid target-object-id format {}".format(command.GetParameterValue("object-id"))
@@ -671,6 +676,9 @@ class CozmoSoar(psl.AgentConnector):
             obj_input_dict["last-tapped"] = obj.last_tapped_time - self.start_time\
                                             if obj.last_tapped_time is not None else -1.0
             obj_input_dict["name"] = LIGHT_CUBE_NAMES[obj.cube_id]
+        elif isinstance(obj, cozmo.objects.Charger):
+            #TODO: Handle seeing the charger
+            pass
         else:
             cozmo_obj_type = obj.object_type
             obj_type, obj_name = cozmo_obj_type.name.split("-")

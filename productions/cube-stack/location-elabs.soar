@@ -29,3 +29,11 @@ sp {cube-stack*elaborate*cube-dist
    (<b> ^heading (- (compute-heading <r-y> <r-x> <b-y> <b-x>) <r-rot>)
         ^distance (compute-range <r-y> <r-x> <b-y> <b-x>))
 }
+
+sp {cube-stack*elaborate*abs-heading
+   (state <s> ^name cube-stack
+              ^block <b>)
+   (<b> ^heading <hdg>)
+-->
+   (<b> ^abs-heading (abs <hdg>))
+}

@@ -35,7 +35,8 @@ sp {cube-stack*propose*turn-to-top
    (state <s> ^name cube-stack
               ^stack-top <top-id>
               ^block <b>
-              ^io.input-link <in>)
+              ^io.input-link <in>
+             -^io.output-link.<act>.status running)
    (<b> ^cube-id <top-id>
         ^heading <hd>)
    (<in> ^carrying-block 0
@@ -52,8 +53,9 @@ sp {cube-stack*propose*pick-up-top
    "Given a proposed top cube ot stack, go and pick it up if it is visible."
    (state <s> ^name cube-stack
               ^stack-top <top-id>
-              ^io.input-link.object <obj>)
-   (<obj> ^type cube
+              ^io.input-link.object <obj>
+             -^io.output-link.<act>.status running)
+   (<obj> ^type led-cube
           ^cube-id <top-id>
           ^object-id <oid>)
 -->
@@ -66,7 +68,8 @@ sp {cube-stack*propose*pick-up-top
 sp {cube-stack*propose*look-up-again
    "After we pick up a block, the head can end up tilted far down. Move it back up"
    (state <s> ^name cube-stack
-              ^io.input-link <in>)
+              ^io.input-link <in>
+             -^io.output-link.<act>.status running)
    (<in> ^carrying-block 1
          ^head-angle {< -3.0 <hd-ang>})
 -->
@@ -83,7 +86,8 @@ sp {cube-stack*propose*turn-to-bot
               ^stack-top <tid>
               ^stack-bot <bid>
               ^io.input-link <in>
-              ^block <b>)
+              ^block <b>
+             -^io.output-link.<act>.status running)
    (<in> ^carrying-block 1
         -^object.cube-id <bid>
          ^head-angle > -3.0)
@@ -102,17 +106,24 @@ sp {cube-stack*propose*place-on-bottom
    (state <s> ^name cube-stack
               ^stack-top <tid>
               ^stack-bot <bid>
-              ^io.input-link <in>)
+              ^block <topb>
+              ^block <botb>
+              ^io.input-link <in>
+             -^io.output-link.<act>.status running)
    (<in> ^object <b>
          ^carrying-block 1)
-   (<b> ^type cube
+   (<b> ^type led-cube
         ^cube-id <bid>
         ^object-id <oid>)
+   (<topb> ^cube-id <tid>)
+   (<botb> ^cube-id <bid>)
 -->
    (<s> ^operator <op> + =)
    (<op> ^name place-on-object
          ^actions.place-on-object <a>)
    (<a> ^object-id <oid>)
+   (<topb> ^on yes)
+   (<botb> ^under yes)
 }
 
 
