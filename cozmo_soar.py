@@ -8,7 +8,12 @@ import cozmo
 from cozmo.util import degrees, distance_mm, speed_mmps
 
 from c_soar_util import *
+from types import SimpleNamespace
 
+import transforms3d
+import math
+import numpy as np
+import copy
 
 class CozmoSoar(psl.AgentConnector):
     """
@@ -20,7 +25,6 @@ class CozmoSoar(psl.AgentConnector):
     the Cozmo robot with Soar by updating the appropriate input link attributes and interpreting
     the resulting output link commands.
     """
-
     def __init__(self, agent: psl.SoarAgent, robot: cozmo.robot, object_file=None):
         """
         Create an instance of the `CozmoSoar` class connecting the agent to the robot.
@@ -45,7 +49,9 @@ class CozmoSoar(psl.AgentConnector):
         self.objects = {}
         self.faces = {}
         self.actions = []
-
+        self.w.request_nav_memory_map(.5)
+        self.svs_buffer = {}
+    
         #######################
         # Working Memory data #
         #######################
@@ -648,6 +654,153 @@ class CozmoSoar(psl.AgentConnector):
                 status_wme.update_wm()
                 self.actions.remove((action, status_wme, root_id))
 
+        #######
+        # SVS #
+        #######
+        # obj1 comesfrom navmap, obj2 comes from buffer.  test if they are equal (disregarding small changes in vision)
+        def equal(obj1, obj2):
+            epsilon_position = 1
+            epsilon_rotation = .2
+            pos_a = [obj1.pose.position.x, obj1.pose.position.y, obj1.pose.position.z]
+            pos_b = [obj2.pose.position.x, obj2.pose.position.y, obj2.pose.position.z]
+            rot_a = [obj1.pose.rotation.q0, obj1.pose.rotation.q1, obj1.pose.rotation.q2, obj1.pose.rotation.q3]
+            rot_b = [obj2.pose.rotation.q0, obj2.pose.rotation.q1, obj2.pose.rotation.q2, obj2.pose.rotation.q3]
+
+            return obj1.object_id == obj2.object_id and obj1.is_visible == obj2.is_visible and abs(max([ai - bi for ai, bi in zip(pos_a, pos_b)])) < epsilon_position and abs(max([ai - bi for ai, bi in zip(rot_a, rot_b)])) < epsilon_rotation
+            
+        # we only want to send information on blocks whose locations we know.  in navmap, it initializes blocks at position (0, 0, 0) even if it cannot see them.  this function checks to see if this is the "init_block" state
+        def block_init(val):
+            pos = val.pose.position
+            return val.is_visible is False and pos.x == 0.00 and pos.y == 0.00 and pos.z == 0.00
+
+        # create and populate lists to add, delete, and change elements in SVS
+        navmap = self.w.__dict__['_objects']
+        buff = self.svs_buffer
+        change_list = []
+        add_list = []
+        tag_list = [] # used for is_visible tags
+        
+        # deepcopy val from navmap
+        def deepcopy(val):
+            d = {}
+            n = SimpleNamespace(**d)
+            n.object_id = val.object_id
+            n.is_visible = val.is_visible
+            n.pose = val.pose
+            return n
+
+        # loop through navmap items checking for changes / additions and add to lists to be processed
+        for _, val in navmap.items():
+            oid = val.object_id
+            if not block_init(val):
+                if oid in buff:
+                    if not equal(val, buff[oid]):
+                        change_list.append(val)
+                        if val.is_visible is not buff[oid].is_visible:
+                            tag_list.append(f'tag change {oid} is_visible {val.is_visible}')
+                        buff[oid] = deepcopy(val)
+                else:
+                    if val.is_visible:
+                        add_list.append(val)
+                        tag_list.append(f'tag add {oid} is_visible True')
+                        buff[oid] = deepcopy(val)
+            
+        def get_obj_str(obj, str_type):
+            position = obj.pose.position
+            rotation = obj.pose.rotation
+            pos_arr = [position.x, position.y, position.z]
+            quat = (rotation.q0, rotation.q1, rotation.q2, rotation.q3)
+            oid = obj.object_id
+
+            def quaternion_to_euler(quat):
+                """
+                credit: https://stackoverflow.com/questions/53033620/how-to-convert-euler-angles-to-quaternions-and-get-the-same-euler-angles-back-fr?rq=1
+                """
+                import math
+                (w, x, y, z) = quat
+                t0 = +2.0 * (w * x + y * z)
+                t1 = +1.0 - 2.0 * (x * x + y * y)
+                X = math.atan2(t0, t1)
+
+                t2 = +2.0 * (w * y - z * x)
+                t2 = +1.0 if t2 > +1.0 else t2
+                t2 = -1.0 if t2 < -1.0 else t2
+                Y = math.asin(t2)
+
+                t3 = +2.0 * (w * z + x * y)
+                t4 = +1.0 - 2.0 * (y * y + z * z)
+                Z = math.atan2(t3, t4)
+                return (X, Y, Z)
+
+            eul = quaternion_to_euler(quat)
+
+            if type(obj).__name__ == '_proxy_LightCube':
+                LIGHT_CUBE_LENGTH = 43
+                depth = LIGHT_CUBE_LENGTH
+                width = LIGHT_CUBE_LENGTH
+                height = LIGHT_CUBE_LENGTH
+            
+            else:
+                depth = obj.x_size_mm
+                width = obj.y_size_mm
+                height = obj.z_size_mm
+
+            # generate [GEOMETRY] for svs str by generating vertices from position and vectors of dimensions      
+            def combinations(possibilities):
+                """
+                Takes in array of the form [(tuple), (tuple), (tuple)] and returns all the possible combinations.  You can think of each tuple as possibilities of a value at a certain place (index in top level array).  This returns all possible combinations of those values in each place.
+                """
+                # will be modified during recursion
+                combs = []
+                def comb_helper(arr, i, baton):
+                    """
+                    Modifies combs variable above
+                    """
+
+                    for elt in arr[i]:
+                        baton.append(elt)
+                        if i < len(arr) - 1:
+                            comb_helper(arr, i + 1, baton)
+                        else:
+                            combs.append(copy.deepcopy(baton))
+                        baton.pop()
+                comb_helper(possibilities, 0, [])
+                return combs
+
+            # vectors from center of object to vertices, unrotated
+            vectors = np.transpose(np.array(combinations([(depth/2.0, -depth/2.0), (width/2.0, -width/2.0), (height/2.0, -height/2.0)])))
+            rotation_matrix = transforms3d.euler.euler2mat(eul[0], eul[1], eul[2], axes='sxyz')
+            rotated_vectors = np.transpose(np.matmul(rotation_matrix, vectors))
+            
+            # rotated vertices = position array + rotated vectors
+            vertices = np.transpose(np.array([[ai + bi for ai, bi in zip(pos_arr, vector)] for vector in rotated_vectors]))
+            
+            # generate [TRANSFORM] portion of svs string
+            scalar = 1000.0   # turns navmap oordinates in mm to SVS coordinates in m
+            gen_transform = lambda pos, rot: f"p {pos[0]/scalar} {pos[1]/scalar} {pos[2]/scalar} r {rot[0]} {rot[1]} {rot[2]}"
+            geo_str = "v"
+            for vertex in vertices:
+                geo_str += f' {vertex[0]/scalar} {vertex[1]/scalar} {vertex[2]/scalar}'
+            svs_str = f"{geo_str} {gen_transform(pos_arr, eul)}"
+            
+            if str_type == 'add':
+                return f'add {oid} world {svs_str}'
+            else:
+                return f'change {oid} {svs_str}'
+
+        def send_input(input):
+            print('\nSending SVS input: ', input)
+            self.agent.agent.SendSVSInput(input)
+        
+        for obj in change_list:
+            change_input = get_obj_str(obj, 'change')
+            send_input(change_input)
+        for obj in add_list:
+            add_input = get_obj_str(obj, 'add')
+            send_input(add_input)
+        for tag in tag_list:
+            send_input(tag)
+
     def __build_obj_wme_subtree(self, obj, obj_designation, obj_wme):
         """
         Build a working memory sub-tree for a given perceived object
@@ -681,10 +834,13 @@ class CozmoSoar(psl.AgentConnector):
             pass
         else:
             cozmo_obj_type = obj.object_type
-            obj_type, obj_name = cozmo_obj_type.name.split("-")
+            temp_arr = cozmo_obj_type.name.split("-")
+            obj_type = temp_arr[0]
+            
+            # fix for names including '-'
+            obj_name = ''.join(temp_arr[1:])
             obj_input_dict["type"] = obj_type
             obj_input_dict["name"] = obj_name
-
         for input_name in obj_input_dict.keys():
             new_val = obj_input_dict[input_name]
             wme = self.WMEs.get(obj_designation + "." + input_name)
@@ -799,20 +955,51 @@ class SoarObserver(psl.AgentConnector):
 
 
 def define_custom_objects_from_file(world: cozmo.world.World, filename: str):
+    # define a unique cube (44mm x 44mm x 44mm) (approximately the same size as a light cube)
+    # with a 30mm x 30mm Diamonds2 image on every face
+    # cube_obj = world.define_custom_cube(CustomObjectTypes.CustomType00,
+    #                                           CustomObjectMarkers.Diamonds2,
+    #                                           44,
+    #                                           30, 30, True)
+
+    # define a unique cube (88mm x 88mm x 88mm) (approximately 2x the size of a light cube)
+    # with a 50mm x 50mm Diamonds3 image on every face
+    # big_cube_obj = world.define_custom_cube(CustomObjectTypes.CustomType01,
+    #                                           CustomObjectMarkers.Diamonds3,
+    #                                           88,
+    #                                           50, 50, True)
+
+
+    # define a unique box (60mm deep x 140mm width x100mm tall)
+    # with a different 30mm x 50mm image on each of the 6 faces
+    # box_obj = world.define_custom_box(cust_type('box', 'box'),
+    #                                         CustomObjectMarkers.Hexagons2,  # front
+    #                                         CustomObjectMarkers.Circles3,   # back
+    #                                         CustomObjectMarkers.Circles4,   # top
+    #                                         CustomObjectMarkers.Circles5,   # bottom
+    #                                         CustomObjectMarkers.Triangles4, # left
+    #                                         CustomObjectMarkers.Triangles3, # right
+    #                                         60, 140, 100,
+    #                                         30, 50, True)
     obj_tree = ET.parse(filename)
     obj_root = obj_tree.getroot()
     custom_objects = []
+    
+    # find attribute.text from node n
+    f = lambda n, attr: n.find(attr).text
+
     for obj_node in obj_root:
         obj_type = obj_node.tag
         obj_unique = True if obj_node.attrib['unique'] == "true" else False
-        obj_name = obj_node.find('name').text
+        obj_name = f(obj_node, 'name')
+        obj_marker = f(obj_node, 'marker')
         obj_marker_node = obj_node.find('marker')
-        obj_marker = obj_marker_node.text
         obj_marker_height = int(obj_marker_node.attrib['height'])
         obj_marker_width = int(obj_marker_node.attrib['width'])
         cozmo_object_type = custom_object_type_factory(obj_type, obj_name)
+        
         if obj_type == "cube":
-            obj_size = int(obj_node.find('size').text)
+            obj_size = int(f(obj_node, 'size'))
             custom_object = world.define_custom_cube(
                 custom_object_type=cozmo_object_type,
                 marker=MARKER_DICT[obj_marker],
@@ -821,17 +1008,36 @@ def define_custom_objects_from_file(world: cozmo.world.World, filename: str):
                 marker_height_mm=obj_marker_height,
                 is_unique=obj_unique)
             custom_objects.append(custom_object)
-        if obj_type == "wall":
-            obj_width = int(obj_node.find('width').text)
-            obj_height = int(obj_node.find('height').text)
-            custom_object = world.define_custom_wall(
-                custom_object_type=cozmo_object_type,
-                marker=MARKER_DICT[obj_marker],
-                width_mm=obj_width,
-                height_mm=obj_height,
-                marker_width_mm=obj_marker_width,
-                marker_height_mm=obj_marker_height,
-                is_unique=obj_unique)
-            custom_object.name = obj_name
-            custom_objects.append(custom_object)
+        
+        # wall or box
+        else:
+            obj_width = int(f(obj_node, 'width'))
+            obj_height = int(f(obj_node, 'height'))
+
+            if obj_type == "wall":
+                custom_object = world.define_custom_wall(
+                    custom_object_type=cozmo_object_type,
+                    marker=MARKER_DICT[obj_marker],
+                    width_mm=obj_width,
+                    height_mm=obj_height,
+                    marker_width_mm=obj_marker_width,
+                    marker_height_mm=obj_marker_height,
+                    is_unique=obj_unique)
+                custom_object.name = obj_name
+                custom_objects.append(custom_object)
+            
+            if obj_type == "box":
+                obj_depth = int(f(obj_node, 'depth'))
+                mh = lambda node, loc: MARKER_DICT[f(node, f'marker-{loc}')]
+                custom_object = world.define_custom_box(cozmo_object_type,
+                    mh(obj_node, 'front'),
+                    mh(obj_node, 'back'),
+                    mh(obj_node, 'top'),
+                    mh(obj_node, 'bottom'),
+                    mh(obj_node, 'left'),
+                    mh(obj_node, 'right'),
+                    obj_depth, obj_width, obj_height,
+                    obj_marker_height, obj_marker_width, obj_unique)
+                custom_object.name = obj_name
+                custom_objects.append(custom_object)
     return custom_objects

@@ -2,13 +2,29 @@
 <objects>
     <cube unique="true">
         <name>cutting-board</name>
-        <marker width="37" height="37">Diamonds5</marker>
+        <marker width="37" height="37">Triangles4</marker>
         <size>43</size>
     </cube>
     <wall unique="false">
         <name>wall</name>
-        <marker width="37" height="37">Triangles2</marker>
+        <marker width="37" height="37">Diamonds2</marker>
         <width>300</width>
         <height>150</height>
     </wall>
+    <box unique="true">
+        <name>box</name>
+        <marker width="37" height="37"></marker>
+        <marker-front>Diamonds3</marker-front>
+        <marker-back>Circles5</marker-back>
+        <marker-top>Circles3</marker-top>
+        <marker-bottom>Circles4</marker-bottom>
+        <marker-left>Triangles2</marker-left>
+        <marker-right>Triangles3</marker-right>
+        <depth>78</depth>
+        <width>300</width>
+        <height>150</height>
+    </box>
 </objects>
+
+
+
