@@ -667,12 +667,12 @@ class CozmoSoar(psl.AgentConnector):
                     if not nu.blocks_equal(val, buff[oid]):
                         change_list.append(val)
                         if val.is_visible is not buff[oid].is_visible:
-                            tag_list.append(f'tag change {oid} is_visible {val.is_visible}')
+                            tag_list.append(f'tag change {oid} is_visible {str(val.is_visible).lower()}')
                         buff[oid] = nu.deepcopy(val)
                 else:
                     if val.is_visible:
                         add_list.append(val)
-                        tag_list.append(f'tag add {oid} is_visible True')
+                        tag_list.append(f'tag add {oid} is_visible true')
                         buff[oid] = nu.deepcopy(val)
         
         def send_svs_input(svs_in):
