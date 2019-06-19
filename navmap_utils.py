@@ -8,14 +8,18 @@ import itertools
 
 LIGHT_CUBE_LENGTH = 43
 
-# obj1 comesfrom navmap, obj2 comes from buffer.  test if they are equal (disregarding small changes in vision)
+# test if objs from buff and navmap are equal disregarding small changes in vision
 def blocks_equal(obj1, obj2):
     epsilon_position = 1
     epsilon_rotation = .2
-    pos_a = [obj1.pose.position.x, obj1.pose.position.y, obj1.pose.position.z]
-    pos_b = [obj2.pose.position.x, obj2.pose.position.y, obj2.pose.position.z]
-    rot_a = [obj1.pose.rotation.q0, obj1.pose.rotation.q1, obj1.pose.rotation.q2, obj1.pose.rotation.q3]
-    rot_b = [obj2.pose.rotation.q0, obj2.pose.rotation.q1, obj2.pose.rotation.q2, obj2.pose.rotation.q3]
+    pos1 = obj1.pose.position
+    pos2 = obj2.pose.position
+    rot1 = obj1.pose.rotation
+    rot2 = obj2.pose.rotation
+    pos_a = [pos1.x, pos1.y, pos1.z]
+    pos_b = [pos2.x, pos2.y, pos2.z]
+    rot_a = [rot1.q0, rot1.q1, rot1.q2, rot1.q3]
+    rot_b = [rot2.q0, rot2.q1, rot2.q2, rot2.q3]
 
     # conditions for equality
     cond_id = obj1.object_id == obj2.object_id
@@ -82,8 +86,8 @@ def get_obj_str(obj, str_type):
         height = obj.z_size_mm
 
     # vectors from center of object to vertices, unrotated
-    raw_vectors = [elt for elt in itertools.product((depth/2.0, -depth/2.0), (width/2.0, -width/2.0), (height/2.0, -height/2.0))]
-    vectors = np.transpose(np.array(raw_vectors))
+    raw_vectors = itertools.product((depth/2.0, -depth/2.0), (width/2.0, -width/2.0), (height/2.0, -height/2.0))
+    vectors = np.transpose(np.array([elt for elt in raw_vectors]))
     rotation_matrix = transforms3d.euler.euler2mat(eul[0], eul[1], eul[2], axes='sxyz')
     rotated_vectors = np.transpose(np.matmul(rotation_matrix, vectors))
     
