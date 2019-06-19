@@ -3,17 +3,12 @@ import xml.etree.ElementTree as ET
 
 import PySoarLib as psl
 import soar.Python_sml_ClientInterface as sml
+import navmap_utils as nu
 
 import cozmo
 from cozmo.util import degrees, distance_mm, speed_mmps
-
 from c_soar_util import *
-from types import SimpleNamespace
 
-import transforms3d
-import math
-import numpy as np
-import copy
 
 class CozmoSoar(psl.AgentConnector):
     """
@@ -657,22 +652,6 @@ class CozmoSoar(psl.AgentConnector):
         #######
         # SVS #
         #######
-        # obj1 comesfrom navmap, obj2 comes from buffer.  test if they are equal (disregarding small changes in vision)
-        def equal(obj1, obj2):
-            epsilon_position = 1
-            epsilon_rotation = .2
-            pos_a = [obj1.pose.position.x, obj1.pose.position.y, obj1.pose.position.z]
-            pos_b = [obj2.pose.position.x, obj2.pose.position.y, obj2.pose.position.z]
-            rot_a = [obj1.pose.rotation.q0, obj1.pose.rotation.q1, obj1.pose.rotation.q2, obj1.pose.rotation.q3]
-            rot_b = [obj2.pose.rotation.q0, obj2.pose.rotation.q1, obj2.pose.rotation.q2, obj2.pose.rotation.q3]
-
-            return obj1.object_id == obj2.object_id and obj1.is_visible == obj2.is_visible and abs(max([ai - bi for ai, bi in zip(pos_a, pos_b)])) < epsilon_position and abs(max([ai - bi for ai, bi in zip(rot_a, rot_b)])) < epsilon_rotation
-            
-        # we only want to send information on blocks whose locations we know.  in navmap, it initializes blocks at position (0, 0, 0) even if it cannot see them.  this function checks to see if this is the "init_block" state
-        def block_init(val):
-            pos = val.pose.position
-            return val.is_visible is False and pos.x == 0.00 and pos.y == 0.00 and pos.z == 0.00
-
         # create and populate lists to add, delete, and change elements in SVS
         navmap = self.w.__dict__['_objects']
         buff = self.svs_buffer
@@ -680,126 +659,34 @@ class CozmoSoar(psl.AgentConnector):
         add_list = []
         tag_list = [] # used for is_visible tags
         
-        # deepcopy val from navmap
-        def deepcopy(val):
-            d = {}
-            n = SimpleNamespace(**d)
-            n.object_id = val.object_id
-            n.is_visible = val.is_visible
-            n.pose = val.pose
-            return n
-
         # loop through navmap items checking for changes / additions and add to lists to be processed
         for _, val in navmap.items():
             oid = val.object_id
-            if not block_init(val):
+            if not nu.block_init(val):
                 if oid in buff:
-                    if not equal(val, buff[oid]):
+                    if not nu.blocks_equal(val, buff[oid]):
                         change_list.append(val)
                         if val.is_visible is not buff[oid].is_visible:
                             tag_list.append(f'tag change {oid} is_visible {val.is_visible}')
-                        buff[oid] = deepcopy(val)
+                        buff[oid] = nu.deepcopy(val)
                 else:
                     if val.is_visible:
                         add_list.append(val)
                         tag_list.append(f'tag add {oid} is_visible True')
-                        buff[oid] = deepcopy(val)
-            
-        def get_obj_str(obj, str_type):
-            position = obj.pose.position
-            rotation = obj.pose.rotation
-            pos_arr = [position.x, position.y, position.z]
-            quat = (rotation.q0, rotation.q1, rotation.q2, rotation.q3)
-            oid = obj.object_id
-
-            def quaternion_to_euler(quat):
-                """
-                credit: https://stackoverflow.com/questions/53033620/how-to-convert-euler-angles-to-quaternions-and-get-the-same-euler-angles-back-fr?rq=1
-                """
-                import math
-                (w, x, y, z) = quat
-                t0 = +2.0 * (w * x + y * z)
-                t1 = +1.0 - 2.0 * (x * x + y * y)
-                X = math.atan2(t0, t1)
-
-                t2 = +2.0 * (w * y - z * x)
-                t2 = +1.0 if t2 > +1.0 else t2
-                t2 = -1.0 if t2 < -1.0 else t2
-                Y = math.asin(t2)
-
-                t3 = +2.0 * (w * z + x * y)
-                t4 = +1.0 - 2.0 * (y * y + z * z)
-                Z = math.atan2(t3, t4)
-                return (X, Y, Z)
-
-            eul = quaternion_to_euler(quat)
-
-            if type(obj).__name__ == '_proxy_LightCube':
-                LIGHT_CUBE_LENGTH = 43
-                depth = LIGHT_CUBE_LENGTH
-                width = LIGHT_CUBE_LENGTH
-                height = LIGHT_CUBE_LENGTH
-            
-            else:
-                depth = obj.x_size_mm
-                width = obj.y_size_mm
-                height = obj.z_size_mm
-
-            # generate [GEOMETRY] for svs str by generating vertices from position and vectors of dimensions      
-            def combinations(possibilities):
-                """
-                Takes in array of the form [(tuple), (tuple), (tuple)] and returns all the possible combinations.  You can think of each tuple as possibilities of a value at a certain place (index in top level array).  This returns all possible combinations of those values in each place.
-                """
-                # will be modified during recursion
-                combs = []
-                def comb_helper(arr, i, baton):
-                    """
-                    Modifies combs variable above
-                    """
-
-                    for elt in arr[i]:
-                        baton.append(elt)
-                        if i < len(arr) - 1:
-                            comb_helper(arr, i + 1, baton)
-                        else:
-                            combs.append(copy.deepcopy(baton))
-                        baton.pop()
-                comb_helper(possibilities, 0, [])
-                return combs
-
-            # vectors from center of object to vertices, unrotated
-            vectors = np.transpose(np.array(combinations([(depth/2.0, -depth/2.0), (width/2.0, -width/2.0), (height/2.0, -height/2.0)])))
-            rotation_matrix = transforms3d.euler.euler2mat(eul[0], eul[1], eul[2], axes='sxyz')
-            rotated_vectors = np.transpose(np.matmul(rotation_matrix, vectors))
-            
-            # rotated vertices = position array + rotated vectors
-            vertices = np.transpose(np.array([[ai + bi for ai, bi in zip(pos_arr, vector)] for vector in rotated_vectors]))
-            
-            # generate [TRANSFORM] portion of svs string
-            scalar = 1000.0   # turns navmap oordinates in mm to SVS coordinates in m
-            gen_transform = lambda pos, rot: f"p {pos[0]/scalar} {pos[1]/scalar} {pos[2]/scalar} r {rot[0]} {rot[1]} {rot[2]}"
-            geo_str = "v"
-            for vertex in vertices:
-                geo_str += f' {vertex[0]/scalar} {vertex[1]/scalar} {vertex[2]/scalar}'
-            svs_str = f"{geo_str} {gen_transform(pos_arr, eul)}"
-            
-            if str_type == 'add':
-                return f'add {oid} world {svs_str}'
-            else:
-                return f'change {oid} {svs_str}'
-
-        def send_input(input):
-            print('\nSending SVS input: ', input)
-            self.agent.agent.SendSVSInput(input)
+                        buff[oid] = nu.deepcopy(val)
         
+        def send_svs_input(svs_in):
+            print('\nSending SVS input: ', svs_in)
+            self.agent.agent.SendSVSInput(svs_in)
+
         for obj in change_list:
-            change_input = get_obj_str(obj, 'change')
-            send_input(change_input)
+            change_input = nu.get_obj_str(obj, 'change')
+            send_svs_input(change_input)
         for obj in add_list:
-            add_input = get_obj_str(obj, 'add')
-            send_input(add_input)
+            add_input = nu.get_obj_str(obj, 'add')
+            send_svs_input(add_input)
         for tag in tag_list:
-            send_input(tag)
+            send_svs_input(tag)
 
     def __build_obj_wme_subtree(self, obj, obj_designation, obj_wme):
         """
@@ -986,8 +873,9 @@ def define_custom_objects_from_file(world: cozmo.world.World, filename: str):
     custom_objects = []
     
     # find attribute.text from node n
-    f = lambda n, attr: n.find(attr).text
-
+    def f(n, attr):
+        return n.find(attr).text
+    
     for obj_node in obj_root:
         obj_type = obj_node.tag
         obj_unique = True if obj_node.attrib['unique'] == "true" else False
