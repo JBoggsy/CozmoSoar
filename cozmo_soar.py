@@ -3,10 +3,10 @@ import xml.etree.ElementTree as ET
 
 import PySoarLib as psl
 import soar.Python_sml_ClientInterface as sml
+import navmap_utils as nu
 
 import cozmo
 from cozmo.util import degrees, distance_mm, speed_mmps
-
 from c_soar_util import *
 
 
@@ -20,7 +20,6 @@ class CozmoSoar(psl.AgentConnector):
     the Cozmo robot with Soar by updating the appropriate input link attributes and interpreting
     the resulting output link commands.
     """
-
     def __init__(self, agent: psl.SoarAgent, robot: cozmo.robot, object_file=None):
         """
         Create an instance of the `CozmoSoar` class connecting the agent to the robot.
@@ -45,7 +44,9 @@ class CozmoSoar(psl.AgentConnector):
         self.objects = {}
         self.faces = {}
         self.actions = []
-
+        self.w.request_nav_memory_map(.5)
+        self.svs_buffer = {}
+    
         #######################
         # Working Memory data #
         #######################
@@ -648,6 +649,45 @@ class CozmoSoar(psl.AgentConnector):
                 status_wme.update_wm()
                 self.actions.remove((action, status_wme, root_id))
 
+        #######
+        # SVS #
+        #######
+        # create and populate lists to add, delete, and change elements in SVS
+        navmap = self.w.__dict__['_objects']
+        buff = self.svs_buffer
+        change_list = []
+        add_list = []
+        tag_list = [] # used for is_visible tags
+        
+        # loop through navmap items checking for changes / additions and add to lists to be processed
+        for _, val in navmap.items():
+            oid = val.object_id
+            if not nu.block_init(val):
+                if oid in buff:
+                    if not nu.blocks_equal(val, buff[oid]):
+                        change_list.append(val)
+                        if val.is_visible is not buff[oid].is_visible:
+                            tag_list.append(f'tag change {oid} is_visible {str(val.is_visible).lower()}')
+                        buff[oid] = nu.deepcopy(val)
+                else:
+                    if val.is_visible:
+                        add_list.append(val)
+                        tag_list.append(f'tag add {oid} is_visible true')
+                        buff[oid] = nu.deepcopy(val)
+        
+        def send_svs_input(svs_in):
+            print('\nSending SVS input: ', svs_in)
+            self.agent.agent.SendSVSInput(svs_in)
+
+        for obj in change_list:
+            change_input = nu.get_obj_str(obj, 'change')
+            send_svs_input(change_input)
+        for obj in add_list:
+            add_input = nu.get_obj_str(obj, 'add')
+            send_svs_input(add_input)
+        for tag in tag_list:
+            send_svs_input(tag)
+
     def __build_obj_wme_subtree(self, obj, obj_designation, obj_wme):
         """
         Build a working memory sub-tree for a given perceived object
@@ -681,10 +721,13 @@ class CozmoSoar(psl.AgentConnector):
             pass
         else:
             cozmo_obj_type = obj.object_type
-            obj_type, obj_name = cozmo_obj_type.name.split("-")
+            temp_arr = cozmo_obj_type.name.split("-")
+            obj_type = temp_arr[0]
+            
+            # fix for names including '-'
+            obj_name = ''.join(temp_arr[1:])
             obj_input_dict["type"] = obj_type
             obj_input_dict["name"] = obj_name
-
         for input_name in obj_input_dict.keys():
             new_val = obj_input_dict[input_name]
             wme = self.WMEs.get(obj_designation + "." + input_name)
@@ -799,20 +842,52 @@ class SoarObserver(psl.AgentConnector):
 
 
 def define_custom_objects_from_file(world: cozmo.world.World, filename: str):
+    # define a unique cube (44mm x 44mm x 44mm) (approximately the same size as a light cube)
+    # with a 30mm x 30mm Diamonds2 image on every face
+    # cube_obj = world.define_custom_cube(CustomObjectTypes.CustomType00,
+    #                                           CustomObjectMarkers.Diamonds2,
+    #                                           44,
+    #                                           30, 30, True)
+
+    # define a unique cube (88mm x 88mm x 88mm) (approximately 2x the size of a light cube)
+    # with a 50mm x 50mm Diamonds3 image on every face
+    # big_cube_obj = world.define_custom_cube(CustomObjectTypes.CustomType01,
+    #                                           CustomObjectMarkers.Diamonds3,
+    #                                           88,
+    #                                           50, 50, True)
+
+
+    # define a unique box (60mm deep x 140mm width x100mm tall)
+    # with a different 30mm x 50mm image on each of the 6 faces
+    # box_obj = world.define_custom_box(cust_type('box', 'box'),
+    #                                         CustomObjectMarkers.Hexagons2,  # front
+    #                                         CustomObjectMarkers.Circles3,   # back
+    #                                         CustomObjectMarkers.Circles4,   # top
+    #                                         CustomObjectMarkers.Circles5,   # bottom
+    #                                         CustomObjectMarkers.Triangles4, # left
+    #                                         CustomObjectMarkers.Triangles3, # right
+    #                                         60, 140, 100,
+    #                                         30, 50, True)
     obj_tree = ET.parse(filename)
     obj_root = obj_tree.getroot()
     custom_objects = []
+    
+    # find attribute.text from node n
+    def f(n, attr):
+        return n.find(attr).text
+    
     for obj_node in obj_root:
         obj_type = obj_node.tag
         obj_unique = True if obj_node.attrib['unique'] == "true" else False
-        obj_name = obj_node.find('name').text
+        obj_name = f(obj_node, 'name')
+        obj_marker = f(obj_node, 'marker')
         obj_marker_node = obj_node.find('marker')
-        obj_marker = obj_marker_node.text
         obj_marker_height = int(obj_marker_node.attrib['height'])
         obj_marker_width = int(obj_marker_node.attrib['width'])
         cozmo_object_type = custom_object_type_factory(obj_type, obj_name)
+        
         if obj_type == "cube":
-            obj_size = int(obj_node.find('size').text)
+            obj_size = int(f(obj_node, 'size'))
             custom_object = world.define_custom_cube(
                 custom_object_type=cozmo_object_type,
                 marker=MARKER_DICT[obj_marker],
@@ -821,17 +896,36 @@ def define_custom_objects_from_file(world: cozmo.world.World, filename: str):
                 marker_height_mm=obj_marker_height,
                 is_unique=obj_unique)
             custom_objects.append(custom_object)
-        if obj_type == "wall":
-            obj_width = int(obj_node.find('width').text)
-            obj_height = int(obj_node.find('height').text)
-            custom_object = world.define_custom_wall(
-                custom_object_type=cozmo_object_type,
-                marker=MARKER_DICT[obj_marker],
-                width_mm=obj_width,
-                height_mm=obj_height,
-                marker_width_mm=obj_marker_width,
-                marker_height_mm=obj_marker_height,
-                is_unique=obj_unique)
-            custom_object.name = obj_name
-            custom_objects.append(custom_object)
+        
+        # wall or box
+        else:
+            obj_width = int(f(obj_node, 'width'))
+            obj_height = int(f(obj_node, 'height'))
+
+            if obj_type == "wall":
+                custom_object = world.define_custom_wall(
+                    custom_object_type=cozmo_object_type,
+                    marker=MARKER_DICT[obj_marker],
+                    width_mm=obj_width,
+                    height_mm=obj_height,
+                    marker_width_mm=obj_marker_width,
+                    marker_height_mm=obj_marker_height,
+                    is_unique=obj_unique)
+                custom_object.name = obj_name
+                custom_objects.append(custom_object)
+            
+            if obj_type == "box":
+                obj_depth = int(f(obj_node, 'depth'))
+                mh = lambda node, loc: MARKER_DICT[f(node, f'marker-{loc}')]
+                custom_object = world.define_custom_box(cozmo_object_type,
+                    mh(obj_node, 'front'),
+                    mh(obj_node, 'back'),
+                    mh(obj_node, 'top'),
+                    mh(obj_node, 'bottom'),
+                    mh(obj_node, 'left'),
+                    mh(obj_node, 'right'),
+                    obj_depth, obj_width, obj_height,
+                    obj_marker_height, obj_marker_width, obj_unique)
+                custom_object.name = obj_name
+                custom_objects.append(custom_object)
     return custom_objects

@@ -29,6 +29,7 @@ def cse_factory(agent_file: Path, auto_run=False, object_file=None, debugger=Fal
 
         agent.add_connector("cozmo", cozmo_robot)
         agent.connect()
+        agent.execute_command("svs --enable")
         if not auto_run:
             while True:
                 agent.execute_command(input(">> "))
@@ -72,6 +73,13 @@ def gen_cli_parser():
         help="If present, open the 3D viewer.",
         action="store_true"
     )
+    cli_parser.add_argument(
+        "-nv",
+        "--no-viewer",
+        dest="no_viewer",
+        help="If present, will not launch the viewer.",
+        action="store_false"
+    )
     cli_parser.add_argument("agent")
     return cli_parser
 
@@ -86,4 +94,4 @@ if __name__ == "__main__":
         print("Sourcing from file {}".format(agent_file_path.absolute()))
     print(args.debugger)
     cse = cse_factory(agent_file_path, args.autorun, args.obj_file, args.debugger)
-    cozmo.run_program(cse, use_3d_viewer=False, use_viewer=True)
+    cozmo.run_program(cse, use_3d_viewer=False, use_viewer=args.no_viewer)
