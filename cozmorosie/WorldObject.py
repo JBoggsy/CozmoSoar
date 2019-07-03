@@ -52,15 +52,14 @@ class CozmoObjectUnwrapper:
         return None
 
     def color(self):
+        return "white1"
+
+    def name(self):
         cube_id = self.cube_id()
-        if cube_id == None:
-            return "white1"
-        elif cube_id == 1:
-            return "red1"
-        elif cube_id == 2:
-            return "green1"
-        elif cube_id == 3:
-            return "blue1"
+        if cube_id == 2:
+            return "apple1"
+        else:
+            return "block1"
 
 class WorldObject(WMInterface):
     def __init__(self, handle, cozmo_obj=None):
@@ -79,6 +78,7 @@ class WorldObject(WMInterface):
         self.scl_changed = True
 
         self.obj_id = None
+        self.cube_id = None
 
         self.cozmo_obj = None
         if cozmo_obj:
@@ -129,6 +129,7 @@ class WorldObject(WMInterface):
 
         self.objectId = unwrapper.id()
         self.update_bbox(unwrapper)
+        self.cube_id = unwrapper.cube_id()
 
         if len(self.properties) == 0:
             self.create_properties(unwrapper)
@@ -145,15 +146,17 @@ class WorldObject(WMInterface):
     # Properties
     def create_properties(self, unwrapper):
         if unwrapper.is_light_cube():
-            self.properties["category"] = ObjectProperty("category", "light-cube")
+            self.properties["category"] = ObjectProperty("category", "object")
             self.properties["is-connected"] = ObjectProperty("is-connected1", unwrapper.is_connected())
             self.properties["is-moving"] = ObjectProperty("is-moving1", unwrapper.is_moving())
+            self.properties["shape"] = ObjectProperty("shape", "light-cube1")
         else:
             self.properties["category"] = ObjectProperty("category", "object")
+            self.properties["shape"] = ObjectProperty("shape", "cube1")
 
         self.properties["grabbable"] = ObjectProperty("is-grabbable1", unwrapper.is_grabbable())
         self.properties["color"] = ObjectProperty("color", unwrapper.color())
-        self.properties["shape"] = ObjectProperty("shape", "cube1")
+        self.properties["name"] = ObjectProperty("name", unwrapper.name())
 
     ### Methods for managing working memory structures ###
 
@@ -165,6 +168,8 @@ class WorldObject(WMInterface):
     def _add_to_wm_impl(self, parent_id):
         self.obj_id = parent_id.CreateIdWME("object")
         self.obj_id.CreateStringWME("object-handle", self.handle)
+        if self.cube_id:
+            self.obj_id.CreateIntWME("cube-id", self.cube_id)
 
         for prop in self.properties.values():
             prop.add_to_wm(self.obj_id)

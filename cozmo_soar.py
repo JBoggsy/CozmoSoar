@@ -85,6 +85,8 @@ class CozmoSoar(psl.AgentConnector):
             "dock-with-cube": self.__handle_dock_with_cube,
             "pop-a-wheelie": self.__handle_pop_a_wheelie,
             "roll-cube": self.__handle_roll_cube,
+            "change-block-color": self.__handle_change_block_color,
+            "stop": self.__handle_stop,
         }
 
     def on_output_event(self, command_name: str, root_id: sml.Identifier):
@@ -107,9 +109,9 @@ class CozmoSoar(psl.AgentConnector):
         if action:
             print(action)
             self.actions.append((action, status_wme, root_id))
-        else:
-            print("Output Command " + command_name + " had a syntax error")
-            root_id.CreateStringWME("status", "error")
+        #else:
+        #    print("Output Command " + command_name + " had a syntax error")
+        #    root_id.CreateStringWME("status", "error")
 
     def on_init_soar(self):
         self.world_objs.remove_from_wm()
@@ -122,6 +124,23 @@ class CozmoSoar(psl.AgentConnector):
 
         psl.SoarUtils.remove_tree_from_wm(self.WMEs)
         self.actions = []
+
+    def __handle_stop(self, command: sml.Identifier):
+        """
+        Will stop the current action
+
+        The Sour output should look like:
+        (I3 ^stop <stop>)
+        Cozmo should stop the current action
+
+        :return: True if successful, False otherwise
+        """
+        print("STOPPING")
+        self.robot.abort_all_actions()
+        status_wme = psl.SoarWME("status", "complete")
+        status_wme.add_to_wm(command)
+
+        return (None, None)
 
 
     def __handle_place_object_down(self, command: sml.Identifier):
@@ -571,6 +590,46 @@ class CozmoSoar(psl.AgentConnector):
         status_wme.update_wm()
 
         return wheelie_action, status_wme
+
+    def __handle_change_block_color(self, command: sml.Identifier):
+        """
+        Handle a Soar change-block-color command.
+        The Soar output should look like:
+        (I3 ^change-block-color Vx)
+            (Vx ^color [red, blue, green, white, off]
+                ^object-id [id])
+        where id is the object-id of the cube which should have its color
+        changed.
+        :param command: Soar command object
+        :return: True if successful, False otherwise
+        """
+
+        target_id = command.GetParameterValue("object-id")
+        target_obj = self.world_objs.get_object(target_id)
+        if not target_obj:
+            print("Couldn't find target object: {}".format(target_id))
+            print(self.world_objs)
+            return False
+
+        color = command.GetParameterValue("color").lower()
+        if color not in COLORS:
+            print("Invalid color choice: {}".format(color))
+            status_wme = psl.SoarWME("status", "failed")
+            fail_code_wme = psl.SoarWME("failure-code", "invalid-color")
+            fail_reason_wme = psl.SoarWME("failure-reason", "invalid-color: {}".format(color))
+            status_wme.add_to_wm(command)
+            fail_code_wme.add_to_wm(command)
+            fail_reason_wme.add_to_wm(command)
+            status_wme.update_wm()
+            return False
+
+        print("Changing object {} to color {}".format(target_id, color))
+        target_obj.cozmo_obj.set_lights(LIGHTS_DICT[color])
+        target_obj.properties["color"].set_value(color)
+        status_wme = psl.SoarWME("status", "complete")
+        status_wme.add_to_wm(command)
+        status_wme.update_wm()
+        return (None, None)
 
 
     def on_input_phase(self, input_link: sml.Identifier):
