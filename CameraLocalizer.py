@@ -5,6 +5,7 @@ class CameraLocalizer:
 
     def __init__(self):
         # Spin up a thread to periodically update the transfor
+        pass
 
         # transform
     
@@ -14,11 +15,11 @@ class CameraLocalizer:
 
     # cozmo_pose: xyzrpy
     def get_world_pose(self, cozmo_pose):
-        pass
+        return cozmo_pose
 
     # world_pose: xyzrpy
     def get_cozmo_pose(self, world_pose):
-        pass
+        return world_pose
 
 
 

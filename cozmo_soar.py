@@ -1,16 +1,21 @@
 from time import sleep
+from math import pi
 
 import pysoarlib as psl
 import Python_sml_ClientInterface as sml
 
 import cozmo
 from cozmo.util import radians, degrees, distance_mm, speed_mmps
+from CameraLocalizer import CameraLocalizer
 
 from c_soar_util import *
 
 from cozmorosie.WorldObjectManager import WorldObjectManager
 from cozmorosie.RobotInfo import RobotInfo
 from cozmorosie.CustomWalls import define_custom_walls, define_custom_cubes
+
+deg2rad = lambda d: d*pi/180.0
+rad2deg = lambda r: r/pi*180.0
 
 
 class CozmoSoar(psl.AgentConnector):
@@ -36,6 +41,7 @@ class CozmoSoar(psl.AgentConnector):
         self.name = self.agent.agent_name
         self.robot = self.r = robot
         self.world = self.w = self.r.world
+        self.localizer = CameraLocalizer()
 
         self.cam = self.r.camera
         self.cam.image_stream_enabled = True
@@ -388,7 +394,7 @@ class CozmoSoar(psl.AgentConnector):
             return False
 
         print("Going to object {}".format(target_id))
-        go_to_object_action = self.robot.go_to_object(target_obj.cozmo_obj, distance_mm(100), in_parallel=True)
+        go_to_object_action = self.robot.go_to_object(target_obj.cozmo_obj, distance_mm(1000), in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
@@ -403,7 +409,7 @@ class CozmoSoar(psl.AgentConnector):
         (I3 ^go-to-pose Vx)
           (Vx ^x <x> ^y <y> ^orientation <orient> ^relative << true false >> )
 
-        where x and y are floats representing coordinates in millimeters
+        where x and y are floats representing coordinates in meters
         and orient is a float representing heading in degrees
         relative is an optional Boolean, if True then the pose will be relative to the robot
 
@@ -419,11 +425,16 @@ class CozmoSoar(psl.AgentConnector):
             print("go-to-pose requires x, y, and orientation")
             return False
 
+        pose = cozmo.util.pose_z_angle(x=x*1000, y=y*1000, z=0.0, angle_z=radians(orient))
+
         relative = command.GetChildString("relative")
-        relative = (relative == "true" or relative == "True")
+        relative = (relative != None and relative.lower() == "true")
+
+        if not relative:
+            world_pose = self.localizer.get_world_pose([x, y, 0.0, 0.0, 0.0, orient])
+            pose = cozmo.util.pose_z_angle(x=world_pose[0]*1000, y=world_pose[1]*1000, z=0.0, angle_z=radians(world_pose[5]))
 
         print("Going to ({}, {}) with orientation {}, relative={}".format(x, y, orient, relative))
-        pose = cozmo.util.pose_z_angle(x=x, y=y, z=0.0, angle_z=degrees(orient))
         go_to_pose_action = self.robot.go_to_pose(pose, relative_to_robot=relative, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
@@ -472,18 +483,18 @@ class CozmoSoar(psl.AgentConnector):
           (Vx ^distance [dist]
               ^speed [spd])
         where [dist] is a real number indicating how far Cozmo should travel (negatives go
-        backwards) and speed is how fast Cozmo should travel. Units are mm and mm/s, respectively.
+        backwards) and speed is how fast Cozmo should travel. Units are meter and meter/sec, respectively.
 
         :param command: Soar command object
         :return: True if successful, False otherwise
         """
         try:
-            distance = distance_mm(float(command.GetParameterValue("distance")))
+            distance = distance_mm(float(command.GetParameterValue("distance"))*1000)
         except ValueError as e:
             print("Invalid distance format {}".format(command.GetParameterValue("distance")))
             return False
         try:
-            speed = speed_mmps(float(command.GetParameterValue("speed")))
+            speed = speed_mmps(float(command.GetParameterValue("speed"))*1000)
         except ValueError as e:
             print("Invalid speed format {}".format(command.GetParameterValue("speed")))
             return False
@@ -505,8 +516,8 @@ class CozmoSoar(psl.AgentConnector):
           (Vx ^angle [ang]
               ^speed [spd]
               ^absolute << true false >>)
-        where [ang] is the amount Cozmo should rotate in degrees and speed is the speed at which
-        Cozmo should rotate in deg/s. 
+        where [ang] is the amount Cozmo should rotate in radians and speed is the speed at which
+        Cozmo should rotate in rad/s. 
         If absolute=true, the angle is an absolute angle (turn to face angle theta)
             This is optional and defaults to false
 
@@ -514,21 +525,23 @@ class CozmoSoar(psl.AgentConnector):
         :return: True if successful, False otherwise
         """
         try:
-            angle = degrees(float(command.GetParameterValue("angle")))
+            angle = float(command.GetParameterValue("angle"))
         except ValueError as e:
             print("Invalid angle format {}".format(command.GetParameterValue("angle")))
             return False
         try:
-            speed = degrees(float(command.GetParameterValue("speed")))
+            speed = float(command.GetParameterValue("speed"))
         except ValueError as e:
             print("Invalid speed format {}".format(command.GetParameterValue("speed")))
             return False
 
         absolute = command.GetChildString("absolute")
         absolute = (absolute == "true" or absolute == "True")
+        if absolute:
+            angle = self.localizer.get_world_pose([0.0, 0.0, 0.0, 0.0, 0.0, angle])[5]
 
-        print("Rotating in place {} degrees at {}deg/s".format(angle.degrees, speed.degrees))
-        turn_in_place_action = self.r.turn_in_place(angle=angle, speed=speed, is_absolute=absolute, in_parallel=True)
+        print("Rotating in place {} degrees at {}deg/s".format(angle, speed))
+        turn_in_place_action = self.r.turn_in_place(angle=radians(angle), speed=radians(speed), is_absolute=absolute, in_parallel=True)
         status_wme = psl.SoarWME("status", "running")
         status_wme.add_to_wm(command)
         status_wme.update_wm()
@@ -656,7 +669,7 @@ class CozmoSoar(psl.AgentConnector):
         #####################################################
         # UPDATE ROBOT INFORMATION 
         #####################################################
-        self.robot_info.update(self.r)
+        self.robot_info.update(self.r, self.localizer)
         self.robot_info.update_wm(input_link)
         svs_commands = self.robot_info.get_svs_commands()
         if len(svs_commands) > 0:
@@ -720,7 +733,7 @@ class CozmoSoar(psl.AgentConnector):
         #########################
         # OBJECT INPUT HANDLING #
         #########################
-        self.world_objs.update(list(self.w.visible_objects))
+        self.world_objs.update(list(self.w.visible_objects), self.localizer)
         self.world_objs.update_wm(input_link)
         svs_commands = self.world_objs.get_svs_commands()
         if len(svs_commands) > 0:

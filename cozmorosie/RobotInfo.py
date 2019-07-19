@@ -4,9 +4,9 @@ from pysoarlib import *
 from .MapInfo import MapInfo
 
 # Info for view region
-VIEW_DIST = 4.0
+VIEW_DIST = 0.5
 VIEW_ANGLE = pi/2 * 0.7
-VIEW_HEIGHT = 1.2
+VIEW_HEIGHT = 0.12
 
 class RobotInfo(WMInterface):
     def __init__(self, world_objs, map_filename):
@@ -20,7 +20,7 @@ class RobotInfo(WMInterface):
         self.pose_id = None
         self.pose_wmes = [ SoarWME(dim, 0.0) for dim in [ "x", "y", "z", "roll", "pitch", "yaw" ] ]
         self.pose = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
-        self.dims = [.5, .2, .3]
+        self.dims = [.05, .02, .03]
 
         self.map_info = MapInfo(map_filename)
         self.current_region = None
@@ -54,11 +54,13 @@ class RobotInfo(WMInterface):
         return self.current_region
 
 
-    def update(self, robot_data):
+    def update(self, robot_data, localizer):
         self.robot_data = robot_data
         yaw = self.robot_data.pose.rotation.angle_z.radians
         pos = self.robot_data.pose.position
-        self.pose = [ pos.x/100.0, pos.y/100.0, pos.z/100.0, 0.0, 0.0, yaw ]
+        robot_pose = [ pos.x/1000.0, pos.y/1000.0, pos.z/1000.0, 0.0, 0.0, yaw ]
+        localizer.update_robot_pose(robot_pose)
+        self.pose = localizer.get_world_pose(robot_pose)
         for d, pose_wme in enumerate(self.pose_wmes):
             pose_wme.set_value(self.pose[d])
         self.update_region()
@@ -98,7 +100,7 @@ class RobotInfo(WMInterface):
         self.svs_cmd_queue.append("add robot_pos robot\n")
         self.svs_cmd_queue.append(SVSCommands.add_box("robot_body", parent="robot", scl=self.dims))
         self.svs_cmd_queue.append("add robot_view robot v {:s} p {:f} {:f} {:f}\n".format(
-            self._get_view_region_vertices(), VIEW_DIST/2 + 0.5, 0.0, 0.0))
+            self._get_view_region_vertices(), VIEW_DIST/2 + 0.05, 0.0, 0.0))
 
     def update_waypoint_wm(self):
         if self.wp_id:

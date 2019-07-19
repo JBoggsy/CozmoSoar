@@ -21,17 +21,15 @@ class CozmoObjectUnwrapper:
     #    # Remapped so yaw=0 is down x-axis and yaw=90 is down y-axis
     #    return ((450 - int(self.cozmo_obj["rotation"]["y"])) % 360) * pi / 180.0
 
-    def pos(self):
+    def pose(self):
         pos = self.cozmo_obj.pose.position
-        return [ pos.x/100.0, pos.y/100.0, pos.z/100.0 ]
-
-    def rot(self):
-        return [ 0.0, 0.0, self.cozmo_obj.pose.rotation.angle_z.radians ]
+        yaw = self.cozmo_obj.pose.rotation.angle_z.radians
+        return [pos.x/1000.0, pos.y/1000.0, pos.z/1000.0, 0.0, 0.0, yaw ]
 
     def scl(self):
         co = self.cozmo_obj
         if isinstance(co, cozmo.objects.CustomObject):
-            return [ co.x_size_mm/100.0, co.y_size_mm/100.0, co.z_size_mm/100.0 ]
+            return [ co.x_size_mm/1000.0, co.y_size_mm/1000.0, co.z_size_mm/1000.0 ]
         return [0.25, 0.25, 0.25]
 
     def is_grabbable(self):
@@ -68,7 +66,7 @@ class CozmoObjectUnwrapper:
             return "block1"
 
 class WorldObject(WMInterface):
-    def __init__(self, handle, cozmo_obj=None):
+    def __init__(self, handle, cozmo_obj=None, localizer=None):
         WMInterface.__init__(self)
         self.handle = handle
         self.objectId = cozmo_obj.object_id if cozmo_obj else None
@@ -77,7 +75,7 @@ class WorldObject(WMInterface):
 
         self.bbox_pos = [0, 0, 0]
         self.bbox_rot = [0, 0, 0]
-        self.bbox_scl = [0.1, 0.1, 0.1]
+        self.bbox_scl = [0.01, 0.01, 0.01]
 
         self.pos_changed = True
         self.rot_changed = True
@@ -88,7 +86,7 @@ class WorldObject(WMInterface):
 
         self.cozmo_obj = None
         if cozmo_obj:
-            self.update(cozmo_obj)
+            self.update(cozmo_obj, localizer)
 
         self.svs_cmd_queue = []
 
@@ -129,12 +127,12 @@ class WorldObject(WMInterface):
         self.bbox_scl = list(scl)
         self.scl_changed = True
 
-    def update(self, cozmo_obj):
+    def update(self, cozmo_obj, localizer):
         self.cozmo_obj = cozmo_obj
         unwrapper = CozmoObjectUnwrapper(cozmo_obj)
 
         self.objectId = unwrapper.id()
-        self.update_bbox(unwrapper)
+        self.update_bbox(unwrapper, localizer)
         self.cube_id = unwrapper.cube_id()
 
         if len(self.properties) == 0:
@@ -144,9 +142,10 @@ class WorldObject(WMInterface):
             self.properties["is-connected"].set_value(unwrapper.is_connected())
             self.properties["is-moving"].set_value(unwrapper.is_moving())
 
-    def update_bbox(self, unwrapper):
-        self.set_pos(unwrapper.pos())
-        self.set_rot(unwrapper.rot())
+    def update_bbox(self, unwrapper, localizer):
+        pose = localizer.get_world_pose(unwrapper.pose())
+        self.set_pos(pose[0:3])
+        self.set_rot(pose[3:6])
         self.set_scl(unwrapper.scl())
 
     # Properties

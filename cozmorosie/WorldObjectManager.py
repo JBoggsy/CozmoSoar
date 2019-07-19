@@ -48,7 +48,7 @@ class WorldObjectManager(WMInterface):
                 self.objects[dest_handle] = wobj.copy(dest_handle)
         self.wm_dirty = True
 
-    def update(self, cozmo_objs):
+    def update(self, cozmo_objs, localizer):
         linked_cozmo_objs = {}
 
         for cozmo_obj in cozmo_objs:
@@ -66,10 +66,10 @@ class WorldObjectManager(WMInterface):
         for handle, cozmo_obj in linked_cozmo_objs.items():
             if handle in self.objects:
                 wobj = self.objects[handle]
-                wobj.update(cozmo_obj)
+                wobj.update(cozmo_obj, localizer)
                 stale_objs.remove(handle)
             else:
-                self.objects[handle] = WorldObject(handle, cozmo_obj)
+                self.objects[handle] = WorldObject(handle, cozmo_obj, localizer)
 
         # Remove all stale objects from WM
         for handle in stale_objs:
