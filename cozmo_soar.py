@@ -10,7 +10,7 @@ from c_soar_util import *
 
 from cozmorosie.WorldObjectManager import WorldObjectManager
 from cozmorosie.RobotInfo import RobotInfo
-from cozmorosie.CustomWalls import define_custom_walls
+from cozmorosie.CustomWalls import define_custom_walls, define_custom_cubes
 
 
 class CozmoSoar(psl.AgentConnector):
@@ -47,6 +47,7 @@ class CozmoSoar(psl.AgentConnector):
         self.actions = []
 
         define_custom_walls(self.world)
+        define_custom_cubes(self.world)
 
         #######################
         # Working Memory data #
@@ -100,11 +101,11 @@ class CozmoSoar(psl.AgentConnector):
         :param root_id: sml Identifier object containing the command
         :return: None
         """
-        print(
-            "!!! A: ",
-            command_name,
-            [root_id.GetChild(c) for c in range(root_id.GetNumberChildren())],
-        )
+        #print(
+        #    "!!! A: ",
+        #    command_name,
+        #    [root_id.GetChild(c) for c in range(root_id.GetNumberChildren())],
+        #)
         action, status_wme = self.command_map[command_name](root_id)
         if action:
             print(action)

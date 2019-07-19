@@ -2,6 +2,10 @@ from pysoarlib import *
 
 from .WorldObject import WorldObject
 
+import cozmo
+from cozmo.objects import CustomObjectTypes as COT
+boxes = [ COT.CustomType17,  COT.CustomType18, COT.CustomType19 ]
+
 class WorldObjectManager(WMInterface):
     def __init__(self):
         WMInterface.__init__(self)
@@ -48,6 +52,10 @@ class WorldObjectManager(WMInterface):
         linked_cozmo_objs = {}
 
         for cozmo_obj in cozmo_objs:
+            if "object_type" in cozmo_obj.__dict__ and cozmo_obj.object_type not in boxes:
+                continue
+            if isinstance(cozmo_obj, cozmo.objects.Charger):
+                continue
             perc_id = str(cozmo_obj.object_id)
             handle = self.get_soar_handle(perc_id)
             linked_cozmo_objs[handle] = cozmo_obj

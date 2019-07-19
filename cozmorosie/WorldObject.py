@@ -4,6 +4,8 @@ import cozmo
 from pysoarlib import *
 
 from .ObjectProperty import ObjectProperty
+from cozmo.objects import CustomObjectTypes as COT
+
 
 class CozmoObjectUnwrapper:
     def __init__(self, cozmo_obj):
@@ -52,7 +54,11 @@ class CozmoObjectUnwrapper:
         return None
 
     def color(self):
-        return "white1"
+        if self.is_light_cube():
+            return { 1: "blue1", 2: "red1", 3: "green1" }[self.cube_id()]
+        else:
+            custom_cubes = { COT.CustomType17: "yellow1", COT.CustomType18: "orange1", COT.CustomType19: "purple1" }
+            return custom_cubes.get(self.cozmo_obj.object_type, None)
 
     def name(self):
         cube_id = self.cube_id()
@@ -149,10 +155,10 @@ class WorldObject(WMInterface):
             self.properties["category"] = ObjectProperty("category", "object")
             self.properties["is-connected"] = ObjectProperty("is-connected1", unwrapper.is_connected())
             self.properties["is-moving"] = ObjectProperty("is-moving1", unwrapper.is_moving())
-            self.properties["shape"] = ObjectProperty("shape", "light-cube1")
+            self.properties["shape"] = ObjectProperty("shape", "box1")
         else:
             self.properties["category"] = ObjectProperty("category", "object")
-            self.properties["shape"] = ObjectProperty("shape", "cube1")
+            self.properties["shape"] = ObjectProperty("shape", "box1")
 
         self.properties["grabbable"] = ObjectProperty("is-grabbable1", unwrapper.is_grabbable())
         self.properties["color"] = ObjectProperty("color", unwrapper.color())

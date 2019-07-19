@@ -28,8 +28,9 @@ class ChatGUI(Frame):
     def create_widgets(self):
         self.grid(row=0, column=0, sticky=N+S+E+W)
         self.columnconfigure(0, weight=3, minsize=600)
-        self.columnconfigure(1, weight=1, minsize=400)
+        self.columnconfigure(1, weight=1, minsize=100)
         self.columnconfigure(2, weight=1, minsize=100)
+        self.columnconfigure(3, weight=1, minsize=100)
         self.rowconfigure(0, weight=10, minsize=400)
         self.rowconfigure(1, weight=1, minsize=50)
 
@@ -40,8 +41,15 @@ class ChatGUI(Frame):
         self.messages_list.grid(row=0, column=0, sticky=N+S+E+W)
         self.scrollbar.pack(side=RIGHT, fill=Y)
 
-        self.script_frame = Frame(self)
-        self.script_frame.grid(row=0, column=1, sticky=N+S+E+W)
+        self.script_list = Listbox(self, font=("Times", "12"))
+        self.script_scroll = Scrollbar(self.script_list)
+        self.script_list.config(yscrollcommand=self.script_scroll.set)
+        self.script_scroll.config(command=self.messages_list.yview)
+        self.script_list.grid(row=0, column=1, columnspan=3, sticky=N+S+E+W)
+        self.script_scroll.pack(side=RIGHT, fill=Y)
+
+        #self.script_frame = Frame(self)
+        #self.script_frame.grid(row=0, column=1, sticky=N+S+E+W)
 
         self.chat_entry = Entry(self, font=("Times", "16"))
         self.chat_entry.bind('<Return>', lambda key: self.on_submit_click())
@@ -57,18 +65,27 @@ class ChatGUI(Frame):
         self.run_button["command"] = self.on_run_click
         self.run_button.grid(row=1, column=2, sticky=N+S+E+W)
 
+        self.adv_button = Button(self, text="Advance", font=("Times", "24"))
+        self.adv_button["command"] = self.on_advance_click
+        self.adv_button.grid(row=1, column=3, sticky=N+S+E+W)
+
     def create_script_buttons(self):
         self.script = []
         if self.soar_agent.messages_file != None:
             with open(self.soar_agent.messages_file, 'r') as f:
-                self.script = [ line.rstrip('\n') for line in f.readlines() if len(line.rstrip('\n')) > 0 and line[0] != '#']
+                self.script = [ line.rstrip('\n') for line in f.readlines() if len(line.rstrip('\n')) > 0]
+
 
         row = 0
+        self.script_index = 0
         for message in self.script:
-            button = Button(self.script_frame, text=message[:30], font=("Times", "16"))
-            button["command"] = lambda message=message: self.send_message(message)
-            button.grid(row=row, column=0, sticky=N+S+E+W)
-            row += 1
+            self.script_list.insert(END, message)
+        if len(self.script) > 0:
+            self.script_list.select_set(0)
+            #button = Button(self.script_frame, text=message[:30], font=("Times", "16"))
+            #button["command"] = lambda message=message: self.send_message(message)
+            #button.grid(row=row, column=0, sticky=N+S+E+W)
+            #row += 1
 
     def send_message(self, message):
         self.messages_list.insert(END, message)
@@ -86,6 +103,20 @@ class ChatGUI(Frame):
         
     def on_run_click(self):
         self.soar_agent.start()
+
+    def on_advance_click(self):
+        if self.script_index < len(self.script):
+            message = self.script[self.script_index]
+            if message[0] != '#':
+                self.send_message(message)
+            self.script_list.selection_clear(self.script_index)
+            self.script_index += 1
+        if self.script_index < len(self.script):
+            self.chat_entry.delete(0, END)
+            self.chat_entry.insert(END, self.script[self.script_index])
+            self.script_list.selection_set(self.script_index)
+            self.script_list.yview_scroll(1, "units")
+
 
     def scroll_history(self, delta):
         if self.history_index == 0 and delta == -1:
