@@ -2,7 +2,6 @@
 
 class CameraLocalizer:
 
-
     def __init__(self):
         # Spin up a thread to periodically update the transfor
         pass
@@ -10,7 +9,7 @@ class CameraLocalizer:
         # transform
     
     # pose: xyzrpy
-    def update_robot_pose(self, pose):
+    def recalculate_transform(self, pose):
         pass
 
     # cozmo_pose: xyzrpy

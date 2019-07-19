@@ -17,6 +17,9 @@ from cozmorosie.CustomWalls import define_custom_walls, define_custom_cubes
 deg2rad = lambda d: d*pi/180.0
 rad2deg = lambda r: r/pi*180.0
 
+import time
+current_time_ms = lambda: int(round(time.time() * 1000))
+
 
 class CozmoSoar(psl.AgentConnector):
     """
@@ -42,6 +45,7 @@ class CozmoSoar(psl.AgentConnector):
         self.robot = self.r = robot
         self.world = self.w = self.r.world
         self.localizer = CameraLocalizer()
+        self.last_cam_update = 0
 
         self.cam = self.r.camera
         self.cam.image_stream_enabled = True
@@ -54,6 +58,7 @@ class CozmoSoar(psl.AgentConnector):
 
         define_custom_walls(self.world)
         define_custom_cubes(self.world)
+
 
         #######################
         # Working Memory data #
@@ -669,6 +674,13 @@ class CozmoSoar(psl.AgentConnector):
         #####################################################
         # UPDATE ROBOT INFORMATION 
         #####################################################
+
+        if current_time_ms() - self.last_cam_update > LOCALIZER_UPDATE_RATE:
+            yaw = self.robot_data.pose.rotation.angle_z.radians
+            pos = self.robot_data.pose.position
+            self.localizer.recalculate_transform([ pos.x/1000.0, pos.y/1000.0, pos.z/1000.0, 0.0, 0.0, yaw ])
+            self.last_cam_update = current_time_ms()
+
         self.robot_info.update(self.r, self.localizer)
         self.robot_info.update_wm(input_link)
         svs_commands = self.robot_info.get_svs_commands()
