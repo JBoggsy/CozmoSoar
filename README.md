@@ -114,6 +114,7 @@ The Cozmo-Soar interface provides certain input-link attributes and values to a 
     * x (float)
     * y (float)
     * z (float)
+  * visible (int)
 * [obj-count](#obj-count) (int)
 * [picked-up](#picked-up) (int)
 * [pose](#pose) 
@@ -143,6 +144,7 @@ The Cozmo-Soar interface provides certain input-link attributes and values to a 
 * [pick-up-object](#pick-up-object)
   * object-id (int)
 * [place-object-down](#place-object-down)
+* [place-on-object](#place-on-object)
 * [set-backpack-lights](#set-backpack-lights)
   * color (str)
 * [turn-in-place](#turn-in-place)
@@ -197,6 +199,7 @@ Provides information about an object Cozmo can currently see and recognize, such
 * `object-id`: An integer uniquely identifying the object among all those Cozmo can currently see. Note that the ID of an object may not be the same if it leaves and then reenters Cozmo's vision.
 * `type`: A string indicating what kind of object it is. The possible types are "led-cube", "cube", and "wall". The light cubes that come with Cozmo will register as "led-cubes", while custom-defined cubes will simply be "cube."
 * `pose`: Pose information about the object. See [pose](#pose).
+* `visible`: True if the element has been observed recently. “recently” is defined as [visibility_timeout](http://cozmosdk.anki.com/docs/generated/cozmo.objects.html?highlight=visible#cozmo.objects.ObservableElement.visibility_timeout) seconds. See [is_visible](http://cozmosdk.anki.com/docs/generated/cozmo.objects.html?highlight=visible#cozmo.objects.ObservableElement.is_visible).
 
 #### [face-count](http://cozmosdk.anki.com/docs/generated/cozmo.world.html#cozmo.world.World.visible_face_count)
 An integer. Indicates how many faces Cozmo currently sees.
@@ -271,10 +274,11 @@ Instructs Cozmo to attempt to lift the specified object. The object must be know
 
 #### [place-object-down](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.place_object_on_ground_here)
 *parameters:*
+- `filler`: `int`
 
 Instructs Cozmo to lower whatever object it is carrying to the ground, then back up. No object id is required, since this action is really equivalent to instructing Cozmo to fully lower its lift and then back up a tad.
 
-#### [place-object-on](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.place_on_object)
+#### [place-on-object](http://cozmosdk.anki.com/docs/generated/cozmo.robot.html#cozmo.robot.Robot.place_on_object)
 *parameters:*
 - `object-id`: `int`
 
