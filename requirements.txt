@@ -2,4 +2,4 @@ cozmo==1.4.9
 cozmoclad==3.3.0
 numpy==1.15.4
 opencv-python==4.0.0.21
-Pillow==5.4.1
+Pillow==9.0.0
